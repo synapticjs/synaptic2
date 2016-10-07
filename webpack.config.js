@@ -1,0 +1,36 @@
+var webpack = require('webpack')
+var path = require('path')
+module.exports = {
+  context: __dirname,
+  entry: './src/index.js',
+  output: {
+    path: path.resolve('dist'),
+    filename: 'synaptic.js',
+    libraryTarget: 'var',
+    library: 'synaptic'
+  },
+  plugins: [
+    new webpack.NoErrorsPlugin(),
+    new webpack.optimize.UglifyJsPlugin({
+        compress: {
+            warnings: false
+        }
+    })
+  ],
+  resolve: {
+    extensions: ['', '.js', '.json'],
+    modulesDirectories: ['.', 'src', 'node_modules']
+  },
+  module: {
+    loaders: [
+      {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        loader: 'babel', // 'babel-loader' is also a valid name to reference
+        query: {
+          presets: ['es2015']
+        }
+      }
+    ]
+  }
+}

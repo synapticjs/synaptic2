@@ -1,0 +1,63 @@
+<script src="./dist/synaptic.js" charset="UTF-8"></script>
+<script>
+
+// Feed Forward
+var ff = new synaptic.FeedForward(2, 4, 1)
+console.log(`Training XOR...`)
+ff.learningRate = 0.5
+for (var i = 0; i < 3000; i++) {
+  ff.activate(0,0)
+  ff.propagate(0)
+
+  ff.activate(0,1)
+  ff.propagate(1)
+
+  ff.activate(1,0)
+  ff.propagate(1)
+
+  ff.activate(1,1)
+  ff.propagate(0)
+}
+
+console.log(`[0, 0] => ${ff.activate(0,0)}`)
+console.log(`[0, 1] => ${ff.activate(0,1)}`)
+console.log(`[1, 0] => ${ff.activate(1,0)}`)
+console.log(`[1, 1] => ${ff.activate(1,1)}`)
+
+// LSTM
+var inputs = 3
+var memoryBlocks = 1
+var outputs = 2
+console.log(`\n\nLSTM (${inputs}, ${memoryBlocks}, ${outputs})\n`)
+var lstm = new synaptic.LSTM(inputs, memoryBlocks, outputs)
+console.log('Input Layer', lstm.inputLayer)
+console.log('Input Gate', lstm.inputGate)
+console.log('Forget Gate', lstm.forgetGate)
+console.log('Memory Cell', lstm.memoryCell)
+console.log('Output Gate', lstm.outputGate)
+console.log('Output Layer', lstm.outputLayer)
+console.log('connections')
+console.table(lstm.connections)
+console.log('gates')
+console.table(lstm.gates)
+lstm.activate(0, 0, 0)
+lstm.propagate(0, 0)
+lstm.activate(1, 1, 0)
+lstm.propagate(1, 0)
+lstm.activate(0, 1, 1)
+lstm.propagate(1, 1)
+lstm.activate(1, 0, 1)
+lstm.propagate(1, 0)
+lstm.activate(0, 0, 1)
+lstm.propagate(1, 0)
+lstm.activate(0, 1, 0)
+lstm.propagate(1, 1)
+lstm.activate(1, 0, 0)
+lstm.propagate(1, 1)
+lstm.activate(0, 1, 1)
+lstm.propagate(1, 0)
+console.log('weights')
+console.table(lstm.weight)
+console.log('gains')
+console.table(lstm.gain)
+</script>
