@@ -76,7 +76,7 @@ export default class Engine {
         for (const k of this.gatedBy[j]) { // compute extended elegibility traces for j's inputs
 
           // eq. 18
-          xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df[j](s[j]) * ε[j][i] * this.bigParenthesisTerm(j, k)
+          xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df[j](s[j]) * ε[j][i] * this.bigParenthesisTerm(k, j)
         }
       }
 
@@ -123,7 +123,7 @@ export default class Engine {
       δP[j] = df[j](s[j]) * Σ(P[j], k => δ[k] * g[k][j] * w[k][j])
 
       // eq. 22
-      δG[j] = df[j](s[j]) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(j, k))
+      δG[j] = df[j](s[j]) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(k, j))
 
       // eq. 23
       δ[j] = δP[j] + δG[j]
@@ -139,7 +139,7 @@ export default class Engine {
   }
 
   // this calculate the big parenthesis term that is present in eq. 18 and eq. 22
-  bigParenthesisTerm (j, k) {
+  bigParenthesisTerm (k, j) {
     // glosary
     const w = this.weight
     const s = this.state
@@ -183,7 +183,7 @@ export default class Engine {
     if (this.biasUnit != null) {
       this.addConnection(this.biasUnit, unit)
     }
-    
+
     return unit
   }
 
