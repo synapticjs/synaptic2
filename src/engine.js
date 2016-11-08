@@ -153,7 +153,7 @@ export default class Engine {
 
   addUnit () {
     const unit = this.size
-    this.state[unit] = random()
+    this.state[unit] = this.random()
     this.weight[unit] = {}
     this.gain[unit] = {}
     this.elegibilityTrace[unit] = {}
