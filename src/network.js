@@ -8,8 +8,7 @@ export default class InputLayer {
 
     // init layers
     layers.forEach(layer => layer.init(this))
-
-    this.layers = this.engine.layers
+    this.layers = []
   }
 
   addUnit () {
@@ -26,13 +25,15 @@ export default class InputLayer {
 
   addLayer (width = 0, height = 1, depth = 1) {
     const units = this.engine.addLayer(width * height * depth)
-    return {
+    const layer = {
       width,
       height,
       depth,
       units,
       size: units.length
     }
+    this.layers.push(layer)
+    return layer
   }
 
   getLastLayer () {
