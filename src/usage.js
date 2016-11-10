@@ -26,13 +26,13 @@ const LSTM = new Network(
 
 const ConvNet = new Network(
   new Input2D(32, 32),
-  new Convolution2D(32, 32, {
+  new Convolution2D({
     filter: 5,
     depth: 12,
     stride: 2,
     zerPadding: 0
   }),
-  new MaxPool2D(2),
   new Activation.ReLU(),
+  new MaxPool2D(2),
   new Dense(10)
 )
