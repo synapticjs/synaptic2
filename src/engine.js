@@ -1,5 +1,6 @@
-// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
-// trying to keep the code as close as posible to the equations and as verbose as possible.
+export const activationTypes = {
+  LOGISTIC_SIGMOID: 'LOGISTIC_SIGMOID'
+}
 
 const defaults = {
   bias: true,
@@ -19,7 +20,6 @@ export default class Engine {
     this.projectedErrorResponsibility = {}
     this.gatedErrorResponsibility = {}
     this.activationFunction = {}
-    this.activationFunctionDerivative = {}
     this.inputsOf = {}
     this.projectedBy = {}
     this.gatersOf = {}
@@ -32,6 +32,7 @@ export default class Engine {
     this.connections = []
     this.gates = []
     this.learningRate = 0.1
+    this.layers = []
     this.size = 0
     this.random = generator
     this.biasUnit = null
@@ -41,114 +42,6 @@ export default class Engine {
       this.biasUnit = this.addUnit()
       this.activation[this.biasUnit] = 1
     }
-  }
-
-  activate (unit, input) {
-    // glosary
-    const j = unit
-    const s = this.state
-    const w = this.weight
-    const g = this.gain
-    const y = this.activation
-    const f = this.activationFunction
-    const df = this.activationFunctionDerivative
-    const ε = this.elegibilityTrace
-    const xε = this.extendedElegibilityTrace
-
-    // this is only for input neurons (they receive their activation from the environment)
-    if (typeof input !== 'undefined') {
-
-      y[j] = input
-
-    } else {
-
-      // eq. 15
-      s[j] = g[j][j] * w[j][j] * s[j] + Σ(this.inputSet[j], i => g[j][i] * w[j][i] * y[i]) // compute state of j
-
-      // eq. 16
-      y[j] = f[j](s[j]) // compute activation of j
-
-      for (const i of this.inputSet[j]) { // comupute elegibility traces for j's inputs
-
-        // eq. 17
-        ε[j][i] = g[j][j] * w[j][j] * ε[j][i] + g[j][i] * y[i]
-
-        for (const k of this.gatedBy[j]) { // compute extended elegibility traces for j's inputs
-
-          // eq. 18
-          xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df[j](s[j]) * ε[j][i] * this.bigParenthesisTerm(k, j)
-        }
-      }
-
-      // update the gain of the connections gated by this unit with its activation value
-      for (const to of this.gatedBy[unit]) {
-        for (const from of this.inputsOfGatedBy[to][unit]) {
-          // eq. 14
-          g[to][from] = y[unit]
-        }
-      }
-    }
-
-    // return the activation of this unit
-    return y[j]
-  }
-
-  propagate (unit, target) {
-    // glosary
-    const j = unit
-    const s = this.state
-    const w = this.weight
-    const g = this.gain
-    const y = this.activation
-    const df = this.activationFunctionDerivative
-    const δ = this.errorResponsibility
-    const δP = this.projectedErrorResponsibility
-    const δG = this.gatedErrorResponsibility
-    const α = this.learningRate
-    const ε = this.elegibilityTrace
-    const xε = this.extendedElegibilityTrace
-    const P = this.projectionSet
-    const G = this.gateSet
-
-    // step 1: compute error responsibiltity (δ) for j
-
-    if (typeof target !== 'undefined') { // this is only for output neurons, the error is injected from the environment
-
-      // eq. 10
-      δ[j] = δP[j] = target - y[j]
-
-    } else { // for the rest of the units the error is computed by backpropagation
-
-      // eq. 21
-      δP[j] = df[j](s[j]) * Σ(P[j], k => δ[k] * g[k][j] * w[k][j])
-
-      // eq. 22
-      δG[j] = df[j](s[j]) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(k, j))
-
-      // eq. 23
-      δ[j] = δP[j] + δG[j]
-
-    }
-
-    // step 2: adjust the weights (Δw) for all the inputs of j
-
-    for (const i of this.inputSet[j]) {
-      // eq. 24
-      w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
-    }
-  }
-
-  // this calculate the big parenthesis term that is present in eq. 18 and eq. 22
-  bigParenthesisTerm (k, j) {
-    // glosary
-    const w = this.weight
-    const s = this.state
-    const y = this.activation
-    const dt = this.derivativeTerm[k][j] // the derivative term is 1 if and only if j gates k's self-connection, otherwise is 0
-    const gatedInputs = this.inputsOfGatedBy[k][j] // this index runs over all the inputs of k, that are gated by j
-
-    // big parenthesis term
-    return dt * w[k][k] * s[k] + Σ(gatedInputs, a => w[k][a] * y[a])
   }
 
   addUnit () {
@@ -163,8 +56,7 @@ export default class Engine {
     this.gain[unit][unit] = 1 // ungated connections have a gain of 1 (eq. 14)
     this.elegibilityTrace[unit][unit] = 0
     this.extendedElegibilityTrace[unit][unit] = {}
-    this.activationFunction[unit] = LOGISTIC_SIGMOID
-    this.activationFunctionDerivative[unit] = LOGISTIC_SIGMOID_DERIVATIVE
+    this.activationFunction[unit] = activationTypes.LOGISTIC_SIGMOID
     this.errorResponsibility[unit] = 0
     this.projectedErrorResponsibility[unit] = 0
     this.gatedErrorResponsibility[unit] = 0
@@ -223,6 +115,16 @@ export default class Engine {
     this.track(to)
     this.track(from)
     this.track(gater)
+  }
+
+  addLayer (size = 0) {
+    const layer = []
+    for (let i = 0; i < size; i++) {
+      const unit = this.addUnit()
+      layer.push(unit)
+    }
+    this.layers.push(layer)
+    return layer
   }
 
   track (unit) {
@@ -333,20 +235,6 @@ export default class Engine {
     // each unit keeps track of all the units that they are gating a connection into, and that are downstream of them (see eq. 20)
     this.gateSet[unit] = this.gatedBy[unit].filter(gated => gated > unit)
   }
-}
-
-export function LOGISTIC_SIGMOID (x) {
-  return 1 / (1 + Math.exp(-x))
-}
-
-export function LOGISTIC_SIGMOID_DERIVATIVE (x) {
-  var fx = LOGISTIC_SIGMOID(x)
-  return fx * (1 - fx)
-}
-
-// helper for doing summations
-function Σ (indexes, fn) {
-  return indexes.reduce((sum, index) => sum + fn(index), 0)
 }
 
 // helper for removing duplicated ints from an array
