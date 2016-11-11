@@ -1,14 +1,19 @@
-export default class Input2DLayer {
+export default class Input2D {
 
   constructor (width, height) {
     this.width = width
     this.height = height
-    this.network = null
     this.layer = null
   }
 
-  init (network) {
-    this.network = network
+  init (network, boundary) {
     this.layer = network.addLayer(this.width, this.height)
+    // set the boundary for next layer
+    return {
+      width: this.width,
+      height: this.height,
+      depth: 1,
+      layer: this.layer
+    }
   }
 }

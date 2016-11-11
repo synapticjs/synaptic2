@@ -1,69 +1,80 @@
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution2DLayer {
+export default class Convolution2D {
 
   constructor ({ filter = 1, depth = 1, stride = 1, zeroPadding = 0 }) {
     this.filter = filter
     this.depth = depth
     this.stride = stride
     this.zeroPadding = zeroPadding
-    this.size = 0
-    this.network = null
     this.layer = null
   }
 
-  init (network) {
-    this.network = network
+  init (network, boundary) {
     this.layer = network.addLayer()
-    const prevLayer = network.getLastLayer()
 
-    let x, y, z, from, to
-    for (x = 0; x < prevLayer.width; x += this.stride) {
-      for (y = 0; y < prevLayer.height; y += this.stride) {
-        for (z = 0; z < prevLayer.depth; z += this.stride) {
+    let x, y, z, fromX, fromY, fromZ, from, to
+    for (x = 0; x < boundary.width; x += this.stride) {
+      for (y = 0; y < boundary.height; y += this.stride) {
+        for (z = 0; z < this.depth; z++) {
 
         // create convolution layer units
         const unit = network.addUnit()
-        this.size++
-        this.layer.units.push(unit)
+        this.layer.push(unit)
 
         // connect units to prev layer
-        const radious = filter/2
-        for (let f = -radious; f < radious; f++) {
-            const targetX = Math.floor(x + f)
-            const targetY = Math.floor(y + f)
-            const targetZ = z
-            if (this.arePreviousLayerCoords(targetX, targetY)) {
-              to = unit
-              from = prevLayer.units[targetX + targetY * prevLayer.height + targetZ * prevLayer.height * prevLayer.depth]
-              network.addConnection(from, to)
-            } else if (this.areZeroPaddingCoords(targetX, targetY)) {
-              to = unit
-              from = network.addUnit() // create a zero-padding-unit
-              network.engine.activation[from] = 0 // make the zero-padding-unit's activation to be zero
-              network.addConnection(from, to)
+        const radious = filter / 2
+        for (let offset = -radious; offset < radious; offset++) {
+            fromX = Math.round(x + offset)
+            fromY = Math.round(y + offset)
+            for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
+              if (this.inLayerArea(boundary, targetX, targetY)) {
+                to = unit
+                from = boundary.layer[targetX + targetY * boundary.height + targetZ * boundary.height * boundary.depth]
+                network.addConnection(from, to)
+              } else if (this.inZeroPaddingArea(boundary, targetX, targetY)) {
+                to = unit
+                from = network.addUnit() // create a zero-padding unit
+                network.engine.activation[from] = 0 // set the zero-padding unit's activation to be zero
+                network.addConnection(from, to)
+              }
             }
           }
         }
       }
     }
 
-    this.layer.width = x
-    this.layer.height = y
-    this.layer.depth = z
+    return {
+      width: boundary.width / this.stride | 0,
+      height: boundary.height / this.stride | 0,
+      depth: this.depth,
+      layer: this.layer
+    }
   }
 
-  arePreviousLayerCoords (x, y) {
+  reverseInit (network) {
+    // set the boundary for prev layer
+    network.setBoundary({
+      width: boundary.width / this.stride | 0,
+      height: boundary.height / this.stride | 0,
+      depth: this.depth,
+      layer: this.layer
+    })
+  }
+
+  // returns true if the coords fall within the layer area
+  inLayerArea (layer, x, y) {
     return  x > 0 &&
-            x < this.width &&
+            x < layer.width &&
             y > 0 &&
-            y < this.height
+            y < layer.height
   }
 
-  areZeroPaddingCoords (x, y) {
+  // returns true if the coords fall within the zero-padding area
+  inZeroPaddingArea (layer, x, y) {
     return  x < 0 && x > -this.zeroPadding ||
-            x > this.width && x < this.width + this.zeroPadding ||
+            x > layer.width && x < layer.width + this.zeroPadding ||
             y < 0 && y > -this.zeroPadding ||
-            y > this.height && y < this.height + this.zeroPadding
+            y > layer.height && y < layer.height + this.zeroPadding
   }
 }

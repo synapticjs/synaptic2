@@ -132,6 +132,27 @@ export default class PaperBackend {
       case activationTypes.LOGISTIC_SIGMOID:
         x = this.engine.state[unit]
         return 1 / (1 + Math.exp(-x))
+
+      case activationTypes.RELU:
+        x = this.engine.state[unit]
+        return x > 0 ? x : 0
+
+      case activationTypes.IDENTITY:
+        x = this.engine.state[unit]
+        return x
+
+      case activationTypes.MAX_POOLING:
+        const inputUnit = this.engine.inputsOf[unit][0]
+        const gatedUnit = this.engine.gatedBy[unit][0]
+        const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit]
+        const maxActivation = inputsOfGatedUnit.reduce((max, input) => Math.max(this.engine.activation[input], max), -Infinity)
+        const inputUnitWithHigherActivation = inputsOfGatedUnit.find(input => this.engine.activation[input] === maxActivation)
+        return inputWithHigherActivation === inputUnit ? 1 : 0
+
+      case activationTypes.DROPOUT:
+        // TODO: chances should be customizable
+        const chance = 0.2
+        return Math.random() < chance ? 1 : 0
     }
   }
 
@@ -142,6 +163,18 @@ export default class PaperBackend {
       case activationTypes.LOGISTIC_SIGMOID:
         x = this.activationFunction(unit)
         return x * (1 - x)
+
+      case activationTypes.RELU:
+        return 0
+
+      case activationTypes.IDENTITY:
+        return 0
+
+      case activationTypes.MAX_POOLING:
+        return 0
+
+      case activationTypes.DROPOUT:
+        return 0
     }
   }
 }

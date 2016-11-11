@@ -1,14 +1,29 @@
 import Backend from './backends/paper'
 
-export default class InputLayer {
+export default class Network {
 
-  constructor (layers) {
+  constructor (...layers) {
     this.backend = new Backend()
     this.engine = this.backend.engine
+    this.layers = []
+
+    let prevBoundary = null
+    let nextBoundary = null
 
     // init layers
-    layers.forEach(layer => layer.init(this))
-    this.layers = []
+    const boundaries = []
+    layers.forEach(layer => {
+      prevBoundary = layer.init && layer.init(this, prevBoundary) || prevBoundary
+      boundaries.push(prevBoundary)
+    })
+
+    // reverse init layers
+    boundaries.reverse()
+    layers.reverse()
+    .forEach((layer, index) => {
+      nextBoundary = boundaries[index - 1] || nextBoundary
+      boundaries[index] = layer.reverseInit && layer.reverseInit(this, nextBoundary) || boundaries[index]
+    })
   }
 
   addUnit () {
@@ -24,19 +39,8 @@ export default class InputLayer {
   }
 
   addLayer (width = 0, height = 1, depth = 1) {
-    const units = this.engine.addLayer(width * height * depth)
-    const layer = {
-      width,
-      height,
-      depth,
-      units,
-      size: units.length
-    }
+    const layer = this.engine.addLayer(width * height * depth)
     this.layers.push(layer)
     return layer
-  }
-
-  getLastLayer () {
-    return this.layers[this.layers.length - 1]
   }
 }

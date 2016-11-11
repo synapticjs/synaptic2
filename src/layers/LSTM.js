@@ -1,58 +1,78 @@
-export default class LSTMLayer {
+// this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
+export class Block {
 
-  constructor (inputSize, memoryBlocks, outputSize) {
-    this.inputSize = inputSize
+  constructor (memoryBlocks) {
     this.memoryBlocks = memoryBlocks
-    this.outputSize = outputSize
-
-    this.network = null
-
-    this.inputLayer
-    this.inputGate
-    this.forgetGate
-    this.memoryCell
-    this.outputGate
-    this.outputLayer
+    this.prevLayer = null
+    this.nextLayer = null
+    this.inputGate = null
+    this.forgetGate = null
+    this.memoryCell = null
+    this.outputGate = null
   }
 
-  init (network) {
-    this.network = network
+  init (network, boundary) {
 
-    this.inputLayer = network.addLayer(this.inputSize)
+    this.prevLayer = boundary.layer
     this.inputGate = network.addLayer(this.memoryBlocks)
     this.forgetGate = network.addLayer(this.memoryBlocks)
     this.memoryCell = network.addLayer(this.memoryBlocks)
     this.outputGate = network.addLayer(this.memoryBlocks)
-    this.outputLayer = network.addLayer(this.outputSize)
 
-    // connection from input layer to memory cell
-    connectLayers(network, this.inputLayer.units, this.memoryCell.units)
+    // connection from previous layer to memory cell
+    connectLayers(network, this.prevLayer, this.memoryCell)
 
     // self-connection from memory cell
-    connectLayers(network, this.memoryCell.units, this.memoryCell.units)
+    connectLayers(network, this.memoryCell, this.memoryCell)
 
-    // connection from memory cell to output layer
-    connectLayers(network, this.memoryCell.units, this.outputLayer.units)
+    // connections from previous layer to gates
+    connectLayers(network, this.prevLayer, this.inputGate)
+    connectLayers(network, this.prevLayer, this.forgetGate)
+    connectLayers(network, this.prevLayer, this.outputGate)
 
-    // connections from input layer to gates
-    connectLayers(network, this.inputLayer.units, this.inputGate.units)
-    connectLayers(network, this.inputLayer.units, this.forgetGate.units)
-    connectLayers(network, this.inputLayer.units, this.outputGate.units)
+    // input and forget gates
+    gateLayer(network, this.inputGate, this.memoryCell, 'INBOUND')
+    gateLayer(network, this.forgetGate, this.memoryCell, 'SELF')
 
-    // direct connection from input layer to output layer
-    connectLayers(network, this.inputLayer.units, this.outputLayer.units)
+    // set the boundary for next layer
+    return {
+      width: this.memoryCell.length,
+      height: 1,
+      depth: 1,
+      layer: this.memoryCell
+    }
+  }
 
-    // gates
-    gateLayer(network, this.inputGate.units, this.memoryCell.units, 'INBOUND')
-    gateLayer(network, this.forgetGate.units, this.memoryCell.units, 'SELF')
-    gateLayer(network, this.outputGate.units, this.memoryCell.units, 'OUTBOUND')
+  reverseInit (netowork, boundary) {
+
+    this.nextLayer = boundary.layer
+
+    // direct connection from prevLayer to nextLayer
+    connectLayers(network, this.prevLayer, this.nextLayer)
+
+    // output gate
+    gateLayer(network, this.outputGate, this.memoryCell, 'OUTBOUND')
 
     // recurrent connections from each memory cell to each gates - Fig. 4 (b)
-    connectLayers(network, this.memoryCell.units, this.inputGate.units)
-    connectLayers(network, this.memoryCell.units, this.forgetGate.units)
-    connectLayers(network, this.memoryCell.units, this.outputGate.units)
+    connectLayers(network, this.memoryCell, this.inputGate)
+    connectLayers(network, this.memoryCell, this.forgetGate)
+    connectLayers(network, this.memoryCell, this.outputGate)
   }
 }
+
+// this is a direct connection from input to output
+export class Direct {
+
+  reverseInit (network, boundary) {
+
+    const inputLayer = network.layers[0]
+    const outputLayer = network.layers[network.layers.length - 1]
+
+    connectLayers(inputLayer, outputLayer)
+  }
+}
+
+// ---
 
 // helper to connect layers
 function connectLayers (network, from, to, connectionType) {

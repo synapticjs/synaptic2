@@ -1,5 +1,9 @@
 export const activationTypes = {
-  LOGISTIC_SIGMOID: 'LOGISTIC_SIGMOID'
+  LOGISTIC_SIGMOID: 'LOGISTIC_SIGMOID',
+  RELU: 'RELU',
+  MAX_POOLING: 'MAX_POOLING',
+  DROPOUT: 'DROPOUT',
+  IDENTITY: 'IDENTITY'
 }
 
 const defaults = {

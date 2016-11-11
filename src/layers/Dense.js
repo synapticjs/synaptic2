@@ -1,20 +1,25 @@
-export default class DenseLayer {
+export default class Dense {
 
   constructor (size) {
-    this.size = size
-    this.network = null
     this.layer = null
   }
 
-  init (network) {
-    this.network = network
+  init (network, boundary) {
     this.layer = network.addLayer(this.size)
 
     // connect all units from previous layer to this one
-    network.getLastLayer().units.forEach(from => {
+    boundary.layer.forEach(from => {
       this.layer.forEach(to => {
         network.addConnection(from, to)
       })
     })
+
+    // set the boundary for next layer
+    return {
+      width: this.size,
+      height: 1,
+      depth: 1,
+      layer: this.layer
+    }
   }
 }
