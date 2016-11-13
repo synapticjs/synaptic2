@@ -2,9 +2,10 @@
 
 export default class Convolution3D {
 
-  constructor ({ filter = 1, stride = 1 }) {
+  constructor ({ filter = 1, stride = 1, zeroPadding = 0 }) {
     this.filter = filter
     this.stride = stride
+    this.zeroPadding = zeroPadding
     this.layer = null
   }
 
@@ -32,6 +33,13 @@ export default class Convolution3D {
                 to = unit
                 from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
                 network.addConnection(from, to)
+
+              // add zero-padding units
+              } else if (this.isPadding(boundary, fromX, fromY, fromZ)) {
+                to = unit
+                from = network.addUnit()
+                network.engine.activation[from] = 0
+                network.addConnection(from, to)
               }
             }
           }
@@ -55,5 +63,15 @@ export default class Convolution3D {
             y < boundary.height
             z > 0 &&
             z < boundary.depth
+  }
+
+  // returns true if the coords fall within the zero-padding area
+  isPadding (boundary, x, y, z) {
+    return  x < 0 ||
+            x > boundary.width ||
+            y < 0 ||
+            y > boundary.height ||
+            z < 0 ||
+            z > boundary.depth
   }
 }
