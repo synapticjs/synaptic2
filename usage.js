@@ -73,11 +73,12 @@ const LSTM_stacked = new Network(
 const ConvNet = new Network(
   new Input3D(32, 32, 3), // 32x32x3
   new Dropout(.2),
+  new ZeroPadding2D(1),
   new Convolution2D({  // 32x32x12
     filter: 5,
     depth: 12,
     stride: 1,
-    zeroPadding: 1
+    padding: 1
   }),
   new Activation.ReLU(), // 32x32x12
   new MaxPool2D(2), // 16x16x12

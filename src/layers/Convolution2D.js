@@ -2,11 +2,11 @@
 
 export default class Convolution2D {
 
-  constructor ({ filter = 1, depth = 1, stride = 1, zeroPadding = 0 }) {
+  constructor ({ filter = 1, depth = 1, stride = 1, padding = 0 }) {
     this.filter = filter
     this.depth = depth
     this.stride = stride
-    this.zeroPadding = zeroPadding
+    this.padding = padding
     this.layer = null
   }
 
@@ -15,31 +15,25 @@ export default class Convolution2D {
 
     let x, y, z, fromX, fromY, fromZ, from, to
     for (z = 0; z < this.depth; z++) {
-      for (y = -this.zeroPadding; y < boundary.height + this.zeroPadding; y += this.stride) {
-        for (x = -this.zeroPadding; x < boundary.width + this.zeroPadding; x += this.stride) {
+      for (y = this.padding; y < boundary.height - this.padding; y += this.stride) {
+        for (x = this.padding; x < boundary.width - this.padding; x += this.stride) {
 
-        // create convolution layer units
-        const unit = network.addUnit()
-        this.layer.push(unit)
+          // create convolution layer units
+          const unit = network.addUnit()
+          this.layer.push(unit)
 
-        // connect units to prev layer
-        const filterRadious = this.filter / 2
-        for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
-          for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-            fromX = Math.round(x + offsetX)
-            fromY = Math.round(y + offsetY)
-            for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
-              if (this.isValid(boundary, fromX, fromY, fromZ)) {
-                to = unit
-                from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
-                network.addConnection(from, to)
-
-              // add zero-padding units
-              } else if (this.isPadding(boundary, fromX, fromY, fromZ)) {
-                to = unit
-                from = network.addUnit()
-                network.engine.activation[from] = 0
-                network.addConnection(from, to)
+          // connect units to prev layer
+          const filterRadious = this.filter / 2
+          for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
+            for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
+              fromX = Math.round(x + offsetX)
+              fromY = Math.round(y + offsetY)
+              for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
+                if (this.isValid(boundary, fromX, fromY, fromZ)) {
+                  to = unit
+                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
+                  network.addConnection(from, to)
+                }
               }
             }
           }
@@ -48,8 +42,8 @@ export default class Convolution2D {
     }
 
     return {
-      width: boundary.width / this.stride | 0,
-      height: boundary.height / this.stride | 0,
+      width: (boundary.width - this.padding) / this.stride | 0,
+      height: (boundary.height - this.padding) / this.stride | 0,
       depth: this.depth,
       layer: this.layer
     }
@@ -63,15 +57,5 @@ export default class Convolution2D {
             y < boundary.height
             z > 0 &&
             z < boundary.depth
-  }
-
-  // returns true if the coords fall within the zero-padding area
-  isPadding (boundary, x, y, z) {
-    return  x < 0 ||
-            x > boundary.width ||
-            y < 0 ||
-            y > boundary.height ||
-            z < 0 ||
-            z > boundary.depth
   }
 }

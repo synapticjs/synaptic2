@@ -126,63 +126,6 @@ export default class Paper {
     return dt * w[k][k] * s[k] + Σ(gatedInputs, a => w[k][a] * y[a])
   },
 
-  activate (inputs) {
-    this.engine.status = StatusTypes.ACTIVATING
-    const activations = this.engine.layers.map((layer, layerIndex) => {
-      return layer.map((unit, unitIndex) => {
-        this.activateUnit(unit, layerIndex === 0 ? inputs[unitIndex] : void 0)
-      })
-    })
-    this.engine.status = StatusTypes.IDLE
-    return activations.pop() // return activation of the last layer (aka output layer)
-  }
-
-  propagate (targets) {
-    this.engine.status = StatusTypes.PROPAGATING
-    this.engine.layers
-    .slice(1) // input layer doesn't propagate
-    .reverse() // layers propagate in reverse order
-    .forEach((layer, layerIndex) => {
-      layer.slice().reverse() // units get propagated in reverse order
-      .forEach((unit, unitIndex) => {
-        this.activateUnit(unit, layerIndex === 0 ? targets[unitIndex] : void 0)
-      })
-    })
-    this.engine.status = StatusTypes.IDLE
-  },
-
-  train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
-    return new Promise (resolve => {
-
-      // init training
-      let startTime = new Date()
-      let error = 0
-      let iterations = 0
-
-      this.engine.learningRate = learningRate
-      this.engine.status = StatusTypes.TRAINING
-
-      //
-      while (error > minError && iterations < maxIterations) {
-        dataset.forEach(data => {
-          const { input, output } = data
-          const predictedOutput = this.activate(input)
-          this.propagate(output);
-          error += this.costFunction(output, predictedOutput, costFunction);
-        })
-        error /= dataset.length
-        iterations++
-      }
-
-      this.engine.status = StatusTypes.IDLE
-      resolve({
-        error,
-        iterations,
-        time: new Date() - startTime
-      })
-    })
-  }
-
   activationFunction (unit) {
     let x
     const type = this.engine.activationFunction[unit]
@@ -266,6 +209,63 @@ export default class Paper {
         }
         return x;
     }
+  }
+
+  activate (inputs) {
+    this.engine.status = StatusTypes.ACTIVATING
+    const activations = this.engine.layers.map((layer, layerIndex) => {
+      return layer.map((unit, unitIndex) => {
+        this.activateUnit(unit, layerIndex === 0 ? inputs[unitIndex] : void 0)
+      })
+    })
+    this.engine.status = StatusTypes.IDLE
+    return activations.pop() // return activation of the last layer (aka output layer)
+  }
+
+  propagate (targets) {
+    this.engine.status = StatusTypes.PROPAGATING
+    this.engine.layers
+    .slice(1) // input layer doesn't propagate
+    .reverse() // layers propagate in reverse order
+    .forEach((layer, layerIndex) => {
+      layer.slice().reverse() // units get propagated in reverse order
+      .forEach((unit, unitIndex) => {
+        this.activateUnit(unit, layerIndex === 0 ? targets[unitIndex] : void 0)
+      })
+    })
+    this.engine.status = StatusTypes.IDLE
+  },
+
+  train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
+    return new Promise (resolve => {
+
+      // init training
+      let startTime = new Date()
+      let error = 0
+      let iterations = 0
+
+      this.engine.learningRate = learningRate
+      this.engine.status = StatusTypes.TRAINING
+
+      //
+      while (error > minError && iterations < maxIterations) {
+        dataset.forEach(data => {
+          const { input, output } = data
+          const predictedOutput = this.activate(input)
+          this.propagate(output);
+          error += this.costFunction(output, predictedOutput, costFunction);
+        })
+        error /= dataset.length
+        iterations++
+      }
+
+      this.engine.status = StatusTypes.IDLE
+      resolve({
+        error,
+        iterations,
+        time: new Date() - startTime
+      })
+    })
   }
 }
 
