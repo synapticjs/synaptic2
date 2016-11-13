@@ -40,7 +40,7 @@ export default class Network {
     layers.reverse()
     .forEach((layer, index) => {
       nextBoundary = boundaries[index - 1] || nextBoundary
-      boundaries[index] = layer.reverseInit && layer.reverseInit(this, nextBoundary) || boundaries[index]
+      layer.reverseInit && layer.reverseInit(this, nextBoundary)
     })
 
     // done

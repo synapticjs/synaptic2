@@ -27,4 +27,8 @@ export default class Trainer {
   train (dataset, options) {
     return network.backend.train(dataset, options)
   }
+
+  test (dataset, options) {
+    // TODO
+  }
 }

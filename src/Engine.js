@@ -295,6 +295,10 @@ export default class Engine {
 
   clone () {
     return Engine.fromJSON(this.toJSON())
+  },
+
+  clear () {
+    // TODO: this should wipe all the elegibilityTrace's and extendedElegibilityTrace's to clear the networks context
   }
 }
 
