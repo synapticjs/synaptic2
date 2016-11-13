@@ -21,8 +21,6 @@ export default class Network {
       layers = [ ...options ]
     }
 
-    this.layers = []
-
     let prevBoundary = null
     let nextBoundary = null
 
@@ -59,7 +57,7 @@ export default class Network {
   }
 
   getLayers () {
-    return this.engine.layers.slice()
+    return this.engine.layers.slice() // return a clone of the layers array
   }
 
   toJSON () {
@@ -68,6 +66,19 @@ export default class Network {
 
   clone () {
     return Network.fromJSON(this.toJSON())
+  }
+
+  activate (input) {
+    return this.getLayers()
+    .map((layer, index) => this.network.backend.activate(layer, index === 0 ? input : [])) //activate each layer in order
+    .pop() // return activation of the last layer
+  }
+
+  propagate (target) {
+    this.getLayers()
+    .slice(1) // input layer doesn't propagate
+    .reverse() // propagate layers in reverse order
+    .forEach((layer, index) => this.network.backend.propagate(layer, index === 0 ? target : []))
   }
 }
 
