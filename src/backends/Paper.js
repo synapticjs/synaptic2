@@ -2,7 +2,7 @@
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
 import Engine, { ActivationTypes } from '../Engine'
-import { CostTypes } from '../Trainer'
+import { CostTypes, defaults } from '../Trainer'
 
 export default class Paper {
 
@@ -10,121 +10,149 @@ export default class Paper {
     this.engine = engine || new Engine()
   }
 
-  activate (layer, inputs = []) {
-    return layer.map((unit, index) =>
-      // glosary
-      const j = unit
-      const s = this.engine.state
-      const w = this.engine.weight
-      const g = this.engine.gain
-      const y = this.engine.activation
-      const f = this.activationFunction
-      const df = this.activationFunctionDerivative
-      const ε = this.engine.elegibilityTrace
-      const xε = this.engine.extendedElegibilityTrace
+  activate (inputs) {
+    return this.engine.layers.map((layer, layerIndex) => {
+      return layer.map((unit, unitIndex) => {
 
-      // unit sets
-      const inputSet = this.engine.inputSet
-      const gatedBy = this.engine.gatedBy
-      const inputsOfGatedBy = this.engine.inputsOfGatedBy
+        // glosary
+        const j = unit
+        const s = this.engine.state
+        const w = this.engine.weight
+        const g = this.engine.gain
+        const y = this.engine.activation
+        const f = this.activationFunction
+        const df = this.activationFunctionDerivative
+        const ε = this.engine.elegibilityTrace
+        const xε = this.engine.extendedElegibilityTrace
 
-      // input value
-      const input = inputs[index]
+        // unit sets
+        const inputSet = this.engine.inputSet
+        const gatedBy = this.engine.gatedBy
+        const inputsOfGatedBy = this.engine.inputsOfGatedBy
 
-      // this is only for input neurons (they receive their activation from the environment)
-      if (typeof input !== 'undefined') {
+        // this is only for input neurons (they receive their activation from the environment)
+        if (layerIndex === 0) {
 
-        y[j] = input
+          y[j] = inputs[unitIndex]
 
-      } else {
+        } else {
 
-        // eq. 15
-        s[j] = g[j][j] * w[j][j] * s[j] + Σ(inputSet[j], i => g[j][i] * w[j][i] * y[i]) // compute state of j
+          // eq. 15
+          s[j] = g[j][j] * w[j][j] * s[j] + Σ(inputSet[j], i => g[j][i] * w[j][i] * y[i]) // compute state of j
 
-        // eq. 16
-        y[j] = f(j) // compute activation of j
+          // eq. 16
+          y[j] = f(j) // compute activation of j
 
-        for (const i of inputSet[j]) { // comupute elegibility traces for j's inputs
+          for (const i of inputSet[j]) { // comupute elegibility traces for j's inputs
 
-          // eq. 17
-          ε[j][i] = g[j][j] * w[j][j] * ε[j][i] + g[j][i] * y[i]
+            // eq. 17
+            ε[j][i] = g[j][j] * w[j][j] * ε[j][i] + g[j][i] * y[i]
 
-          for (const k of gatedBy[j]) { // compute extended elegibility traces for j's inputs
+            for (const k of gatedBy[j]) { // compute extended elegibility traces for j's inputs
 
-            // eq. 18
-            xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df(j) * ε[j][i] * this.bigParenthesisTerm(k, j)
+              // eq. 18
+              xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df(j) * ε[j][i] * this.bigParenthesisTerm(k, j)
+            }
+          }
+
+          // update the gain of the connections gated by this unit with its activation value
+          for (const to of gatedBy[unit]) {
+            for (const from of inputsOfGatedBy[to][unit]) {
+              // eq. 14
+              g[to][from] = y[unit]
+            }
           }
         }
 
-        // update the gain of the connections gated by this unit with its activation value
-        for (const to of gatedBy[unit]) {
-          for (const from of inputsOfGatedBy[to][unit]) {
-            // eq. 14
-            g[to][from] = y[unit]
-          }
-        }
-      }
-
-      // return the activation of this unit
-      return y[j]
+        // return the activation of this unit
+        return y[j]
+      })
     })
+    .pop() // return activation of the last layer (aka output layer)
   }
 
-  propagate (layer, targets = []) {
-    layer.slice().reverse().forEach((unit, index) => {
-      // glosary
-      const j = unit
-      const s = this.engine.state
-      const w = this.engine.weight
-      const g = this.engine.gain
-      const y = this.engine.activation
-      const df = this.activationFunctionDerivative
-      const δ = this.engine.errorResponsibility
-      const δP = this.engine.projectedErrorResponsibility
-      const δG = this.engine.gatedErrorResponsibility
-      const α = this.engine.learningRate
-      const ε = this.engine.elegibilityTrace
-      const xε = this.engine.extendedElegibilityTrace
-      const P = this.engine.projectionSet
-      const G = this.engine.gateSet
+  propagate (targets) {
+    this.engine.layers
+    .slice(1) // input layer doesn't propagate
+    .reverse() // layers propagate in reverse order
+    .forEach((layer, layerIndex) => {
+      layer.slice().reverse() // units get propagated in reverse order
+      .forEach((unit, unitIndex) => {
 
-      // unit sets
-      const inputSet = this.engine.inputSet
+        // glosary
+        const j = unit
+        const s = this.engine.state
+        const w = this.engine.weight
+        const g = this.engine.gain
+        const y = this.engine.activation
+        const df = this.activationFunctionDerivative
+        const δ = this.engine.errorResponsibility
+        const δP = this.engine.projectedErrorResponsibility
+        const δG = this.engine.gatedErrorResponsibility
+        const α = this.engine.learningRate
+        const ε = this.engine.elegibilityTrace
+        const xε = this.engine.extendedElegibilityTrace
+        const P = this.engine.projectionSet
+        const G = this.engine.gateSet
 
-      // target value
-      const target = targets[index]
+        // unit sets
+        const inputSet = this.engine.inputSet
 
-      // step 1: compute error responsibiltity (δ) for j
+        // target value
+        const target = targets[index]
 
-      if (typeof target !== 'undefined') { // this is only for output neurons, the error is injected from the environment
+        // step 1: compute error responsibiltity (δ) for j
 
-        // eq. 10
-        δ[j] = δP[j] = target - y[j]
+        if (typeof target !== 'undefined') { // this is only for output neurons, the error is injected from the environment
 
-      } else { // for the rest of the units the error is computed by backpropagation
+          // eq. 10
+          δ[j] = δP[j] = target - y[j]
 
-        // eq. 21
-        δP[j] = df(j) * Σ(P[j], k => δ[k] * g[k][j] * w[k][j])
+        } else { // for the rest of the units the error is computed by backpropagation
 
-        // eq. 22
-        δG[j] = df(j) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(k, j))
+          // eq. 21
+          δP[j] = df(j) * Σ(P[j], k => δ[k] * g[k][j] * w[k][j])
 
-        // eq. 23
-        δ[j] = δP[j] + δG[j]
+          // eq. 22
+          δG[j] = df(j) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(k, j))
 
-      }
+          // eq. 23
+          δ[j] = δP[j] + δG[j]
 
-      // step 2: adjust the weights (Δw) for all the inputs of j
+        }
 
-      for (const i of inputSet[j]) {
-        // eq. 24
-        w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
-      }
+        // step 2: adjust the weights (Δw) for all the inputs of j
+
+        for (const i of inputSet[j]) {
+          // eq. 24
+          w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
+        }
+      })
     })
   },
 
-  train (dataset) {
-    // TODO:
+  train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
+    return new Promise (resolve => {
+      let startTime = new Date()
+      let error = 0
+      let iterations = 0
+      this.engine.learningRate = learningRate
+      while (error > minError && iterations < maxIterations) {
+        dataset.forEach(data => {
+          const { input, output } = data
+          const predictedOutput = this.activate(input)
+          this.propagate(output);
+          error += this.costFunction(output, predictedOutput, costFunction);
+        })
+        error /= dataset.length
+        iterations++
+      }
+      resolve({
+        error,
+        iterations,
+        time: new Date() - startTime
+      })
+    })
   }
 
   // this calculate the big parenthesis term that is present in eq. 18 and eq. 22
@@ -199,6 +227,29 @@ export default class Paper {
 
       case ActivationTypes.DROPOUT:
         return 0
+    }
+  }
+
+  costFunction (target, predicted, costType) {
+    let i, x = 0
+    switch (costType) {
+      case CostTypes.MSE:
+        for (i = 0; i < target.length; i++) {
+          x += Math.pow(target[i] - predicted[i], 2)
+        }
+        return x / target.length;
+
+      case CostTypes.CROSS_ENTROPY:
+        for (i = 0; i < target.length; i++) {
+          x -= (target[i] * Math.log(predicted[i] + 1e-15)) + ((1 - target[i]) * Math.log((1 + 1e-15) - predicted[i])) // +1e-15 is a tiny push away to avoid Math.log(0)
+        }
+        return x;
+
+      case CostTypes.BINARY:
+        for (i = 0; i < target.length; i++) {
+          x += Math.round(target[i] * 2) != Math.round(predicted[i] * 2)
+        }
+        return x;
     }
   }
 }

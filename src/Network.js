@@ -69,16 +69,11 @@ export default class Network {
   }
 
   activate (input) {
-    return this.getLayers()
-    .map((layer, index) => this.network.backend.activate(layer, index === 0 ? input : [])) //activate each layer in order
-    .pop() // return activation of the last layer
+    return this.backend.activate(input)
   }
 
   propagate (target) {
-    this.getLayers()
-    .slice(1) // input layer doesn't propagate
-    .reverse() // propagate layers in reverse order
-    .forEach((layer, index) => this.network.backend.propagate(layer, index === 0 ? target : []))
+    this.backend.propagate(target)
   }
 }
 
