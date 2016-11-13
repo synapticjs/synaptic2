@@ -1,7 +1,7 @@
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
-// -- activation types
+// -- Activation Types
 
 export const ActivationTypes = {
   LOGISTIC_SIGMOID: 'Logistic Sigmoid',
@@ -12,7 +12,7 @@ export const ActivationTypes = {
   IDENTITY: 'Identity'
 }
 
-// -- engine
+// -- Engine
 
 const defaults = {
   bias: true,
