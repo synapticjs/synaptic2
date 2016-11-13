@@ -1,4 +1,12 @@
-import Network from './network'
+import Network from './src/network'
+
+import {
+  ASM,
+  CPU,
+  BLAS,
+  GPU,
+  WebWorker
+} from './backends'
 
 import {
   Activation,
@@ -18,7 +26,7 @@ import {
   ZeroPadding,
   ZeroPadding2D,
   ZeroPadding3D
-} from './layers'
+} from './src/layers'
 
 const Perceptron = new Network(
   new Input(2),
@@ -81,35 +89,18 @@ const Net = new Network({
     bias: false,
     generator: () => Math.random() * 2 - 1,
     layers: [
-      new Input3D(32, 32, 3), // 32x32x3
-      new Dropout(.2),
-      new Convolution2D({  // 32x32x12
-        filter: 5,
-        depth: 12,
-        stride: 1,
-        zeroPadding: 1
-      }),
-      new Activation.ReLU(), // 32x32x12
-      new MaxPool2D(2), // 16x16x12
-      new Dense(10) // 10x1x1
+      new Input(2),
+      new Dense(5),
+      new Dense(1)
     ]
 })
 
 // with custom backend
-const CPU = require('./backends/cpu')
 const Net = new Network({
     backend: new CPU(),
     layers: [
-      new Input3D(32, 32, 3), // 32x32x3
-      new Dropout(.2),
-      new Convolution2D({  // 32x32x12
-        filter: 5,
-        depth: 12,
-        stride: 1,
-        zeroPadding: 1
-      }),
-      new Activation.ReLU(), // 32x32x12
-      new MaxPool2D(2), // 16x16x12
-      new Dense(10) // 10x1x1
+      new Input(2),
+      new Dense(5),
+      new Dense(1)
     ]
 })
