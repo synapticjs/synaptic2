@@ -40,12 +40,12 @@ export default class Paper {
       // eq. 16
       y[j] = f(j) // compute activation of j
 
-      for (const i of inputSet[j]) { // comupute elegibility traces for j's inputs
+      for (let i of inputSet[j]) { // comupute elegibility traces for j's inputs
 
         // eq. 17
         ε[j][i] = g[j][j] * w[j][j] * ε[j][i] + g[j][i] * y[i]
 
-        for (const k of gatedBy[j]) { // compute extended elegibility traces for j's inputs
+        for (let k of gatedBy[j]) { // compute extended elegibility traces for j's inputs
 
           // eq. 18
           xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df(j) * ε[j][i] * this.bigParenthesisTerm(k, j)
@@ -53,8 +53,8 @@ export default class Paper {
       }
 
       // update the gain of the connections gated by this unit with its activation value
-      for (const to of gatedBy[unit]) {
-        for (const from of inputsOfGatedBy[to][unit]) {
+      for (let to of gatedBy[unit]) {
+        for (let from of inputsOfGatedBy[to][unit]) {
           // eq. 14
           g[to][from] = y[unit]
         }
@@ -107,9 +107,13 @@ export default class Paper {
 
     // step 2: adjust the weights (Δw) for all the inputs of j
 
-    for (const i of inputSet[j]) {
-      // eq. 24
-      w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
+    for (let i of inputSet[j]) {
+
+      // compute delta (eq. 24)
+      const Δw = α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
+
+      // apply delta
+      w[j][i] += Δw
     }
   }
 
@@ -215,7 +219,8 @@ export default class Paper {
     this.engine.status = StatusTypes.ACTIVATING
     const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
-        this.activateUnit(unit, layerIndex === 0 ? inputs[unitIndex] : void 0)
+        const input = layerIndex === 0 ? inputs[unitIndex] : void 0 // only units in the input layer receive an input
+        this.activateUnit(unit, input)
       })
     })
     this.engine.status = StatusTypes.IDLE
@@ -230,7 +235,8 @@ export default class Paper {
     .forEach((layer, layerIndex) => {
       layer.slice().reverse() // units get propagated in reverse order
       .forEach((unit, unitIndex) => {
-        this.activateUnit(unit, layerIndex === 0 ? targets[unitIndex] : void 0)
+        const target = layerIndex === 0 ? targets[unitIndex] : void 0 // only units in the output layer receive a target
+        this.activateUnit(unit, target)
       })
     })
     this.engine.status = StatusTypes.IDLE
@@ -239,7 +245,7 @@ export default class Paper {
   train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
     return new Promise (resolve => {
 
-      // init training
+      // start training
       let startTime = new Date()
       let error = 0
       let iterations = 0
@@ -247,18 +253,19 @@ export default class Paper {
       this.engine.learningRate = learningRate
       this.engine.status = StatusTypes.TRAINING
 
-      //
+      // train
       while (error > minError && iterations < maxIterations) {
-        dataset.forEach(data => {
+        for (let data of dataset) {
           const { input, output } = data
           const predictedOutput = this.activate(input)
           this.propagate(output);
           error += this.costFunction(output, predictedOutput, costFunction);
-        })
+        }
         error /= dataset.length
         iterations++
       }
 
+      // end training
       this.engine.status = StatusTypes.IDLE
       resolve({
         error,
@@ -268,6 +275,8 @@ export default class Paper {
     })
   }
 }
+
+// --
 
 // helper for doing summations
 function Σ (indexes, fn) {
