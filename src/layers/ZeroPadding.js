@@ -37,9 +37,11 @@ export default class ZeroPadding {
 
   // returns true if the coords fall within the zero-padding area
   isPadding (boundary, x, y, z) {
-    return  x < 0 && x > -this.padding ||
-            x > boundary.width && x < boundary.width + this.padding ||
-            y < 0 && y > -this.padding ||
-            y > boundary.height && y < boundary.height + this.padding
+    return  x < 0 ||
+            x > boundary.width ||
+            y < 0 ||
+            y > boundary.height ||
+            z < 0 ||
+            z > boundary.depth
   }
 }
