@@ -4,12 +4,12 @@
 // -- activation types
 
 export const ActivationTypes = {
-  LOGISTIC_SIGMOID: 'LOGISTIC_SIGMOID',
-  TANH: 'TANH',
-  RELU: 'RELU',
-  MAX_POOLING: 'MAX_POOLING',
-  DROPOUT: 'DROPOUT',
-  IDENTITY: 'IDENTITY'
+  LOGISTIC_SIGMOID: 'Logistic Sigmoid',
+  TANH: 'Hyperbolic Tangent',
+  RELU: 'Rectified Linear Unit',
+  MAX_POOLING: 'Max Pooling',
+  DROPOUT: 'Dropout',
+  IDENTITY: 'Identity'
 }
 
 // -- engine
