@@ -1,7 +1,11 @@
+// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
+// trying to keep the code as close as posible to the equations and as verbose as possible.
+
 // -- activation types
 
 export const ActivationTypes = {
   LOGISTIC_SIGMOID: 'LOGISTIC_SIGMOID',
+  TANH: 'TANH',
   RELU: 'RELU',
   MAX_POOLING: 'MAX_POOLING',
   DROPOUT: 'DROPOUT',

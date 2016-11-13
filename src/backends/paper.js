@@ -141,6 +141,12 @@ export default class PaperBackend {
         x = this.engine.state[unit]
         return 1 / (1 + Math.exp(-x))
 
+      case ActivationTypes.TANH:
+        x = this.engine.state[unit]
+        const eP = Math.exp(x);
+        const eN = 1 / eP;
+        return (eP - eN) / (eP + eN)
+
       case ActivationTypes.RELU:
         x = this.engine.state[unit]
         return x > 0 ? x : 0
@@ -159,7 +165,7 @@ export default class PaperBackend {
 
       case ActivationTypes.DROPOUT:
         const chances = this.engine.state[unit]
-        return Math.random() < chances && this.engine.training ? 0 : 1
+        return this.engine.random() < chances && this.engine.training ? 0 : 1
     }
   }
 
@@ -170,6 +176,10 @@ export default class PaperBackend {
       case ActivationTypes.LOGISTIC_SIGMOID:
         x = this.activationFunction(unit)
         return x * (1 - x)
+
+      case ActivationTypes.TANH:
+        x = this.activationFunction(unit)
+        return 1 - Math.pow(x, 2);
 
       case ActivationTypes.RELU:
         return 0
