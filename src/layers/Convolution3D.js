@@ -58,14 +58,4 @@ export default class Convolution3D {
             z > 0 &&
             z < boundary.depth
   }
-
-  // returns true if the coords fall within the zero-padding area
-  isPadding (boundary, x, y, z) {
-    return  x < 0 ||
-            x > boundary.width ||
-            y < 0 ||
-            y > boundary.height ||
-            z < 0 ||
-            z > boundary.depth
-  }
 }
