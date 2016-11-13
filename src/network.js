@@ -1,4 +1,5 @@
-import Backend from './backends/paper'
+import Engine from './Engine'
+import Backend from './backends/Paper'
 
 export default class Network {
 
@@ -54,10 +55,25 @@ export default class Network {
   }
 
   addLayer (width = 0, height = 1, depth = 1) {
-    const layer = this.engine.addLayer(width * height * depth)
-    this.layers.push(layer)
-    return layer
+    return this.engine.addLayer(width * height * depth)
   }
+
+  getLayers () {
+    return this.engine.layers.slice()
+  }
+
+  toJSON () {
+    return this.engine.toJSON()
+  }
+
+  clone () {
+    return Network.fromJSON(this.toJSON())
+  }
+}
+
+Network.fromJSON = function (json) {
+  const engine = Engine.fromJSON(json)
+  return new Network({ engine })
 }
 
 function hasOptions(args) {

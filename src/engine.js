@@ -248,6 +248,71 @@ export default class Engine {
     // each unit keeps track of all the units that they are gating a connection into, and that are downstream of them (see eq. 20)
     this.gateSet[unit] = this.gatedBy[unit].filter(gated => gated > unit)
   }
+
+  toJSON () {
+    return JSON.stringify({
+      state,
+      weight,
+      gain,
+      activation,
+      elegibilityTrace,
+      extendedElegibilityTrace,
+      errorResponsibility,
+      projectedErrorResponsibility,
+      gatedErrorResponsibility,
+      activationFunction,
+      inputsOf,
+      projectedBy,
+      gatersOf,
+      gatedBy,
+      inputsOfGatedBy,
+      projectionSet,
+      gateSet,
+      inputSet,
+      derivativeTerm,
+      connections,
+      gates,
+      learningRate,
+      layers,
+      size,
+      biasUnit,
+    } = this)
+  }
+
+  clone () {
+    return Engine.fromJSON(this.toJSON())
+  }
+}
+
+Engine.fromJSON = function (json) {
+  const data = JSON.parse(json)
+  const engine = new Engine()
+  engine.state = data.state
+  engine.weight = data.weight
+  engine.gain = data.gain
+  engine.activation = data.activation
+  engine.elegibilityTrace = data.elegibilityTrace
+  engine.extendedElegibilityTrace = data.extendedElegibilityTrace
+  engine.errorResponsibility = data.errorResponsibility
+  engine.projectedErrorResponsibility = data.projectedErrorResponsibility
+  engine.gatedErrorResponsibility = data.gatedErrorResponsibility
+  engine.activationFunction = data.activationFunction
+  engine.inputsOf = data.inputsOf
+  engine.projectedBy = data.projectedBy
+  engine.gatersOf = data.gatersOf
+  engine.gatedBy = data.gatedBy
+  engine.inputsOfGatedBy = data.inputsOfGatedBy
+  engine.projectionSet = data.projectionSet
+  engine.gateSet = data.gateSet
+  engine.inputSet = data.inputSet
+  engine.derivativeTerm = data.derivativeTerm
+  engine.connections = data.connections
+  engine.gates = data.gates
+  engine.learningRate = data.learningRate
+  engine.layers = data.layers
+  engine.size = data.size
+  engine.biasUnit = data.biasUnit
+  return engine
 }
 
 // helper for removing duplicated ints from an array
