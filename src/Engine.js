@@ -265,32 +265,32 @@ export default class Engine {
 
   toJSON () {
     return JSON.stringify({
-      state,
-      weight,
-      gain,
-      activation,
-      elegibilityTrace,
-      extendedElegibilityTrace,
-      errorResponsibility,
-      projectedErrorResponsibility,
-      gatedErrorResponsibility,
-      activationFunction,
-      inputsOf,
-      projectedBy,
-      gatersOf,
-      gatedBy,
-      inputsOfGatedBy,
-      projectionSet,
-      gateSet,
-      inputSet,
-      derivativeTerm,
-      connections,
-      gates,
-      learningRate,
-      layers,
-      size,
-      biasUnit,
-    } = this)
+      state: this.state,
+      weight: this.weight,
+      gain: this.gain,
+      activation: this.activation,
+      elegibilityTrace: this.elegibilityTrace,
+      extendedElegibilityTrace: this.extendedElegibilityTrace,
+      errorResponsibility: this.errorResponsibility,
+      projectedErrorResponsibility: this.projectedErrorResponsibility,
+      gatedErrorResponsibility: this.gatedErrorResponsibility,
+      activationFunction: this.activationFunction,
+      inputsOf: this.inputsOf,
+      projectedBy: this.projectedBy,
+      gatersOf: this.gatersOf,
+      gatedBy: this.gatedBy,
+      inputsOfGatedBy: this.inputsOfGatedBy,
+      projectionSet: this.projectionSet,
+      gateSet: this.gateSet,
+      inputSet: this.inputSet,
+      derivativeTerm: this.derivativeTerm,
+      connections: this.connections,
+      gates: this.gates,
+      learningRate: this.learningRate,
+      layers: this.layers,
+      size: this.size,
+      biasUnit: this.biasUnit
+    })
   }
 
   clone () {
@@ -305,31 +305,7 @@ export default class Engine {
 Engine.fromJSON = function (json) {
   const data = JSON.parse(json)
   const engine = new Engine()
-  engine.state = data.state
-  engine.weight = data.weight
-  engine.gain = data.gain
-  engine.activation = data.activation
-  engine.elegibilityTrace = data.elegibilityTrace
-  engine.extendedElegibilityTrace = data.extendedElegibilityTrace
-  engine.errorResponsibility = data.errorResponsibility
-  engine.projectedErrorResponsibility = data.projectedErrorResponsibility
-  engine.gatedErrorResponsibility = data.gatedErrorResponsibility
-  engine.activationFunction = data.activationFunction
-  engine.inputsOf = data.inputsOf
-  engine.projectedBy = data.projectedBy
-  engine.gatersOf = data.gatersOf
-  engine.gatedBy = data.gatedBy
-  engine.inputsOfGatedBy = data.inputsOfGatedBy
-  engine.projectionSet = data.projectionSet
-  engine.gateSet = data.gateSet
-  engine.inputSet = data.inputSet
-  engine.derivativeTerm = data.derivativeTerm
-  engine.connections = data.connections
-  engine.gates = data.gates
-  engine.learningRate = data.learningRate
-  engine.layers = data.layers
-  engine.size = data.size
-  engine.biasUnit = data.biasUnit
+  Object.keys(data).forEach(key => engine[key] = data[key])
   return engine
 }
 
