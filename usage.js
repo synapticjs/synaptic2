@@ -1,14 +1,14 @@
-import Network from './src/network'
+import Synaptic from './src'
 
-import {
+const {
   ASM,
   CPU,
   BLAS,
   GPU,
   WebWorker
-} from './backends'
+} = Synaptic.backends
 
-import {
+const {
   Activation,
   Convolution,
   Convolution2D,
@@ -26,7 +26,7 @@ import {
   ZeroPadding,
   ZeroPadding2D,
   ZeroPadding3D
-} from './src/layers'
+} = Synaptic.layers
 
 const Perceptron = new Network(
   new Input(2),
