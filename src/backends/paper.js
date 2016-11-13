@@ -1,115 +1,123 @@
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
-import Engine, { activationTypes } from '../engine'
+import Engine, { ActivationTypes } from '../engine'
 
 export default class PaperBackend {
 
-  constructor () {
-    this.engine = new Engine()
+  constructor (engine) {
+    this.engine = engine || new Engine()
   }
 
-  activate (unit, input) {
-    // glosary
-    const j = unit
-    const s = this.engine.state
-    const w = this.engine.weight
-    const g = this.engine.gain
-    const y = this.engine.activation
-    const f = this.activationFunction
-    const df = this.activationFunctionDerivative
-    const ε = this.engine.elegibilityTrace
-    const xε = this.engine.extendedElegibilityTrace
+  activate (layer, input) {
+    return layer.map((unit) =>
+      // glosary
+      const j = unit
+      const s = this.engine.state
+      const w = this.engine.weight
+      const g = this.engine.gain
+      const y = this.engine.activation
+      const f = this.activationFunction
+      const df = this.activationFunctionDerivative
+      const ε = this.engine.elegibilityTrace
+      const xε = this.engine.extendedElegibilityTrace
 
-    // unit sets
-    const inputSet = this.engine.inputSet
-    const gatedBy = this.engine.gatedBy
-    const inputsOfGatedBy = this.engine.inputsOfGatedBy
+      // unit sets
+      const inputSet = this.engine.inputSet
+      const gatedBy = this.engine.gatedBy
+      const inputsOfGatedBy = this.engine.inputsOfGatedBy
 
-    // this is only for input neurons (they receive their activation from the environment)
-    if (typeof input !== 'undefined') {
+      // this is only for input neurons (they receive their activation from the environment)
+      if (typeof input !== 'undefined') {
 
-      y[j] = input
+        y[j] = input
 
-    } else {
+      } else {
 
-      // eq. 15
-      s[j] = g[j][j] * w[j][j] * s[j] + Σ(inputSet[j], i => g[j][i] * w[j][i] * y[i]) // compute state of j
+        // eq. 15
+        s[j] = g[j][j] * w[j][j] * s[j] + Σ(inputSet[j], i => g[j][i] * w[j][i] * y[i]) // compute state of j
 
-      // eq. 16
-      y[j] = f(j) // compute activation of j
+        // eq. 16
+        y[j] = f(j) // compute activation of j
 
-      for (const i of inputSet[j]) { // comupute elegibility traces for j's inputs
+        for (const i of inputSet[j]) { // comupute elegibility traces for j's inputs
 
-        // eq. 17
-        ε[j][i] = g[j][j] * w[j][j] * ε[j][i] + g[j][i] * y[i]
+          // eq. 17
+          ε[j][i] = g[j][j] * w[j][j] * ε[j][i] + g[j][i] * y[i]
 
-        for (const k of gatedBy[j]) { // compute extended elegibility traces for j's inputs
+          for (const k of gatedBy[j]) { // compute extended elegibility traces for j's inputs
 
-          // eq. 18
-          xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df(j) * ε[j][i] * this.bigParenthesisTerm(k, j)
+            // eq. 18
+            xε[j][i][k] = g[k][k] * w[k][k] * xε[j][i][k] + df(j) * ε[j][i] * this.bigParenthesisTerm(k, j)
+          }
+        }
+
+        // update the gain of the connections gated by this unit with its activation value
+        for (const to of gatedBy[unit]) {
+          for (const from of inputsOfGatedBy[to][unit]) {
+            // eq. 14
+            g[to][from] = y[unit]
+          }
         }
       }
 
-      // update the gain of the connections gated by this unit with its activation value
-      for (const to of gatedBy[unit]) {
-        for (const from of inputsOfGatedBy[to][unit]) {
-          // eq. 14
-          g[to][from] = y[unit]
-        }
-      }
-    }
-
-    // return the activation of this unit
-    return y[j]
+      // return the activation of this unit
+      return y[j]
+    })
   }
 
-  propagate (unit, target) {
-    // glosary
-    const j = unit
-    const s = this.engine.state
-    const w = this.engine.weight
-    const g = this.engine.gain
-    const y = this.engine.activation
-    const df = this.activationFunctionDerivative
-    const δ = this.engine.errorResponsibility
-    const δP = this.engine.projectedErrorResponsibility
-    const δG = this.engine.gatedErrorResponsibility
-    const α = this.engine.learningRate
-    const ε = this.engine.elegibilityTrace
-    const xε = this.engine.extendedElegibilityTrace
-    const P = this.engine.projectionSet
-    const G = this.engine.gateSet
+  propagate (layer, target) {
+    for (const unit of layer) {
+      // glosary
+      const j = unit
+      const s = this.engine.state
+      const w = this.engine.weight
+      const g = this.engine.gain
+      const y = this.engine.activation
+      const df = this.activationFunctionDerivative
+      const δ = this.engine.errorResponsibility
+      const δP = this.engine.projectedErrorResponsibility
+      const δG = this.engine.gatedErrorResponsibility
+      const α = this.engine.learningRate
+      const ε = this.engine.elegibilityTrace
+      const xε = this.engine.extendedElegibilityTrace
+      const P = this.engine.projectionSet
+      const G = this.engine.gateSet
 
-    // unit sets
-    const inputSet = this.engine.inputSet
+      // unit sets
+      const inputSet = this.engine.inputSet
 
-    // step 1: compute error responsibiltity (δ) for j
+      // step 1: compute error responsibiltity (δ) for j
 
-    if (typeof target !== 'undefined') { // this is only for output neurons, the error is injected from the environment
+      if (typeof target !== 'undefined') { // this is only for output neurons, the error is injected from the environment
 
-      // eq. 10
-      δ[j] = δP[j] = target - y[j]
+        // eq. 10
+        δ[j] = δP[j] = target - y[j]
 
-    } else { // for the rest of the units the error is computed by backpropagation
+      } else { // for the rest of the units the error is computed by backpropagation
 
-      // eq. 21
-      δP[j] = df(j) * Σ(P[j], k => δ[k] * g[k][j] * w[k][j])
+        // eq. 21
+        δP[j] = df(j) * Σ(P[j], k => δ[k] * g[k][j] * w[k][j])
 
-      // eq. 22
-      δG[j] = df(j) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(k, j))
+        // eq. 22
+        δG[j] = df(j) * Σ(G[j], k => δ[k] * this.bigParenthesisTerm(k, j))
 
-      // eq. 23
-      δ[j] = δP[j] + δG[j]
+        // eq. 23
+        δ[j] = δP[j] + δG[j]
 
+      }
+
+      // step 2: adjust the weights (Δw) for all the inputs of j
+
+      for (const i of inputSet[j]) {
+        // eq. 24
+        w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
+      }
     }
+  },
 
-    // step 2: adjust the weights (Δw) for all the inputs of j
-
-    for (const i of inputSet[j]) {
-      // eq. 24
-      w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
-    }
+  train (dataset) {
+    // TODO:
   }
 
   // this calculate the big parenthesis term that is present in eq. 18 and eq. 22
@@ -129,19 +137,19 @@ export default class PaperBackend {
     let x
     const type = this.engine.activationFunction[unit]
     switch (type) {
-      case activationTypes.LOGISTIC_SIGMOID:
+      case ActivationTypes.LOGISTIC_SIGMOID:
         x = this.engine.state[unit]
         return 1 / (1 + Math.exp(-x))
 
-      case activationTypes.RELU:
+      case ActivationTypes.RELU:
         x = this.engine.state[unit]
         return x > 0 ? x : 0
 
-      case activationTypes.IDENTITY:
+      case ActivationTypes.IDENTITY:
         x = this.engine.state[unit]
         return x
 
-      case activationTypes.MAX_POOLING:
+      case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0]
         const gatedUnit = this.engine.gatedBy[unit][0]
         const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit]
@@ -149,10 +157,9 @@ export default class PaperBackend {
         const inputUnitWithHigherActivation = inputsOfGatedUnit.find(input => this.engine.activation[input] === maxActivation)
         return inputWithHigherActivation === inputUnit ? 1 : 0
 
-      case activationTypes.DROPOUT:
-        // TODO: chances should be customizable
-        const chance = 0.2
-        return Math.random() < chance ? 1 : 0
+      case ActivationTypes.DROPOUT:
+        const chances = this.engine.state[unit]
+        return Math.random() < chances && this.engine.training ? 0 : 1
     }
   }
 
@@ -160,20 +167,20 @@ export default class PaperBackend {
     let x
     const type = this.engine.activationFunction[unit]
     switch (type) {
-      case activationTypes.LOGISTIC_SIGMOID:
+      case ActivationTypes.LOGISTIC_SIGMOID:
         x = this.activationFunction(unit)
         return x * (1 - x)
 
-      case activationTypes.RELU:
+      case ActivationTypes.RELU:
         return 0
 
-      case activationTypes.IDENTITY:
+      case ActivationTypes.IDENTITY:
         return 0
 
-      case activationTypes.MAX_POOLING:
+      case ActivationTypes.MAX_POOLING:
         return 0
 
-      case activationTypes.DROPOUT:
+      case ActivationTypes.DROPOUT:
         return 0
     }
   }

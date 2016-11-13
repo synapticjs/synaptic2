@@ -1,9 +1,10 @@
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution2D {
+export default class Convolution {
 
-  constructor ({ filter = 1, depth = 1, stride = 1 }) {
+  constructor ({ filter = 1, height = 1, depth = 1, stride = 1 }) {
     this.filter = filter
+    this.height = height
     this.depth = depth
     this.stride = stride
     this.layer = null
@@ -14,7 +15,7 @@ export default class Convolution2D {
 
     let x, y, z, fromX, fromY, fromZ, from, to
     for (z = 0; z < this.depth; z++) {
-      for (y = 0; y < boundary.height; y += this.stride) {
+      for (y = 0; y < this.height; y++) {
         for (x = 0; x < boundary.width; x += this.stride) {
 
         // create convolution layer units
@@ -23,11 +24,10 @@ export default class Convolution2D {
 
         // connect units to prev layer
         const filterRadious = this.filter / 2
-        for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
-          for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-            fromX = Math.round(x + offsetX)
-            fromY = Math.round(y + offsetY)
-            for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
+        for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
+          fromX = Math.round(x + offsetX)
+          for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
+            for (fromY = 0; fromY < boundary.height; fromY++) {
               if (this.isValid(boundary, fromX, fromY, fromZ)) {
                 to = unit
                 from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
@@ -41,7 +41,7 @@ export default class Convolution2D {
 
     return {
       width: boundary.width / this.stride | 0,
-      height: boundary.height / this.stride | 0,
+      height: this.height,
       depth: this.depth,
       layer: this.layer
     }

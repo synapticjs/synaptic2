@@ -1,10 +1,9 @@
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution2D {
+export default class Convolution3D {
 
-  constructor ({ filter = 1, depth = 1, stride = 1 }) {
+  constructor ({ filter = 1, stride = 1 }) {
     this.filter = filter
-    this.depth = depth
     this.stride = stride
     this.layer = null
   }
@@ -13,7 +12,7 @@ export default class Convolution2D {
     this.layer = network.addLayer()
 
     let x, y, z, fromX, fromY, fromZ, from, to
-    for (z = 0; z < this.depth; z++) {
+    for (z = 0; z < boundary.depth; z += this.stride) {
       for (y = 0; y < boundary.height; y += this.stride) {
         for (x = 0; x < boundary.width; x += this.stride) {
 
@@ -23,11 +22,12 @@ export default class Convolution2D {
 
         // connect units to prev layer
         const filterRadious = this.filter / 2
-        for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
-          for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-            fromX = Math.round(x + offsetX)
-            fromY = Math.round(y + offsetY)
-            for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
+        for (let offsetZ = -filterRadious; offsetZ < filterRadious; offsetZ++) {
+          for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
+            for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
+              fromX = Math.round(x + offsetX)
+              fromY = Math.round(y + offsetY)
+              fromZ = Math.round(y + offsetZ)
               if (this.isValid(boundary, fromX, fromY, fromZ)) {
                 to = unit
                 from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
@@ -42,12 +42,12 @@ export default class Convolution2D {
     return {
       width: boundary.width / this.stride | 0,
       height: boundary.height / this.stride | 0,
-      depth: this.depth,
+      depth: boundary.depth / this.stride | 0,
       layer: this.layer
     }
   }
 
-  // returns true if the coords fall within the layer area
+  // returns true if the coords are inside the boundara
   isValid (boundary, x, y, z) {
     return  x > 0 &&
             x < boundary.width &&

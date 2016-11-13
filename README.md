@@ -2,9 +2,9 @@ This is a brief explanation of what I 'm' trying to do here:
 
 The `engine` just holds the values and relationships between units, but it doesn’t do any math. It’s what the user uses to create the topology (add units, layers, connections, gates) and it’s what can be persisted and passed around, cloned, or whatever. It’s what holds the behaviour of the network once it’s trained, the minimum representation of it.
 
-Then there's the `backend`, which right now creates an engine, maybe it would be better to receive one instead, but what’s important is that it’s the one in charge of doing the math. It computes `activation` and `propagation`, and also (this is not there yet) it should do the `train`.
+Then there's the `backend`, it’s the one in charge of doing the math. It computes `activation` and `propagation`, and also (this is not there yet) it should do the `train`.
 
-There's the `network` that has an API like the one in synaptic 2.x draft. It receives a sequence of layers, and inits them one by one, passing itself (`this` ref) to each layer initializer.
+There's the `network` that has an API like the one in synaptic 2.x draft. It receives a sequence of layers, and inits them one by one, passing itself (`this` ref) to each layer initializer, along with a `boundary`.
 
 Finally the `layers`, they all have an `init` method that is called and receives the `network`, and a `boundary`. They can use the `network` instance to add units, connections, gates, layers and what not, and finally they can return a `boundary`, which consist of a layer and their dimensions (width, height, depth). This `boundary` will be received by the next inited `layer`. Layers can also implement a `reverseInit` method, this is called for all the layers, in reverse order, passing this time the `boundary` of the _next_ layers. This is specially useful for gating. Layer don't have to always return a boundary, ie. if layer A returns a boundary, it will be received by layer B. if layer B doesn't return a boundary, layer C will receive layers A boundary, and so forth until a layer returns a boundary.
 
@@ -19,7 +19,7 @@ So the API i’m aiming for looks something like this for the engine, backend an
 ```
 // — engine
 
-activationTypes = {
+ActivationTypes = {
   SIGMOID: 'Sigmoid',
   ReLU: 'ReLU',
   MAX_POOLING: 'Max Pooling
@@ -91,7 +91,7 @@ So the API i’m aiming for looks something like this for the engine, backend an
 ```
 // — engine
 
-activationTypes = {
+ActivationTypes = {
   SIGMOID: 'Sigmoid',
   ReLU: 'ReLU',
   MAX_POOLING: 'Max Pooling

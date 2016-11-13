@@ -1,5 +1,5 @@
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
-export class Block {
+export default class LSTM {
 
   constructor (memoryBlocks) {
     this.memoryBlocks = memoryBlocks
@@ -57,18 +57,6 @@ export class Block {
     connectLayers(network, this.memoryCell, this.inputGate)
     connectLayers(network, this.memoryCell, this.forgetGate)
     connectLayers(network, this.memoryCell, this.outputGate)
-  }
-}
-
-// this is a direct connection from input to output
-export class Direct {
-
-  reverseInit (network, boundary) {
-
-    const inputLayer = network.layers[0]
-    const outputLayer = network.layers[network.layers.length - 1]
-
-    connectLayers(inputLayer, outputLayer)
   }
 }
 

@@ -2,9 +2,24 @@ import Backend from './backends/paper'
 
 export default class Network {
 
-  constructor (...layers) {
-    this.backend = new Backend()
-    this.engine = this.backend.engine
+  constructor (options = []) {
+    let layers
+
+    if (hasOptions(options)) {
+      if ('backend' in options) {
+        this.backend = options.backend
+      } else if ('engine' in options) {
+        this.backend = new Backend(options.engine)
+      } else if ('bias' in options || 'generator' in options) {
+        const engine = new Engine(options)
+        this.backend = new Backend(engine)
+      }
+      layers = options.layers
+    } else {
+      this.backend = new Backend()
+      layers = [ ...options ]
+    }
+
     this.layers = []
 
     let prevBoundary = null
@@ -43,4 +58,8 @@ export default class Network {
     this.layers.push(layer)
     return layer
   }
+}
+
+function hasOptions(args) {
+  return args[0].layers && !args[0].init && !args[0].reverseInit
 }

@@ -1,10 +1,14 @@
-export const activationTypes = {
+// -- activation types
+
+export const ActivationTypes = {
   LOGISTIC_SIGMOID: 'LOGISTIC_SIGMOID',
   RELU: 'RELU',
   MAX_POOLING: 'MAX_POOLING',
   DROPOUT: 'DROPOUT',
   IDENTITY: 'IDENTITY'
 }
+
+// -- engine
 
 const defaults = {
   bias: true,
@@ -40,6 +44,7 @@ export default class Engine {
     this.size = 0
     this.random = generator
     this.biasUnit = null
+    this.training = false
 
     // if using bias, create a bias unit, with a fixed activation of 1
     if (bias) {
@@ -60,7 +65,7 @@ export default class Engine {
     this.gain[unit][unit] = 1 // ungated connections have a gain of 1 (eq. 14)
     this.elegibilityTrace[unit][unit] = 0
     this.extendedElegibilityTrace[unit][unit] = {}
-    this.activationFunction[unit] = activationTypes.LOGISTIC_SIGMOID
+    this.activationFunction[unit] = ActivationTypes.LOGISTIC_SIGMOID
     this.errorResponsibility[unit] = 0
     this.projectedErrorResponsibility[unit] = 0
     this.gatedErrorResponsibility[unit] = 0
