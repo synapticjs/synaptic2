@@ -20,6 +20,9 @@ export default class Dropout {
       from = boundary.layer[i]
       to = unit
 
+      // add a connection with a fixed weight of 1
+      network.addConnection(from, to, 1)
+
       // this unit will act as a gate, randomly dropping inputs
       const gate = network.addUnit(ActivationTypes.DROPOUT)
       network.addGate(from, to, gate)
@@ -30,7 +33,10 @@ export default class Dropout {
       network.addConnection(gate, gate)
     }
 
-    // this layer sets no boundary
-    return
+    // this layer doesn't change the boundary's dimensions
+    return {
+      ...boundary,
+      layer: this.layer
+    }
   }
 }
