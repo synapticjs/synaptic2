@@ -2,6 +2,7 @@
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
 import Engine, { ActivationTypes } from '../Engine'
+import { CostTypes } from '../Trainer'
 
 export default class Paper {
 
@@ -9,8 +10,8 @@ export default class Paper {
     this.engine = engine || new Engine()
   }
 
-  activate (layer, input) {
-    return layer.map((unit) =>
+  activate (layer, inputs = []) {
+    return layer.map((unit, index) =>
       // glosary
       const j = unit
       const s = this.engine.state
@@ -26,6 +27,9 @@ export default class Paper {
       const inputSet = this.engine.inputSet
       const gatedBy = this.engine.gatedBy
       const inputsOfGatedBy = this.engine.inputsOfGatedBy
+
+      // input value
+      const input = inputs[index]
 
       // this is only for input neurons (they receive their activation from the environment)
       if (typeof input !== 'undefined') {
@@ -66,8 +70,8 @@ export default class Paper {
     })
   }
 
-  propagate (layer, target) {
-    for (const unit of layer) {
+  propagate (layer, targets = []) {
+    layer.slice().reverse().forEach((unit, index) => {
       // glosary
       const j = unit
       const s = this.engine.state
@@ -86,6 +90,9 @@ export default class Paper {
 
       // unit sets
       const inputSet = this.engine.inputSet
+
+      // target value
+      const target = targets[index]
 
       // step 1: compute error responsibiltity (δ) for j
 
@@ -113,7 +120,7 @@ export default class Paper {
         // eq. 24
         w[j][i] += α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
       }
-    }
+    })
   },
 
   train (dataset) {
