@@ -3,8 +3,9 @@ export class Direct {
 
   reverseInit (network, boundary) {
 
-    const inputLayer = network.layers[0]
-    const outputLayer = network.layers[network.layers.length - 1]
+    const layers = network.getLayers()
+    const inputLayer = layers[0]
+    const outputLayer = layers[layers.length - 1]
 
     inputLayer.forEach(from => {
       outputLayer.forEach(to => {
