@@ -1,4 +1,4 @@
-import Engine from './Engine'
+import Engine, { StatusTypes } from './Engine'
 import Backend from './backends/Paper'
 
 export default class Network {
@@ -21,10 +21,13 @@ export default class Network {
       layers = [ ...options ]
     }
 
+    this.engine = this.backend.engine
+
     let prevBoundary = null
     let nextBoundary = null
 
     // init layers
+    this.engine.status = StatusTypes.INIT
     const boundaries = []
     layers.forEach(layer => {
       prevBoundary = layer.init && layer.init(this, prevBoundary) || prevBoundary
@@ -32,12 +35,16 @@ export default class Network {
     })
 
     // reverse init layers
+    this.engine.status = StatusTypes.REVERSE_INIT
     boundaries.reverse()
     layers.reverse()
     .forEach((layer, index) => {
       nextBoundary = boundaries[index - 1] || nextBoundary
       boundaries[index] = layer.reverseInit && layer.reverseInit(this, nextBoundary) || boundaries[index]
     })
+
+    // done
+    this.engine.status = StatusTypes.IDLE
   }
 
   addUnit () {

@@ -2,9 +2,9 @@
 // -- Cost Types
 
 export const CostTypes = {
-  MSE: 'Mean Square Error',
-  CROSS_ENTROPY: 'Cross Entropy',
-  BINARY: 'Binary'
+  MSE: 0,
+  CROSS_ENTROPY: 1,
+  BINARY: 2
 }
 
 // -- defaults
@@ -25,11 +25,6 @@ export default class Trainer {
   }
 
   train (dataset, options) {
-    this.network.engine.training = true
     return network.backend.train(dataset, options)
-    .then((result) => {
-      this.network.engine.training = false
-      return result
-    })
   }
 }

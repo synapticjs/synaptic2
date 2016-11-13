@@ -1,7 +1,7 @@
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
-import Engine, { ActivationTypes } from '../Engine'
+import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes, defaults } from '../Trainer'
 
 export default class Paper {
@@ -11,7 +11,8 @@ export default class Paper {
   }
 
   activate (inputs) {
-    return this.engine.layers.map((layer, layerIndex) => {
+    this.engine.status = StatusTypes.ACTIVATING
+    const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
 
         // glosary
@@ -68,10 +69,12 @@ export default class Paper {
         return y[j]
       })
     })
-    .pop() // return activation of the last layer (aka output layer)
+    this.engine.status = StatusTypes.IDLE
+    return activations.pop() // return activation of the last layer (aka output layer)
   }
 
   propagate (targets) {
+    this.engine.status = StatusTypes.PROPAGATING
     this.engine.layers
     .slice(1) // input layer doesn't propagate
     .reverse() // layers propagate in reverse order
@@ -129,14 +132,21 @@ export default class Paper {
         }
       })
     })
+    this.engine.status = StatusTypes.IDLE
   },
 
   train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
     return new Promise (resolve => {
+
+      // init training
       let startTime = new Date()
       let error = 0
       let iterations = 0
+
       this.engine.learningRate = learningRate
+      this.engine.status = StatusTypes.TRAINING
+
+      //
       while (error > minError && iterations < maxIterations) {
         dataset.forEach(data => {
           const { input, output } = data
@@ -147,6 +157,8 @@ export default class Paper {
         error /= dataset.length
         iterations++
       }
+
+      this.engine.status = StatusTypes.IDLE
       resolve({
         error,
         iterations,
@@ -200,7 +212,7 @@ export default class Paper {
 
       case ActivationTypes.DROPOUT:
         const chances = this.engine.state[unit]
-        return this.engine.random() < chances && this.engine.training ? 0 : 1
+        return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1
     }
   }
 

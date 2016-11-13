@@ -4,12 +4,23 @@
 // -- Activation Types
 
 export const ActivationTypes = {
-  LOGISTIC_SIGMOID: 'Logistic Sigmoid',
-  TANH: 'Hyperbolic Tangent',
-  RELU: 'Rectified Linear Unit',
-  MAX_POOLING: 'Max Pooling',
-  DROPOUT: 'Dropout',
-  IDENTITY: 'Identity'
+  LOGISTIC_SIGMOID: 0,
+  TANH: 1,
+  RELU: 2,
+  MAX_POOLING: 3,
+  DROPOUT: 4,
+  IDENTITY: 5
+}
+
+// -- Status Types
+
+export const StatusTypes = {
+  IDLE: 0,
+  INIT: 1,
+  REVERSE_INIT: 2,
+  ACTIVATING: 3,
+  PROPAGATING: 4,
+  TRAINING: 5,
 }
 
 // -- Engine
@@ -48,7 +59,7 @@ export default class Engine {
     this.size = 0
     this.random = generator
     this.biasUnit = null
-    this.training = false
+    this.status = StatusTypes.IDLE
 
     // if using bias, create a bias unit, with a fixed activation of 1
     if (bias) {
@@ -131,6 +142,9 @@ export default class Engine {
   }
 
   addLayer (size = 0, activationFunction) {
+    if (this.status === StatusTypes.REVERSE_INIT) {
+      throw new Error('You can\'t add layers during REVERSE_INIT phase!')
+    }
     const layer = []
     for (let i = 0; i < size; i++) {
       const unit = this.addUnit(activationFunction)
