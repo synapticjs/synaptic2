@@ -15,14 +15,15 @@ export default class ZeroPadding2D {
       for (y = -this.padding; y < boundary.height + this.padding; y++) {
         for (x = -this.padding; x < boundary.width + this.padding; x++) {
 
-        const unit = network.addUnit(ActivationTypes.IDENTITY)
-        this.layer.push(unit)
+          const unit = network.addUnit(ActivationTypes.IDENTITY)
+          this.layer.push(unit)
 
-        // only connect the non-padding units
-        if (!this.isPadding(boundary, x, y, z)) {
-          to = unit
-          from = boundary.layer[x + y * boundary.height + z * boundary.height * boundary.depth]
-          network.addConnection(from, to)
+          // only connect the non-padding units
+          if (!this.isPadding(boundary, x, y, z)) {
+            to = unit
+            from = boundary.layer[x + y * boundary.height + z * boundary.height * boundary.depth]
+            network.addConnection(from, to)
+          }
         }
       }
     }

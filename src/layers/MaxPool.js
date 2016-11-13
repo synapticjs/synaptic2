@@ -17,27 +17,28 @@ export default class MaxPool {
       for (let y = 0; y < boundary.height; y++) {
         for (let x = 0; x < boundary.width; x += this.downsampling) {
 
-        const unit = network.addUnit(ActivationTypes.IDENTITY)
-        this.layer.push(unit)
+          const unit = network.addUnit(ActivationTypes.IDENTITY)
+          this.layer.push(unit)
 
-        for (let offsetX = 0; offsetX < this.downsampling; offsetX++) {
+          for (let offsetX = 0; offsetX < this.downsampling; offsetX++) {
 
-          fromX = x + offsetX
-          fromY = y
-          fromZ = z
+            fromX = x + offsetX
+            fromY = y
+            fromZ = z
 
-          if (this.isValid(boundary, fromX, froY, fromZ)) {
-            const from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
-            const to = unit
+            if (this.isValid(boundary, fromX, froY, fromZ)) {
+              const from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
+              const to = unit
 
-            network.addConnection(from, to, 1)
+              network.addConnection(from, to, 1)
 
-            // this unit will act as a gate, letting only the connections from the unit with the higher activation in the pool go thru
-            const gate = network.addUnit(ActivationTypes.MAX_POOLING)
-            network.addGate(from, to, gate)
-            this.gater.push(gate)
-            // connect the unit from the previous layer as an input of the gate so each gate knows which input they are gating
-            network.addConnection(from, gate)
+              // this unit will act as a gate, letting only the connections from the unit with the higher activation in the pool go thru
+              const gate = network.addUnit(ActivationTypes.MAX_POOLING)
+              network.addGate(from, to, gate)
+              this.gater.push(gate)
+              // connect the unit from the previous layer as an input of the gate so each gate knows which input they are gating
+              network.addConnection(from, gate)
+            }
           }
         }
       }

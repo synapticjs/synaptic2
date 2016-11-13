@@ -74,7 +74,7 @@ export default class LSTM {
 function connectLayers (network, from, to, connectionType) {
   from.forEach((neuronA, indexA) => {
     to.forEach((neuronB, indexB) => {
-      if (from !== to || indexA === indexB)) { // if layers are different, connect all to all, if self-connecting layer, just connect matching indexes (elementwise)
+      if (from !== to || indexA === indexB) { // if layers are different, connect all to all, if self-connecting layer, just connect matching indexes (elementwise)
         network.addConnection(neuronA, neuronB)
       }
     })

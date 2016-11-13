@@ -30,7 +30,7 @@ import ZeroPadding from './layers/ZeroPadding'
 import ZeroPadding2D from './layers/ZeroPadding2D'
 import ZeroPadding3D from './layers/ZeroPadding3D'
 
-export {
+export default {
   Engine,
   Network,
   Trainer,

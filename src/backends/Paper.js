@@ -128,7 +128,7 @@ export default class Paper {
 
     // big parenthesis term
     return dt * w[k][k] * s[k] + Σ(gatedInputs, a => w[k][a] * y[a])
-  },
+  }
 
   activationFunction (unit) {
     let x
@@ -240,7 +240,7 @@ export default class Paper {
       })
     })
     this.engine.status = StatusTypes.IDLE
-  },
+  }
 
   train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
     return new Promise (resolve => {
