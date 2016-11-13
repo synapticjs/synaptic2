@@ -1,4 +1,4 @@
-import { ActivationTypes } from '../engine'
+import { ActivationTypes } from '../Engine'
 
 export default class ZeroPadding2D {
 

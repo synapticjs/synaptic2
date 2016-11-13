@@ -1,9 +1,9 @@
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
-import Engine, { ActivationTypes } from '../engine'
+import Engine, { ActivationTypes } from '../Engine'
 
-export default class PaperBackend {
+export default class Paper {
 
   constructor (engine) {
     this.engine = engine || new Engine()
