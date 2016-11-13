@@ -89,6 +89,8 @@ Network.fromJSON = function (json) {
   return new Network({ engine })
 }
 
+// -- helper to figure out if the user passed options or just layers
+
 function hasOptions(args) {
   return args[0].layers && !args[0].init && !args[0].reverseInit
 }
