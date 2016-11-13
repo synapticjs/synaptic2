@@ -1,32 +1,36 @@
 import {
   Network,
-  backends: {
-    ASM,
-    CPU,
-    BLAS,
-    GPU,
-    WebWorker
-  },
-  layers: {
-    Activation,
-    Convolution,
-    Convolution2D,
-    Convolution3D,
-    Dense,
-    Dropout,
-    Input,
-    Input2D,
-    Input3D,
-    InputToOutput,
-    LSTM,
-    MaxPool,
-    MaxPool2D,
-    MaxPool3D,
-    ZeroPadding,
-    ZeroPadding2D,
-    ZeroPadding3D
-  }
+  backends,
+  layers
 } from './src'
+
+const {
+  ASM,
+  CPU,
+  BLAS,
+  GPU,
+  WebWorker
+} = backends
+
+const {
+  Activation,
+  Convolution,
+  Convolution2D,
+  Convolution3D,
+  Dense,
+  Dropout,
+  Input,
+  Input2D,
+  Input3D,
+  InputToOutput,
+  LSTM,
+  MaxPool,
+  MaxPool2D,
+  MaxPool3D,
+  ZeroPadding,
+  ZeroPadding2D,
+  ZeroPadding3D
+} = layers
 
 const Perceptron = new Network(
   new Input(2),
