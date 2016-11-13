@@ -1,8 +1,14 @@
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
+
+const defaults = {
+  peepholes: true
+}
+
 export default class LSTM {
 
-  constructor (memoryBlocks) {
+  constructor (memoryBlocks, { peepholes } = defaults) {
     this.memoryBlocks = memoryBlocks
+    this.peepholes = peepholes
     this.prevLayer = null
     this.nextLayer = null
     this.inputGate = null
@@ -53,10 +59,12 @@ export default class LSTM {
     // output gate
     gateLayer(network, this.outputGate, this.memoryCell, 'OUTBOUND')
 
-    // recurrent connections from each memory cell to each gates - Fig. 4 (b)
-    connectLayers(network, this.memoryCell, this.inputGate)
-    connectLayers(network, this.memoryCell, this.forgetGate)
-    connectLayers(network, this.memoryCell, this.outputGate)
+    // recurrent connections from each memory cell to each gates (aka peepholes) - Fig. 4 (b)
+    if (this.peepholes) {
+      connectLayers(network, this.memoryCell, this.inputGate)
+      connectLayers(network, this.memoryCell, this.forgetGate)
+      connectLayers(network, this.memoryCell, this.outputGate)
+    }
   }
 }
 
