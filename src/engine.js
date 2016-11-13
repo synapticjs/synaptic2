@@ -53,7 +53,7 @@ export default class Engine {
     }
   }
 
-  addUnit () {
+  addUnit (activationFunction = ActivationTypes.LOGISTIC_SIGMOID) {
     const unit = this.size
     this.state[unit] = this.random()
     this.weight[unit] = {}
@@ -65,7 +65,7 @@ export default class Engine {
     this.gain[unit][unit] = 1 // ungated connections have a gain of 1 (eq. 14)
     this.elegibilityTrace[unit][unit] = 0
     this.extendedElegibilityTrace[unit][unit] = {}
-    this.activationFunction[unit] = ActivationTypes.LOGISTIC_SIGMOID
+    this.activationFunction[unit] = activationFunction
     this.errorResponsibility[unit] = 0
     this.projectedErrorResponsibility[unit] = 0
     this.gatedErrorResponsibility[unit] = 0
@@ -126,10 +126,10 @@ export default class Engine {
     this.track(gater)
   }
 
-  addLayer (size = 0) {
+  addLayer (size = 0, activationFunction) {
     const layer = []
     for (let i = 0; i < size; i++) {
-      const unit = this.addUnit()
+      const unit = this.addUnit(activationFunction)
       layer.push(unit)
     }
     this.layers.push(layer)
