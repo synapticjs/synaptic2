@@ -46,6 +46,13 @@ const LSTM_with_direct_input_to_output = new Network(
   new InputToOutput()
 )
 
+const LSTM_without_peepholes = new Network(
+  new Input(2),
+  new LSTM(5, { peepholes: false }),
+  new Dense(1),
+  new InputToOutput()
+)
+
 
 const LSTM_stacked = new Network(
   new Input(2),
