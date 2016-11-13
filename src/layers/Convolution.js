@@ -42,7 +42,7 @@ export default class Convolution {
     }
 
     return {
-      width: boundary.width / this.stride | 0,
+      width: (boundary.width - this.padding) / this.stride | 0,
       height: this.height,
       depth: this.depth,
       layer: this.layer

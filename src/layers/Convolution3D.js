@@ -42,9 +42,9 @@ export default class Convolution3D {
     }
 
     return {
-      width: boundary.width / this.stride | 0,
-      height: boundary.height / this.stride | 0,
-      depth: boundary.depth / this.stride | 0,
+      width: (boundary.width - this.padding) / this.stride | 0,
+      height: (boundary.height - this.padding) / this.stride | 0,
+      depth: (boundary.depth - this.padding) / this.stride | 0,
       layer: this.layer
     }
   }
