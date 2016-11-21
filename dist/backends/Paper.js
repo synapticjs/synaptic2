@@ -184,7 +184,9 @@ var Paper = (function () {
             .slice(1)
             .reverse()
             .forEach(function (layer, layerIndex) {
-            layer.slice().reverse()
+            layer
+                .slice()
+                .reverse()
                 .forEach(function (unit, unitIndex) {
                 var target = layerIndex === 0 ? targets[unitIndex] : void 0;
                 _this.propagateUnit(unit, target);
@@ -195,13 +197,13 @@ var Paper = (function () {
     Paper.prototype.train = function (dataset, _a) {
         var _this = this;
         var learningRate = _a.learningRate, minError = _a.minError, maxIterations = _a.maxIterations, costFunction = _a.costFunction;
+        console.log({ learningRate: learningRate, minError: minError, maxIterations: maxIterations, costFunction: costFunction });
         return new Promise(function (resolve) {
             var startTime = new Date().getTime();
             var error = Infinity;
             var iterations = 0;
             _this.engine.learningRate = learningRate;
             _this.engine.status = Engine_1.StatusTypes.TRAINING;
-            debugger;
             while (error > minError && iterations < maxIterations) {
                 error = 0;
                 for (var _i = 0, dataset_1 = dataset; _i < dataset_1.length; _i++) {
@@ -232,6 +234,10 @@ var Paper = (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Paper;
 function Σ(indexes, fn) {
-    return indexes.reduce(function (sum, index) { return sum + fn(index); }, 0);
+    var acumulator = 0;
+    for (var i = 0; i < indexes.length; i++) {
+        acumulator += fn(indexes[i]);
+    }
+    return acumulator;
 }
 //# sourceMappingURL=Paper.js.map

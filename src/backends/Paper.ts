@@ -24,17 +24,9 @@ export default class Paper {
     const w = this.engine.weight
     const g = this.engine.gain
     const y = this.engine.activation
-
-    /** activationFunction */
     const f = this.activationFunction
-
-    /** activationFunctionDerivative */
     const df = this.activationFunctionDerivative
-
-    /** elegibilityTrace */
     const ε = this.engine.elegibilityTrace
-
-    /** extendedElegibilityTrace */
     const xε = this.engine.extendedElegibilityTrace
 
     // unit sets
@@ -43,7 +35,7 @@ export default class Paper {
     const inputsOfGatedBy = this.engine.inputsOfGatedBy
 
     // this is only for input neurons (they receive their activation from the environment)
-    if (input == undefined) {
+    if (typeof input !== 'undefined') {
 
       y[j] = input
 
@@ -261,6 +253,7 @@ export default class Paper {
   }
 
   train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
+    console.log({ learningRate, minError, maxIterations, costFunction })
     return new Promise(resolve => {
 
       // start training
@@ -271,7 +264,6 @@ export default class Paper {
       this.engine.learningRate = learningRate
       this.engine.status = StatusTypes.TRAINING
 
-      debugger
       // train
       while (error > minError && iterations < maxIterations) {
         error = 0
