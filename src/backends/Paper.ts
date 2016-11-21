@@ -296,6 +296,6 @@ export default class Paper {
 // --
 
 // helper for doing summations
-function Σ(indexes, fn) {
-  return indexes.reduce((sum, index) => sum + fn(index), 0)
+function Σ(indexes: number[], fn: (num: number) => number) {
+  return indexes.reduce((sum, value) => sum + fn(value), 0)
 }
