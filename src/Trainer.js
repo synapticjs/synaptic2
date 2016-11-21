@@ -16,7 +16,13 @@ export default class Trainer {
   }
 
   train (dataset, options) {
-    return network.backend.train(dataset, options)
+    return this.network.backend.train(dataset, {
+      learningRate: 0.3,
+      minError: 0.0005,
+      maxIterations: 5000,
+      costFunction: CostTypes.MSE,
+      ...options
+    })
   }
 
   test (dataset, options) {

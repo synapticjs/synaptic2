@@ -1,5 +1,4 @@
 import Engine, { StatusTypes } from './Engine'
-import { CostTypes } from './Trainer'
 import Backend from './backends/Paper'
 
 export default class Network {
@@ -82,16 +81,6 @@ export default class Network {
 
   propagate (target) {
     this.backend.propagate(target)
-  }
-
-  train (set, options) {
-    return this.backend.train(set, {
-      learningRate: 0.3,
-      minError: 0.0005,
-      maxIterations: 5000,
-      costFunction: CostTypes.MSE,
-      ...options
-    })
   }
 }
 
