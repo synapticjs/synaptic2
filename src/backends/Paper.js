@@ -2,7 +2,7 @@
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
-import { CostTypes, defaults } from '../Trainer'
+import { CostTypes } from '../Trainer'
 
 export default class Paper {
 
@@ -122,7 +122,7 @@ export default class Paper {
       // eq. 24
       const Δw = α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
 
-      // apply delta
+      // adjust the weights using delta
       w[j][i] += Δw
     }
   }
@@ -252,12 +252,12 @@ export default class Paper {
     this.engine.status = StatusTypes.IDLE
   }
 
-  train (dataset, { learningRate, minError, maxIterations, costFunction } = defaults) {
+  train (dataset, { learningRate, minError, maxIterations, costFunction }) {
     return new Promise (resolve => {
 
       // start training
       let startTime = new Date()
-      let error = 0
+      let error = Infinity
       let iterations = 0
 
       this.engine.learningRate = learningRate
@@ -265,6 +265,7 @@ export default class Paper {
 
       // train
       while (error > minError && iterations < maxIterations) {
+        error = 0
         for (let data of dataset) {
           const { input, output } = data
           const predictedOutput = this.activate(input)

@@ -7,15 +7,6 @@ export const CostTypes = {
   BINARY: 2
 }
 
-// -- defaults
-
-export const defaults = {
-  learningRate: 0.1,
-  minError: 0.05,
-  maxIterations: 2000,
-  costFunction: CostTypes.MSE
-}
-
 // -- Trainer
 
 export default class Trainer {

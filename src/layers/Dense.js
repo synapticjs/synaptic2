@@ -12,7 +12,7 @@ export default class Dense {
     }
 
     this.layer = network.addLayer(this.size)
-    console.log(network)
+    
     // connect all units from previous layer to this one
     boundary.layer.forEach(from => {
       this.layer.forEach(to => {

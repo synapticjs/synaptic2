@@ -5,34 +5,48 @@
 
 var ff = new synaptic.Network(
   new synaptic.layers.Input(2),
-  new synaptic.layers.Dense(5),
-  new synaptic.layers.Dense(5),
+  new synaptic.layers.Dense(3),
   new synaptic.layers.Dense(1)
 )
 console.log(`Training XOR...`)
 ff.learningRate = 0.3
-for (var i = 0; i < 3000; i++) {
-  ff.activate([0,0])
-  ff.propagate([0])
 
-  ff.activate([0,1])
-  ff.propagate([1])
+var XOR = [
+  {
+    input: [0,0],
+    output: [0]
+  },
+  {
+    input: [0,1],
+    output: [1]
+  },
+  {
+    input: [1,0],
+    output: [1]
+  },
+  {
+    input: [1,1],
+    output: [0]
+  },
+]
 
-  ff.activate([1,0])
-  ff.propagate([1])
-
-  ff.activate([1,1])
-  ff.propagate([0])
-}
-
-console.log(`[0, 0] => ${ff.activate([0,0])}`)
-console.log(`[0, 1] => ${ff.activate([0,1])}`)
-console.log(`[1, 0] => ${ff.activate([1,0])}`)
-console.log(`[1, 1] => ${ff.activate([1,1])}`)
+ff.train(XOR, {
+  learningRate: 0.3,
+  minError: 0.0005,
+  maxIterations: 5000
+})
+.then(result => {
+  console.log(result)
+  console.log(`[0, 0] => ${ff.activate([0,0])}`)
+  console.log(`[0, 1] => ${ff.activate([0,1])}`)
+  console.log(`[1, 0] => ${ff.activate([1,0])}`)
+  console.log(`[1, 1] => ${ff.activate([1,1])}`)
+})
 
 
 // LSTM
 
+/*
 var inputs = 3
 var memoryBlocks = 1
 var outputs = 2
@@ -66,5 +80,10 @@ console.log('weights')
 console.table(lstm.engine.weight)
 console.log('gains')
 console.table(lstm.engine.gain)
+*/
+
+// timing task
+
+
 
 </script>
