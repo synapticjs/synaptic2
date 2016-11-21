@@ -1,6 +1,6 @@
 import { ActivationTypes } from '../Engine'
 
-export default class ZeroPadding2D {
+export default class ZeroPadding3D {
 
   constructor (padding) {
     this.padding = padding
@@ -8,6 +8,11 @@ export default class ZeroPadding2D {
   }
 
   init (network, boundary) {
+
+    if (boundary == null) {
+      throw new Error('\'ZeroPadding3D\' cannot be the first layer of the network!')
+    }
+
     this.layer = network.addLayer()
 
     let x, y, z, from, to

@@ -9,6 +9,11 @@ export default class Dropout {
   }
 
   init (network, boundary) {
+
+    if (boundary == null) {
+      throw new Error('\'Dropout\' cannot be the first layer of the network!')
+    }
+
     this.gater = network.addLayer()
     this.layer = network.addLayer()
 

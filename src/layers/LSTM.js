@@ -19,6 +19,10 @@ export default class LSTM {
 
   init (network, boundary) {
 
+    if (boundary == null) {
+      throw new Error('\'LSTM\' cannot be the first layer of the network!')
+    }
+
     this.prevLayer = boundary.layer
     this.inputGate = network.addLayer(this.memoryBlocks)
     this.forgetGate = network.addLayer(this.memoryBlocks)
@@ -49,7 +53,7 @@ export default class LSTM {
     }
   }
 
-  reverseInit (netowork, boundary) {
+  reverseInit (network, boundary) {
 
     this.nextLayer = boundary.layer
 

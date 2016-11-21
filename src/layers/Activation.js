@@ -7,6 +7,11 @@ export class ReLU {
   }
 
   init (network, boundary) {
+
+    if (boundary == null) {
+      throw new Error('\'Activation.ReLU\' cannot be the first layer of the network!')
+    }
+
     const prevLayer = boundary.layer
     this.layer = network.addLayer(prevLayer.length, ActivationTypes.RELU)
 

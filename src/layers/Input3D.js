@@ -8,6 +8,11 @@ export default class Input3D {
   }
 
   init (network, boundary) {
+
+    if (boundary != null) {
+      throw new Error('\'Input3D\' must be the first layer of the network!')
+    }
+
     this.layer = network.addLayer(this.width, this.height, this.depth)
     // set the boundary for next layer
     return {

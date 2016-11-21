@@ -205,7 +205,7 @@ export default class Engine {
     /*
       also, in order to compute the Big Parenthesis Term (eq. 18 and eq. 22)
       each unit must track an index that runs over all the units whose
-      connections to k are gated by j (and are not a self-connection)
+      connections to k are gated by j
     */
 
     // track inputs of unit gated by j
@@ -214,7 +214,7 @@ export default class Engine {
         this.inputsOfGatedBy[unit][j] = uniq(
           this.inputsOfGatedBy[unit][j],
           this.gates
-            .filter(gate => gate.gater === j && gate.to === unit && gate.from === i && gate.to !== gate.from)
+            .filter(gate => gate.gater === j && gate.to === unit && gate.from === i)
             .map(gate => gate.from)
         )
       })
@@ -225,7 +225,7 @@ export default class Engine {
         this.inputsOfGatedBy[k][unit] = uniq(
           this.inputsOfGatedBy[k][unit],
           this.gates
-            .filter(gate => gate.gater === unit && gate.to === k && gate.from === i && gate.to !== gate.from)
+            .filter(gate => gate.gater === unit && gate.to === k && gate.from === i)
             .map(gate => gate.from)
         )
       })

@@ -8,6 +8,15 @@ export default class Paper {
 
   constructor (engine) {
     this.engine = engine || new Engine()
+    this.activateUnit = this.activateUnit.bind(this)
+    this.propagateUnit = this.propagateUnit.bind(this)
+    this.activate = this.activate.bind(this)
+    this.propagate = this.propagate.bind(this)
+    this.bigParenthesisTerm = this.bigParenthesisTerm.bind(this)
+    this.activationFunction = this.activationFunction.bind(this)
+    this.activationFunctionDerivative = this.activationFunctionDerivative.bind(this)
+    this.costFunction = this.costFunction.bind(this)
+    this.train = this.train.bind(this)
   }
 
   activateUnit (unit, input) {
@@ -53,6 +62,7 @@ export default class Paper {
       }
 
       // update the gain of the connections gated by this unit with its activation value
+
       for (let to of gatedBy[unit]) {
         for (let from of inputsOfGatedBy[to][unit]) {
           // eq. 14
@@ -105,11 +115,11 @@ export default class Paper {
 
     }
 
-    // step 2: adjust the weights (Δw) for all the inputs of j
+    // step 2: compute deltas (Δw) and adjust the weights for all the inputs of j
 
     for (let i of inputSet[j]) {
 
-      // compute delta (eq. 24)
+      // eq. 24
       const Δw = α * δP[j] * ε[j][i] + α * Σ(G[j], k => δ[k] * xε[j][i][k])
 
       // apply delta
@@ -124,10 +134,10 @@ export default class Paper {
     const s = this.engine.state
     const y = this.engine.activation
     const dt = this.engine.derivativeTerm[k][j] // the derivative term is 1 if and only if j gates k's self-connection, otherwise is 0
-    const gatedInputs = this.engine.inputsOfGatedBy[k][j] // this index runs over all the inputs of k, that are gated by j
+    const units = this.engine.inputsOfGatedBy[k][j] // this index runs over all the inputs of k, that are gated by j
 
     // big parenthesis term
-    return dt * w[k][k] * s[k] + Σ(gatedInputs, a => w[k][a] * y[a])
+    return dt * w[k][k] * s[k] + Σ(units.filter(a => a !== k), a => w[k][a] * y[a])
   }
 
   activationFunction (unit) {
@@ -220,7 +230,7 @@ export default class Paper {
     const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
         const input = layerIndex === 0 ? inputs[unitIndex] : void 0 // only units in the input layer receive an input
-        this.activateUnit(unit, input)
+        return this.activateUnit(unit, input)
       })
     })
     this.engine.status = StatusTypes.IDLE
@@ -236,7 +246,7 @@ export default class Paper {
       layer.slice().reverse() // units get propagated in reverse order
       .forEach((unit, unitIndex) => {
         const target = layerIndex === 0 ? targets[unitIndex] : void 0 // only units in the output layer receive a target
-        this.activateUnit(unit, target)
+        this.propagateUnit(unit, target)
       })
     })
     this.engine.status = StatusTypes.IDLE

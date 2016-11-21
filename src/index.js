@@ -11,6 +11,15 @@ import GPU from './backends/GPU'
 import Paper from './backends/Paper'
 import WebWorker from './backends/WebWorker'
 
+const backends = {
+  ASM,
+  BLAS,
+  CPU,
+  GPU,
+  Paper,
+  WebWorker
+}
+
 // layers
 import Activation from './layers/Activation'
 import Convolution from './layers/Convolution'
@@ -30,35 +39,30 @@ import ZeroPadding from './layers/ZeroPadding'
 import ZeroPadding2D from './layers/ZeroPadding2D'
 import ZeroPadding3D from './layers/ZeroPadding3D'
 
-export default {
+const layers = {
+  Activation,
+  Convolution,
+  Convolution2D,
+  Convolution3D,
+  Dense,
+  Dropout,
+  Input,
+  Input2D,
+  Input3D,
+  InputToOutput,
+  LSTM,
+  MaxPool,
+  MaxPool2D,
+  MaxPool3D,
+  ZeroPadding,
+  ZeroPadding2D,
+  ZeroPadding3D
+}
+
+export {
   Engine,
   Network,
   Trainer,
-  backends: {
-    ASM,
-    BLAS,
-    CPU,
-    GPU,
-    Paper,
-    WebWorker
-  },
-  layers: {
-    Activation,
-    Convolution,
-    Convolution2D,
-    Convolution3D,
-    Dense,
-    Dropout,
-    Input,
-    Input2D,
-    Input3D,
-    InputToOutput,
-    LSTM,
-    MaxPool,
-    MaxPool2D,
-    MaxPool3D,
-    ZeroPadding,
-    ZeroPadding2D,
-    ZeroPadding3D
-  }
+  backends,
+  layers
 }

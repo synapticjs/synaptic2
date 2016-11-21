@@ -8,6 +8,11 @@ export default class ZeroPadding2D {
   }
 
   init (network, boundary) {
+
+    if (boundary == null) {
+      throw new Error('\'ZeroPadding2D\' cannot be the first layer of the network!')
+    }
+
     this.layer = network.addLayer()
 
     let x, y, z, from, to

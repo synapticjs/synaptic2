@@ -10,6 +10,11 @@ export default class Convolution3D {
   }
 
   init (network, boundary) {
+
+    if (boundary == null) {
+      throw new Error('\'Convolution3D\' cannot be the first layer of the network!')
+    }
+
     this.layer = network.addLayer()
 
     let x, y, z, fromX, fromY, fromZ, from, to

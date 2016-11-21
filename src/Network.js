@@ -3,7 +3,7 @@ import Backend from './backends/Paper'
 
 export default class Network {
 
-  constructor (options = []) {
+  constructor (options) {
     let layers
 
     if (hasOptions(options)) {
@@ -18,7 +18,7 @@ export default class Network {
       layers = options.layers
     } else {
       this.backend = new Backend()
-      layers = [ ...options ]
+      layers = [ ...arguments ]
     }
 
     this.engine = this.backend.engine
@@ -92,5 +92,5 @@ Network.fromJSON = function (json) {
 // -- helper to figure out if the user passed options or just layers
 
 function hasOptions(args) {
-  return args[0].layers && !args[0].init && !args[0].reverseInit
+  return args && args.layers && !args[0].init && !args[0].reverseInit
 }

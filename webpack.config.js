@@ -7,15 +7,16 @@ module.exports = {
     path: path.resolve('dist'),
     filename: 'synaptic.js',
     libraryTarget: 'umd',
-    library: 'synaptic'
+    library: 'synaptic',
+    publicPath: '/',
   },
   plugins: [
-    new webpack.NoErrorsPlugin(),
+    new webpack.NoErrorsPlugin()/*,
     new webpack.optimize.UglifyJsPlugin({
         compress: {
             warnings: false
         }
-    })
+    })*/
   ],
   resolve: {
     extensions: ['', '.js', '.json'],
