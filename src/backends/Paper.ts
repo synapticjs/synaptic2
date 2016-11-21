@@ -297,5 +297,10 @@ export default class Paper {
 
 // helper for doing summations
 function Σ(indexes: number[], fn: (num: number) => number) {
-  return indexes.reduce((sum, value) => sum + fn(value), 0)
+  // return indexes.reduce((sum, value) => sum + fn(value), 0)
+  let acumulator = 0
+  for (let i = 0; i < indexes.length; i++) {
+    acumulator += fn(acumulator[i])
+  }
+  return acumulator
 }
