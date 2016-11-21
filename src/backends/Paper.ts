@@ -5,9 +5,6 @@ import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
 
 export default class Paper {
-
-
-
   constructor(public engine = new Engine()) {
     this.activateUnit = this.activateUnit.bind(this)
     this.propagateUnit = this.propagateUnit.bind(this)
