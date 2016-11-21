@@ -1,7 +1,7 @@
 import Network, { IBoundary } from '../Network'
 
 // this is a direct all-to-all connection from input to output
-export class Direct {
+export default class Direct {
 
   reverseInit(network: Network, boundary: IBoundary) {
 

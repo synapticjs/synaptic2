@@ -29,7 +29,7 @@ var XOR = [
 ]
 
 var trainer = new synaptic.Trainer(ff)
-trainer.train(XOR, {
+/*trainer.train(XOR, {
   learningRate: 0.3,
   minError: 0.0005,
   maxIterations: 5000
@@ -40,19 +40,52 @@ trainer.train(XOR, {
   console.log(`[0, 1] => ${ff.activate([0,1])}`)
   console.log(`[1, 0] => ${ff.activate([1,0])}`)
   console.log(`[1, 1] => ${ff.activate([1,1])}`)
-})
+})*/
 
 // LSTM
 
 var lstm = new synaptic.Network(
   new synaptic.layers.Input(2),
-  new synaptic.layers.LSTM(7),
-  new synaptic.layers.Dense(1)
+  new synaptic.layers.LSTM(5),
+  new synaptic.layers.Dense(1),
+  new synaptic.layers.InputToOutput()
 )
-/*
-var samples = getSamples(7000, 1000)
 
-lstm.train(samples)
+var samples = getSamples(700, 1000)
+
+trainer = new synaptic.Trainer(lstm)
+trainer.train(samples.train, {
+  learningRate: 0.1,
+  minError: 0.005
+})
+.then(result => {
+  console.log('timer', result)
+})
+/*
+lstm.activate([0, 0, 0])
+lstm.propagate([0, 0])
+lstm.activate([1, 1, 0])
+lstm.propagate([1, 0])
+lstm.activate([0, 1, 1])
+lstm.propagate([1, 1])
+lstm.activate([1, 0, 1])
+lstm.propagate([1, 0])
+lstm.activate([0, 0, 1])
+lstm.propagate([1, 0])
+lstm.activate([0, 1, 0])
+lstm.propagate([1, 1])
+lstm.activate([1, 0, 0])
+lstm.propagate([1, 1])
+lstm.activate([0, 1, 1])
+lstm.propagate([1, 0])
+*/
+console.table(lstm.engine.connections)
+console.table(lstm.engine.gates)
+console.log(lstm.engine.activation)
+console.log(lstm.engine.elegibilityTrace)
+console.log(lstm.engine.extendedElegibilityTrace)
+
+
 function getSamples (trainingSize, testSize){
 
   // sample size
@@ -65,23 +98,23 @@ function getSamples (trainingSize, testSize){
     set.push({ input: [0,0], output: [0] });
   }
   while(t < size - 20) {
-      var n = Math.round(Math.random() * 20);
-      set[t].input[0] = 1;
-      for (var j = t; j <= t + n; j++){
-          set[j].input[1] = n / 20;
-          set[j].output[0] = 0.5;
-      }
-      t += n;
-      n = Math.round(Math.random() * 20);
-      for (var k = t+1; k <= (t + n) &&  k < size; k++)
-          set[k].input[1] = set[t].input[1];
-      t += n;
+    var n = Math.round(Math.random() * 20);
+    set[t].input[0] = 1;
+    for (var j = t; j <= t + n; j++){
+      set[j].input[1] = n / 20;
+      set[j].output[0] = 0.5;
+    }
+    t += n;
+    n = Math.round(Math.random() * 20);
+    for (var k = t+1; k <= (t + n) &&  k < size; k++)
+      set[k].input[1] = set[t].input[1];
+    t += n;
   }
 
   // separate samples between train and test sets
   var trainingSet = []; var testSet = [];
   for (var l = 0; l < size; l++)
-      (l < trainingSize ? trainingSet : testSet).push(set[l]);
+    (l < trainingSize ? trainingSet : testSet).push(set[l]);
 
   // return samples
   return {

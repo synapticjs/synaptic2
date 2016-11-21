@@ -14,7 +14,7 @@ export default class Trainer {
 
   }
 
-  train(dataset, { learningRate, minError, maxIterations, costFunction }) {
+  train(dataset, { learningRate, minError, maxIterations, costFunction } = {} as any) {
     return this.network.backend.train(dataset, {
       learningRate: learningRate || 0.3,
       minError: minError || 0.0005,

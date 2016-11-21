@@ -30,7 +30,7 @@ import Dropout from './layers/Dropout'
 import Input from './layers/Input'
 import Input2D from './layers/Input2D'
 import Input3D from './layers/Input3D'
-import InputToOutput = require('./layers/InputToOutput')
+import InputToOutput from './layers/InputToOutput'
 import LSTM from './layers/LSTM'
 import MaxPool from './layers/MaxPool'
 import MaxPool2D from './layers/MaxPool2D'

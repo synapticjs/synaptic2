@@ -50,7 +50,7 @@ export default class Network {
     // reverse init layers
     this.engine.status = StatusTypes.REVERSE_INIT
     boundaries.reverse()
-    layers.reverse()
+    layers.concat().reverse()
       .forEach((layer, index) => {
         nextBoundary = boundaries[index - 1] || nextBoundary
         layer.reverseInit && layer.reverseInit(this, nextBoundary)
@@ -58,6 +58,8 @@ export default class Network {
 
     // done
     this.engine.status = StatusTypes.IDLE
+
+    console.log(layers)
   }
 
   addUnit(activationFunction?: ActivationTypes) {

@@ -261,6 +261,7 @@ export default class Paper {
       this.engine.learningRate = learningRate
       this.engine.status = StatusTypes.TRAINING
 
+      debugger
       // train
       while (error > minError && iterations < maxIterations) {
         error = 0
@@ -272,6 +273,11 @@ export default class Paper {
         }
         error /= dataset.length
         iterations++
+        console.log({
+          error,
+          iterations,
+          time: new Date().getTime() - startTime
+        })
       }
 
       // end training
