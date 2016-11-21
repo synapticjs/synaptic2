@@ -17,16 +17,24 @@ export default class Paper {
     this.train = this.train.bind(this)
   }
 
-  activateUnit(unit, input) {
+  activateUnit(unit: number, input: number): number {
     // glosary
     const j = unit
     const s = this.engine.state
     const w = this.engine.weight
     const g = this.engine.gain
     const y = this.engine.activation
+
+    /** activationFunction */
     const f = this.activationFunction
+
+    /** activationFunctionDerivative */
     const df = this.activationFunctionDerivative
+
+    /** elegibilityTrace */
     const ε = this.engine.elegibilityTrace
+
+    /** extendedElegibilityTrace */
     const xε = this.engine.extendedElegibilityTrace
 
     // unit sets
@@ -35,7 +43,7 @@ export default class Paper {
     const inputsOfGatedBy = this.engine.inputsOfGatedBy
 
     // this is only for input neurons (they receive their activation from the environment)
-    if (typeof input !== 'undefined') {
+    if (input == undefined) {
 
       y[j] = input
 
@@ -73,7 +81,7 @@ export default class Paper {
     return y[j]
   }
 
-  propagateUnit(unit, target) {
+  propagateUnit(unit: number, target?: number) {
     // glosary
     const j = unit
     const s = this.engine.state
@@ -125,8 +133,8 @@ export default class Paper {
     }
   }
 
-  // this calculate the big parenthesis term that is present in eq. 18 and eq. 22
-  bigParenthesisTerm(k, j) {
+  /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
+  bigParenthesisTerm(k: number, j: number) {
     // glosary
     const w = this.engine.weight
     const s = this.engine.state
@@ -138,7 +146,7 @@ export default class Paper {
     return dt * w[k][k] * s[k] + Σ(units.filter(a => a !== k), a => w[k][a] * y[a])
   }
 
-  activationFunction(unit) {
+  activationFunction(unit: number): number {
     let x
     const type = this.engine.activationFunction[unit]
     switch (type) {
@@ -174,8 +182,8 @@ export default class Paper {
     }
   }
 
-  activationFunctionDerivative(unit) {
-    let x
+  activationFunctionDerivative(unit: number) {
+    let x: number
     const type = this.engine.activationFunction[unit]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
@@ -200,8 +208,8 @@ export default class Paper {
     }
   }
 
-  costFunction(target, predicted, costType) {
-    let i, x = 0
+  costFunction(target: number[], predicted: number[], costType: CostTypes) {
+    let i: number, x = 0
     switch (costType) {
       case CostTypes.MSE:
         for (i = 0; i < target.length; i++) {
@@ -223,7 +231,7 @@ export default class Paper {
     }
   }
 
-  activate(inputs) {
+  activate(inputs: number[]): number[] {
     this.engine.status = StatusTypes.ACTIVATING
     const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
@@ -235,13 +243,15 @@ export default class Paper {
     return activations.pop() // return activation of the last layer (aka output layer)
   }
 
-  propagate(targets) {
+  propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
     this.engine.layers
       .slice(1) // input layer doesn't propagate
       .reverse() // layers propagate in reverse order
       .forEach((layer, layerIndex) => {
-        layer.slice().reverse() // units get propagated in reverse order
+        layer
+          .slice()
+          .reverse() // units get propagated in reverse order
           .forEach((unit, unitIndex) => {
             const target = layerIndex === 0 ? targets[unitIndex] : void 0 // only units in the output layer receive a target
             this.propagateUnit(unit, target)
@@ -250,7 +260,7 @@ export default class Paper {
     this.engine.status = StatusTypes.IDLE
   }
 
-  train(dataset: Array<{ input: any; output: any; }>, { learningRate, minError, maxIterations, costFunction }) {
+  train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
     return new Promise(resolve => {
 
       // start training
@@ -294,6 +304,12 @@ export default class Paper {
 // --
 
 // helper for doing summations
-function Σ(indexes, fn) {
-  return indexes.reduce((sum, index) => sum + fn(index), 0)
+function Σ(indexes: number[], fn: (num: number) => number) {
+  // return indexes.reduce((sum, value) => sum + fn(value), 0)
+  let acumulator = 0
+  for (let i = 0; i < indexes.length; i++) {
+    acumulator += fn(indexes[i])
+  }
+
+  return acumulator
 }

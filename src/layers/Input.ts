@@ -1,11 +1,7 @@
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
-export default class Input {
-  layer: number[]
-
-  constructor(public size: number) {
-    this.size = size
-  }
+export default class Input implements INetworkLayer {
+  constructor(public size: number) { }
 
   init(network: Network, boundary: IBoundary): IBoundary {
 
@@ -13,13 +9,13 @@ export default class Input {
       throw new Error('\'Input\' must be the first layer of the network!')
     }
 
-    this.layer = network.addLayer(this.size)
+    let layer = network.addLayer(this.size)
     // set the boundary for next layer
     return {
       width: this.size,
       height: 1,
       depth: 1,
-      layer: this.layer
+      layer: layer
     }
   }
 }

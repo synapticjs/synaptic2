@@ -1,8 +1,8 @@
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution2D {
+export default class Convolution2D implements INetworkLayer {
   filter: number
   depth: number
   stride: number

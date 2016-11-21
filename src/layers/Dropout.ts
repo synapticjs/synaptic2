@@ -1,7 +1,7 @@
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 import { ActivationTypes } from '../Engine'
 
-export default class Dropout {
+export default class Dropout implements INetworkLayer {
   gater: number[] = null
   layer: number[] = null
 

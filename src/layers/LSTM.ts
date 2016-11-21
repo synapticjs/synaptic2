@@ -1,4 +1,4 @@
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
@@ -6,7 +6,7 @@ const defaults = {
   peepholes: true
 }
 
-export default class LSTM {
+export default class LSTM implements INetworkLayer {
 
   peepholes: boolean
 

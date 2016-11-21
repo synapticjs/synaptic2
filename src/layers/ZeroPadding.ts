@@ -1,7 +1,7 @@
 import { ActivationTypes } from '../Engine'
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
-export default class ZeroPadding {
+export default class ZeroPadding implements INetworkLayer {
   layer: number[] = null
 
   constructor(public padding: number) {

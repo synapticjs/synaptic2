@@ -1,7 +1,7 @@
 import { ActivationTypes } from '../Engine'
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
-export default class MaxPool3D {
+export default class MaxPool3D implements INetworkLayer {
 
   gater: number[]
   layer: number[]
