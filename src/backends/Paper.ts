@@ -43,7 +43,7 @@ export default class Paper {
     const inputsOfGatedBy = this.engine.inputsOfGatedBy
 
     // this is only for input neurons (they receive their activation from the environment)
-    if (typeof input !== 'undefined') {
+    if (input == undefined) {
 
       y[j] = input
 
@@ -81,7 +81,7 @@ export default class Paper {
     return y[j]
   }
 
-  propagateUnit(unit, target) {
+  propagateUnit(unit: number, target?: number) {
     // glosary
     const j = unit
     const s = this.engine.state
@@ -133,8 +133,8 @@ export default class Paper {
     }
   }
 
-  // this calculate the big parenthesis term that is present in eq. 18 and eq. 22
-  bigParenthesisTerm(k, j) {
+  /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
+  bigParenthesisTerm(k: number, j: number) {
     // glosary
     const w = this.engine.weight
     const s = this.engine.state
@@ -182,8 +182,8 @@ export default class Paper {
     }
   }
 
-  activationFunctionDerivative(unit) {
-    let x
+  activationFunctionDerivative(unit: number) {
+    let x: number
     const type = this.engine.activationFunction[unit]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
@@ -209,7 +209,7 @@ export default class Paper {
   }
 
   costFunction(target: number[], predicted: number[], costType: CostTypes) {
-    let i, x = 0
+    let i: number, x = 0
     switch (costType) {
       case CostTypes.MSE:
         for (i = 0; i < target.length; i++) {
@@ -231,7 +231,7 @@ export default class Paper {
     }
   }
 
-  activate(inputs: number[]) {
+  activate(inputs: number[]): number[] {
     this.engine.status = StatusTypes.ACTIVATING
     const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
@@ -249,7 +249,9 @@ export default class Paper {
       .slice(1) // input layer doesn't propagate
       .reverse() // layers propagate in reverse order
       .forEach((layer, layerIndex) => {
-        layer.slice().reverse() // units get propagated in reverse order
+        layer
+          .slice()
+          .reverse() // units get propagated in reverse order
           .forEach((unit, unitIndex) => {
             const target = layerIndex === 0 ? targets[unitIndex] : void 0 // only units in the output layer receive a target
             this.propagateUnit(unit, target)
@@ -258,7 +260,7 @@ export default class Paper {
     this.engine.status = StatusTypes.IDLE
   }
 
-  train(dataset: Array<{ input: any; output: any; }>, { learningRate, minError, maxIterations, costFunction }) {
+  train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
     return new Promise(resolve => {
 
       // start training
