@@ -5,34 +5,95 @@
 
 var ff = new synaptic.Network(
   new synaptic.layers.Input(2),
-  new synaptic.layers.Dense(5),
-  new synaptic.layers.Dense(5),
+  new synaptic.layers.Dense(3),
   new synaptic.layers.Dense(1)
 )
-console.log(`Training XOR...`)
-ff.learningRate = 0.3
-for (var i = 0; i < 3000; i++) {
-  ff.activate([0,0])
-  ff.propagate([0])
 
-  ff.activate([0,1])
-  ff.propagate([1])
+var XOR = [
+  {
+    input: [0,0],
+    output: [0]
+  },
+  {
+    input: [0,1],
+    output: [1]
+  },
+  {
+    input: [1,0],
+    output: [1]
+  },
+  {
+    input: [1,1],
+    output: [0]
+  },
+]
 
-  ff.activate([1,0])
-  ff.propagate([1])
-
-  ff.activate([1,1])
-  ff.propagate([0])
-}
-
-console.log(`[0, 0] => ${ff.activate([0,0])}`)
-console.log(`[0, 1] => ${ff.activate([0,1])}`)
-console.log(`[1, 0] => ${ff.activate([1,0])}`)
-console.log(`[1, 1] => ${ff.activate([1,1])}`)
-
+var trainer = new synaptic.Trainer(ff)
+trainer.train(XOR, {
+  learningRate: 0.3,
+  minError: 0.0005,
+  maxIterations: 5000
+})
+.then(result => {
+  console.log(result)
+  console.log(`[0, 0] => ${ff.activate([0,0])}`)
+  console.log(`[0, 1] => ${ff.activate([0,1])}`)
+  console.log(`[1, 0] => ${ff.activate([1,0])}`)
+  console.log(`[1, 1] => ${ff.activate([1,1])}`)
+})
 
 // LSTM
 
+var lstm = new synaptic.Network(
+  new synaptic.layers.Input(2),
+  new synaptic.layers.LSTM(7),
+  new synaptic.layers.Dense(1)
+)
+/*
+var samples = getSamples(7000, 1000)
+
+lstm.train(samples)
+function getSamples (trainingSize, testSize){
+
+  // sample size
+  var size = trainingSize + testSize;
+
+  // generate samples
+  var t = 0;
+  var set = [];
+  for (var i = 0; i < size; i++) {
+    set.push({ input: [0,0], output: [0] });
+  }
+  while(t < size - 20) {
+      var n = Math.round(Math.random() * 20);
+      set[t].input[0] = 1;
+      for (var j = t; j <= t + n; j++){
+          set[j].input[1] = n / 20;
+          set[j].output[0] = 0.5;
+      }
+      t += n;
+      n = Math.round(Math.random() * 20);
+      for (var k = t+1; k <= (t + n) &&  k < size; k++)
+          set[k].input[1] = set[t].input[1];
+      t += n;
+  }
+
+  // separate samples between train and test sets
+  var trainingSet = []; var testSet = [];
+  for (var l = 0; l < size; l++)
+      (l < trainingSize ? trainingSet : testSet).push(set[l]);
+
+  // return samples
+  return {
+      train: trainingSet,
+      test: testSet
+  }
+}
+
+
+
+
+/*
 var inputs = 3
 var memoryBlocks = 1
 var outputs = 2
@@ -66,5 +127,10 @@ console.log('weights')
 console.table(lstm.engine.weight)
 console.log('gains')
 console.table(lstm.engine.gain)
+*/
+
+// timing task
+
+
 
 </script>
