@@ -302,5 +302,6 @@ function Σ(indexes: number[], fn: (num: number) => number) {
   for (let i = 0; i < indexes.length; i++) {
     acumulator += fn(indexes[i])
   }
+
   return acumulator
 }
