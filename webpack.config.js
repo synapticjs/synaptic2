@@ -2,7 +2,7 @@ var webpack = require('webpack')
 var path = require('path')
 module.exports = {
   context: __dirname,
-  entry: './src/index.js',
+  entry: './src/index.ts',
   output: {
     path: path.resolve('dist'),
     filename: 'synaptic.js',
@@ -19,11 +19,12 @@ module.exports = {
     })*/
   ],
   resolve: {
-    extensions: ['', '.js', '.json'],
-    modulesDirectories: ['.', 'src', 'node_modules']
+    extensions: ['', '.js', '.ts', '.json'],
+    modulesDirectories: ['.', 'node_modules']
   },
   module: {
     loaders: [
+      { test: /\.tsx?$/, loader: 'ts-loader' },
       {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
