@@ -4,7 +4,7 @@
   "description": "",
   "main": "engine.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "NODE_ENV=production webpack --config webpack.config.js",
     "test": "jest",
     "dev": "webpack-dashboard -- webpack-dev-server --config ./webpack.config.js"
   },

@@ -11,17 +11,19 @@ module.exports = {
     publicPath: '/',
   },
   plugins: [
-    new webpack.NoErrorsPlugin()/*,
+    new webpack.NoErrorsPlugin()
+  ].concat(process.env.NODE_ENV === 'production' ? [
     new webpack.optimize.UglifyJsPlugin({
-        compress: {
-            warnings: false
-        }
-    })*/
-  ],
+      compress: {
+        warnings: false
+      }
+    })
+  ] : []),
   resolve: {
     extensions: ['', '.js', '.ts', '.json'],
     modulesDirectories: ['.', 'node_modules']
   },
+  devtool: process.env.NODE_ENV === 'production' ? undefined : 'source-map',
   module: {
     loaders: [
       { test: /\.tsx?$/, loader: 'ts-loader' },
