@@ -17,16 +17,24 @@ export default class Paper {
     this.train = this.train.bind(this)
   }
 
-  activateUnit(unit, input) {
+  activateUnit(unit: number, input: number): number {
     // glosary
     const j = unit
     const s = this.engine.state
     const w = this.engine.weight
     const g = this.engine.gain
     const y = this.engine.activation
+
+    /** activationFunction */
     const f = this.activationFunction
+
+    /** activationFunctionDerivative */
     const df = this.activationFunctionDerivative
+
+    /** elegibilityTrace */
     const ε = this.engine.elegibilityTrace
+
+    /** extendedElegibilityTrace */
     const xε = this.engine.extendedElegibilityTrace
 
     // unit sets
@@ -138,7 +146,7 @@ export default class Paper {
     return dt * w[k][k] * s[k] + Σ(units.filter(a => a !== k), a => w[k][a] * y[a])
   }
 
-  activationFunction(unit) {
+  activationFunction(unit: number): number {
     let x
     const type = this.engine.activationFunction[unit]
     switch (type) {
@@ -200,7 +208,7 @@ export default class Paper {
     }
   }
 
-  costFunction(target, predicted, costType) {
+  costFunction(target: number[], predicted: number[], costType: CostTypes) {
     let i, x = 0
     switch (costType) {
       case CostTypes.MSE:
@@ -223,7 +231,7 @@ export default class Paper {
     }
   }
 
-  activate(inputs) {
+  activate(inputs: number[]) {
     this.engine.status = StatusTypes.ACTIVATING
     const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
@@ -235,7 +243,7 @@ export default class Paper {
     return activations.pop() // return activation of the last layer (aka output layer)
   }
 
-  propagate(targets) {
+  propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
     this.engine.layers
       .slice(1) // input layer doesn't propagate

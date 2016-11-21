@@ -54,7 +54,7 @@ export default class Engine {
   connections = []
   gates = []
   learningRate = 0.1
-  layers = []
+  layers: number[][] = []
   size = 0
   random: any
   biasUnit = null
