@@ -10,8 +10,8 @@ var ff = new synaptic.Network(
   new synaptic.layers.Dense(1)
 )
 console.log(`Training XOR...`)
-ff.learningRate = 0.05
-for (var i = 0; i < 100000; i++) {
+ff.learningRate = 0.3
+for (var i = 0; i < 3000; i++) {
   ff.activate([0,0])
   ff.propagate([0])
 
