@@ -1,6 +1,6 @@
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
-export default class Dense {
+export default class Dense implements INetworkLayer {
 
   layer: number[]
 

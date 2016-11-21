@@ -8,12 +8,18 @@ export interface IBoundary {
   layer: number[]
 }
 
+export interface INetworkLayer {
+  layer?: number[]
+  init?(network: Network, boundary: IBoundary): IBoundary
+  reverseInit?(network: Network, boundary: IBoundary)
+}
+
 export default class Network {
   engine: Engine
   backend: Backend
 
-  constructor(...layers);
-  constructor(options);
+  constructor(...layers: INetworkLayer[]);
+  constructor(options: { backend?: Backend; engine?: Engine; bias?: boolean; generator?: any; layers?: INetworkLayer[] });
   constructor(...args) {
     let layers
 

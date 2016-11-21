@@ -1,6 +1,6 @@
-import Network, { IBoundary } from '../Network'
+import Network, { IBoundary, INetworkLayer } from '../Network'
 
-export default class Input3D {
+export default class Input3D implements INetworkLayer {
 
   layer: number[] = null
 
