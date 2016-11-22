@@ -2,7 +2,7 @@ var webpack = require('webpack')
 var path = require('path')
 module.exports = {
   context: __dirname,
-  entry: './src/index.ts',
+  entry: './src/index.js',
   output: {
     path: path.resolve('dist'),
     filename: 'synaptic.js',

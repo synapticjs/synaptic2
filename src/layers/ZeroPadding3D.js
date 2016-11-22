@@ -1,23 +1,23 @@
 import { ActivationTypes } from '../Engine'
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
-export default class ZeroPadding implements INetworkLayer {
-  layer: number[] = null
+export default class ZeroPadding3D  {
 
-  constructor(public padding: number) {
-
+  constructor(padding: number) {
+    this.layer = null
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
+
     if (boundary == null) {
-      throw new Error('\'ZeroPadding\' cannot be the first layer of the network!')
+      throw new Error('\'ZeroPadding3D\' cannot be the first layer of the network!')
     }
 
     this.layer = network.addLayer()
 
     let x, y, z, from, to
-    for (z = 0; z < boundary.depth; z++) {
-      for (y = 0; y < boundary.height; y++) {
+    for (z = -this.padding; z < boundary.depth + this.padding; z++) {
+      for (y = -this.padding; y < boundary.height + this.padding; y++) {
         for (x = -this.padding; x < boundary.width + this.padding; x++) {
 
           const unit = network.addUnit(ActivationTypes.IDENTITY)
@@ -35,8 +35,8 @@ export default class ZeroPadding implements INetworkLayer {
 
     return {
       width: boundary.width + this.padding * 2,
-      height: boundary.height,
-      depth: boundary.height,
+      height: boundary.height + this.padding * 2,
+      depth: boundary.height + this.padding * 2,
       layer: this.layer
     }
   }

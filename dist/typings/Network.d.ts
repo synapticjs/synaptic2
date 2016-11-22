@@ -1,6 +1,6 @@
 import Engine, { ActivationTypes } from './Engine';
 import Backend from './backends/Paper';
-export interface IBoundary {
+export interface BoundaryType {
     width: number;
     height: number;
     depth: number;

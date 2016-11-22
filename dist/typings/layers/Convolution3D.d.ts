@@ -1,4 +1,4 @@
-import Network, { IBoundary } from '../Network';
+import Network, { BoundaryType } from '../Network';
 export default class Convolution3D {
     filter: number;
     stride: number;
@@ -9,6 +9,6 @@ export default class Convolution3D {
         stride?: number;
         padding?: number;
     });
-    init(network: Network, boundary: IBoundary): IBoundary;
+    init(network: Network, boundary: BoundaryType): BoundaryType;
     isValid(boundary: any, x: any, y: any, z: any): boolean;
 }

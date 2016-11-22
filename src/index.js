@@ -21,7 +21,7 @@ const backends = {
 }
 
 // layers
-import Activation = require('./layers/Activation')
+import Activation from './layers/Activation'
 import Convolution from './layers/Convolution'
 import Convolution2D from './layers/Convolution2D'
 import Convolution3D from './layers/Convolution3D'

@@ -1,9 +1,11 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
-export default class Input implements INetworkLayer {
-  constructor(public size: number) { }
+export default class Input {
+  constructor(size: number) {
+    this.size = size
+  }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
 
     if (boundary != null) {
       throw new Error('\'Input\' must be the first layer of the network!')

@@ -1,15 +1,15 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 import { ActivationTypes } from '../Engine'
 
-export default class Dropout implements INetworkLayer {
-  gater: number[] = null
-  layer: number[] = null
+export default class Dropout {
 
-  constructor(public chances: number) {
-
+  constructor(chances: number) {
+    this.chances = chances
+    this.gater = null
+    this.layer = null
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
 
     if (boundary == null) {
       throw new Error('\'Dropout\' cannot be the first layer of the network!')

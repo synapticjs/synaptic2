@@ -1,15 +1,13 @@
 import { ActivationTypes } from '../Engine'
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
-export default class ZeroPadding2D implements INetworkLayer {
+export default class ZeroPadding2D  {
 
-  layer: number[] = null
-
-  constructor(public padding: number) {
-
+  constructor(padding: number) {
+    this.layer = []
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
 
     if (boundary == null) {
       throw new Error('\'ZeroPadding2D\' cannot be the first layer of the network!')

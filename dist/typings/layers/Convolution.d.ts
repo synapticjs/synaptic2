@@ -1,4 +1,4 @@
-import Network, { IBoundary } from '../Network';
+import Network, { BoundaryType } from '../Network';
 export default class Convolution {
     filter: number;
     height: number;
@@ -13,7 +13,7 @@ export default class Convolution {
         stride?: number;
         padding?: number;
     });
-    init(network: Network, boundary: IBoundary): {
+    init(network: Network, boundary: BoundaryType): {
         width: number;
         height: number;
         depth: number;

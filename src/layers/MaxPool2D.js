@@ -1,16 +1,15 @@
 import { ActivationTypes } from '../Engine'
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
-export default class MaxPool2D implements INetworkLayer {
+export default class MaxPool2D  {
 
-  gater: number[] = null
-  layer: number[] = null
-
-  constructor(public downsampling = 2) {
-
+  constructor(downsampling: number = 2) {
+    this.downsampling = downsampling
+    this.gater = null
+    this.layer = null
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
 
     if (boundary == null) {
       throw new Error('\'MaxPool2D\' cannot be the first layer of the network!')

@@ -1,4 +1,4 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
@@ -6,22 +6,19 @@ const defaults = {
   peepholes: true
 }
 
-export default class LSTM implements INetworkLayer {
+export default class LSTM  {
 
-  peepholes: boolean
-
-  prevLayer = null
-  nextLayer = null
-  inputGate = null
-  forgetGate = null
-  memoryCell = null
-  outputGate = null
-
-  constructor(public memoryBlocks: number, { peepholes } = defaults) {
+  constructor(memoryBlocks: number, { peepholes } = defaults) {
     this.peepholes = peepholes
+    this.prevLayer = null
+    this.nextLayer = null
+    this.inputGate = null
+    this.forgetGate = null
+    this.memoryCell = null
+    this.outputGate = null
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
 
     if (boundary == null) {
       throw new Error('\'LSTM\' cannot be the first layer of the network!')

@@ -1,27 +1,31 @@
+// @flow
+
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
 // -- Activation Types
 
-export enum ActivationTypes {
-  LOGISTIC_SIGMOID,
-  TANH,
-  RELU,
-  MAX_POOLING,
-  DROPOUT,
-  IDENTITY
+export const ActivationTypes = {
+  LOGISTIC_SIGMOID: 0,
+  TANH: 1,
+  RELU: 2,
+  MAX_POOLING: 3,
+  DROPOUT: 4,
+  IDENTITY: 5
 }
+
 
 // -- Status Types
 
-export enum StatusTypes {
-  IDLE,
-  INIT,
-  REVERSE_INIT,
-  ACTIVATING,
-  PROPAGATING,
-  TRAINING
+export const StatusTypes = {
+  IDLE: 0,
+  INIT: 1,
+  REVERSE_INIT: 2,
+  ACTIVATING: 3,
+  PROPAGATING: 4,
+  TRAINING: 5
 }
+
 
 // -- Engine
 
@@ -32,37 +36,34 @@ const defaults = {
 
 export default class Engine {
 
-  state = {}
-  weight = {}
-  gain = {}
-  activation = {}
-  elegibilityTrace = {}
-  extendedElegibilityTrace = {}
-  errorResponsibility = {}
-  projectedErrorResponsibility = {}
-  gatedErrorResponsibility = {}
-  activationFunction = {}
-  inputsOf = {}
-  projectedBy = {}
-  gatersOf = {}
-  gatedBy = {}
-  inputsOfGatedBy = {}
-  projectionSet = {}
-  gateSet = {}
-  inputSet = {}
-  derivativeTerm = {}
-  connections = []
-  gates = []
-  learningRate = 0.1
-  layers: number[][] = []
-  size = 0
-  random: any
-  biasUnit = null
-  status = StatusTypes.IDLE
-
   constructor({ bias, generator } = defaults) {
-    this.random = generator
+    this.state = {}
+    this.weight = {}
+    this.gain = {}
+    this.activation = {}
+    this.elegibilityTrace = {}
+    this.extendedElegibilityTrace = {}
+    this.errorResponsibility = {}
+    this.projectedErrorResponsibility = {}
+    this.gatedErrorResponsibility = {}
+    this.activationFunction = {}
+    this.inputsOf = {}
+    this.projectedBy = {}
+    this.gatersOf = {}
+    this.gatedBy = {}
+    this.inputsOfGatedBy = {}
+    this.projectionSet = {}
+    this.gateSet = {}
+    this.inputSet = {}
+    this.derivativeTerm = {}
+    this.connections = []
+    this.gates = []
+    this.learningRate = 0.1
+    this.layers = []
+    this.size = 0
+    this.biasUnit = null
     this.status = StatusTypes.IDLE
+    this.random = generator
 
     // if using bias, create a bias unit, with a fixed activation of 1
     if (bias) {
@@ -106,7 +107,7 @@ export default class Engine {
     return unit
   }
 
-  addConnection(from: number, to: number, weight: number = null) {
+  addConnection(from: number, to: number, weight: ?number = null) {
     // if the connection already exists then return
     if (this.connections.some(connection => connection.from === from && connection.to === to)) {
       return
@@ -144,7 +145,7 @@ export default class Engine {
     this.track(gater)
   }
 
-  addLayer(size = 0, activationFunction?) {
+  addLayer(size: number = 0, activationFunction?) {
     if (this.status === StatusTypes.REVERSE_INIT) {
       throw new Error('You can\'t add layers during REVERSE_INIT phase!')
     }
@@ -157,7 +158,7 @@ export default class Engine {
     return layer
   }
 
-  track(unit) {
+  track(unit: number) {
 
     // each unit keeps track of all the units that project a connection into it (aka inputs)
     this.inputsOf[unit] = uniq(this.connections

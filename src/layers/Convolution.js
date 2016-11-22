@@ -1,18 +1,10 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution implements INetworkLayer {
+export default class Convolution {
 
-  filter: number
-  height: number
-  depth: number
-  stride: number
-  padding: number
-  layer: number[]
-
-
-  constructor({ filter = 1, height = 1, depth = 1, stride = 1, padding = 0 }) {
+  constructor({ filter = 1, height = 1, depth = 1, stride = 1, padding = 0 } = {}) {
     this.filter = filter
     this.height = height
     this.depth = depth
@@ -21,7 +13,7 @@ export default class Convolution implements INetworkLayer {
     this.layer = null
   }
 
-  init(network: Network, boundary: IBoundary) {
+  init(network: Network, boundary: BoundaryType) {
 
     if (boundary == null) {
       throw new Error('\'Convolution\' cannot be the first layer of the network!')

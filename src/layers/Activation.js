@@ -1,11 +1,9 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { BoundaryType } from '../Network'
 import { ActivationTypes } from '../Engine'
 
-export class ReLU implements INetworkLayer {
+export class ReLU {
 
-  layer: number[] = null
-
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: BoundaryType): BoundaryType {
     if (boundary == null) {
       throw new Error('\'Activation.ReLU\' cannot be the first layer of the network!')
     }

@@ -1,9 +1,9 @@
-import Network, { IBoundary } from '../Network'
+import Network, { BoundaryType } from '../Network'
 
 // this is a direct all-to-all connection from input to output
 export default class Direct {
 
-  reverseInit(network: Network, boundary: IBoundary) {
+  reverseInit(network: Network, boundary: BoundaryType) {
 
     if (boundary != null) {
       throw new Error('\'InputToOutput\' must be the last layer of the network!')
