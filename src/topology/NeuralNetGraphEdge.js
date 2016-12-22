@@ -9,7 +9,7 @@ export class NeuralNetGraphEdge {
 
     _activateAndGetAllActivations(input: Activation): {activationsSequence: Activations, activationOutput: Activation} {throw new Error('method not implemented') };
 
-    _propagate(activation: Activations, err: Err, activation_gradient: Gradient): [Deltas, Err, Gradient] { throw new Error('method not implemented') };
+    _propagate(activation: Activations, gradient: Gradient): [Deltas, Gradient] { throw new Error('method not implemented') };
 
     _applyDeltas(deltas: Deltas, activations: Activations, optimizer: optimizerFn): void { throw new Error('method not implemented') };
 

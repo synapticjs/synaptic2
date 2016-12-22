@@ -52,25 +52,22 @@ export class Parallelize1dLayer extends Layer {
         ), this._outputShape);
     }
 
-    _propagate(activation: Activations, err: Err, activation_gradient: Gradient): [Deltas, Err, Gradient] {
+    _propagate(activation: Activations, gradient: Gradient): [Deltas, Gradient] {
         if (!(activation instanceof Matrix))
             throw new TypeError();
 
         const activationData = activation.data;
-        const errData = err.data;
-        const gradientData = activation_gradient.data;
+        const gradientData = gradient.data;
 
         const inputs = this._layersWithOffsets.map(({layer, start, end}) => layer._propagate(
             Matrix.fromTypedArray(activationData.subarray(start, end), layer._inputShape),
-            Matrix.fromTypedArray(errData.subarray(start, end), layer._inputShape),
             Matrix.fromTypedArray(gradientData.subarray(start, end), layer._inputShape),
         ));
 
-        const [deltas, errs, gradients] = R.transpose(inputs);
+        const [deltas, gradients] = R.transpose(inputs);
 
         return [
             deltas,
-            Matrix.fromTypedArray(concat1d(errs), this._inputShape),
             Matrix.fromTypedArray(concat1d(gradients), this._inputShape),
         ]
     }

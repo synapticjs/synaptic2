@@ -2,7 +2,6 @@
 import {Layer} from '../topology/Layer';
 import {Matrix} from 'vectorious';
 import type {optimizerFn} from '../Optimizers';
-import {expect} from 'chai';
 
 
 export class DenseLayer extends Layer {
@@ -18,23 +17,15 @@ export class DenseLayer extends Layer {
     }
 
     activate(input: Activation): Activation {
-        expect(input.shape).to.deep.equal(this._inputShape);
-        const result = Matrix.multiply(input, this.weights);
-        expect(result.shape).to.deep.equal(this._outputShape);
-        return result;
+        return Matrix.multiply(input, this.weights);
     }
 
-    _propagate(activation: Activations, err: Err, activation_gradient: Gradient): [Deltas, Err, Gradient] {
-        expect(err.shape).to.deep.equal(this._outputShape);
-        expect(activation_gradient.shape).to.deep.equal(this._outputShape);
+    _propagate(activation: Activations, gradient: Gradient): [Deltas, Gradient] {
+        if (!(activation instanceof Matrix))
+            throw new TypeError();
 
-        const delta: Delta = Matrix.product(err, activation_gradient);
-        err = Matrix.multiply(err, this.weights.T);
-        activation_gradient = Matrix.ones(...this._inputShape);
-        expect(delta.shape).to.deep.equal(this._outputShape);
-        expect(err.shape).to.deep.equal(this._inputShape);
-        expect(activation_gradient.shape).to.deep.equal(this._inputShape);
-        return [delta, err, activation_gradient]
+        // const delta: Delta = Matrix.multiply(activation.T, gradient);
+        return [gradient, Matrix.multiply(gradient, this.weights.T)]
     }
 
     _applyDeltas(deltas: Deltas, activations: Activations, optimizer: optimizerFn): void {

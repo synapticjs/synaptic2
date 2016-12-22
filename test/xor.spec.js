@@ -5,6 +5,10 @@ import {FeedForwardNetwork, ActivationLayer, DenseLayer, Trainer, BiasedDenseLay
 import {any, max_loss, iterations} from '../src/Objectives';
 import {SGD} from '../src/Optimizers';
 import * as Loss from '../src/Loss';
+import random from 'seed-random';
+
+random('synaptic', {global: true});
+
 
 describe('SGD', () => {
     it('should work', () => {
@@ -59,27 +63,10 @@ describe('XOR', () => {
 
     it.only("should learn", () => {
         const XOR = new FeedForwardNetwork([
-            new BiasedDenseLayer([1, 2], [1, 2]),
-            new ActivationLayer([1, 2], 'sigmoid'),
-            new BiasedDenseLayer([1, 2], [1, 1]),
+            new DenseLayer([1, 2], [1, 5]),
+            new ActivationLayer([1, 5], 'sigmoid'),
+            new BiasedDenseLayer([1, 5], [1, 1]),
             new ActivationLayer([1, 1], 'sigmoid'),
-        ])
-
-        const dense1: BiasedDenseLayer = XOR._chain[0];
-        const dense2: BiasedDenseLayer = XOR._chain[2];
-        const biasedDense1: DenseLayer = dense1._chain[1];
-        const biasedDense2: DenseLayer = dense2._chain[1];
-
-        biasedDense1.weights = new Matrix([
-            [0.22302726165640835, 0.8152578268058458],
-            [0.05408151305826715, 0.4676811492495871],
-            [0.9296917583304284, 0.22871896319953897],
-        ])
-
-        biasedDense2.weights = new Matrix([
-            [0.7885197566582015],
-            [0.45483438097508644],
-            [0.7885197566582015],
         ])
 
         const trainer = new Trainer(XOR);
@@ -93,6 +80,11 @@ describe('XOR', () => {
                 ])
             }
         )
+
+        console.log(XOR.activate(new Matrix([[0, 0]])).toArray()[0]);
+        console.log(XOR.activate(new Matrix([[1, 1]])).toArray()[0]);
+        console.log(XOR.activate(new Matrix([[0, 1]])).toArray()[0]);
+        console.log(XOR.activate(new Matrix([[1, 0]])).toArray()[0]);
 
         assert.isAtMost(XOR.activate(new Matrix([[0, 0]])).toArray()[0], .49, "[0, 0] did not output 0");
         assert.isAtMost(XOR.activate(new Matrix([[1, 1]])).toArray()[0], .49, "[1, 1] did not output 0");

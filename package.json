@@ -27,6 +27,6 @@
     "babel-plugin-transform-flow-strip-types": "^6.18.0",
     "babel-preset-stage-1": "^6.16.0",
     "ramda": "^0.22.1",
-    "vectorious": "^4.3.3"
+    "vectorious": "^4.3.3", "seed-random": "latest"
   }
 }

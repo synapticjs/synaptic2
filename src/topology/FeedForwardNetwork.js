@@ -1,10 +1,6 @@
 import {NeuralNetGraphEdge} from './NeuralNetGraphEdge';
+import type {optimizerFn} from '../Optimizers';
 import R from 'ramda';
-
-const getLastActivationValue: (activations: Activations) => Activation = trainActivation =>
-    Array.isArray(trainActivation)
-        ? getLastActivationValue(R.last(trainActivation))
-        : trainActivation;
 
 export class FeedForwardNetwork extends NeuralNetGraphEdge {
     _chain: NeuralNetGraphEdge[];
@@ -37,7 +33,7 @@ export class FeedForwardNetwork extends NeuralNetGraphEdge {
         return {activationsSequence, activationOutput};
     }
 
-    _propagate(activations: Activations, err: Err, activation_gradient: Gradient): [Deltas, Err, Gradient] {
+    _propagate(activations: Activations, gradient: Gradient): [Deltas, Gradient] {
         if (!Array.isArray(activations))
             throw new TypeError();
 
@@ -46,16 +42,15 @@ export class FeedForwardNetwork extends NeuralNetGraphEdge {
             activations
         ]));
 
-        const deltas: Deltas[] = operations.map(([layer, activation]) => {
+        const deltas: Deltas[] = operations.map(([layer, activation]: [NeuralNetGraphEdge, Activation]) => {
             let delta;
-            [delta, err, activation_gradient] = layer._propagate(activation, err, activation_gradient);
+            [delta, gradient] = layer._propagate(activation, gradient);
             return delta;
         })
 
         return [
             R.reverse(deltas),
-            err,
-            activation_gradient,
+            gradient,
         ];
     }
 

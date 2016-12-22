@@ -3,7 +3,6 @@ import {Layer} from '../topology/Layer';
 import type {activationFn} from '../util/ActivationFunctions';
 import activationFns from '../util/ActivationFunctions';
 import {Matrix} from '../util/Matrix';
-import {expect} from 'chai';
 
 export class ActivationLayer extends Layer {
     static activationFns = activationFns;
@@ -27,30 +26,16 @@ export class ActivationLayer extends Layer {
     }
 
     activate(input: Activation): Activation {
-        expect(input.shape).to.deep.equal(this._inputShape);
         return input.map(this.activationFn.f)
     }
 
-    _propagate(activation: Activations, err: Err, activation_gradient: Gradient): [Deltas, Err, Gradient] {
+    _propagate(activation: Activations, error_gradient: Gradient): [Deltas, Gradient] {
         if (!(activation instanceof Matrix))
             throw new Error();
 
-        expect(activation.shape).to.deep.equal(this._inputShape);
-        expect(err.shape).to.deep.equal(this._outputShape);
-        expect(activation_gradient.shape).to.deep.equal(this._outputShape);
-
-
-        const internal_gradient: Gradient = activation.map(this.activationFn.df);
-
-        // console.log('activation gradient', activation, internal_gradient)
-
-        const gradient: Gradient = activation_gradient
-            ? Matrix.product(activation_gradient, internal_gradient)
-            : internal_gradient;
         return [
             undefined,
-            err,
-            gradient
+            Matrix.product(error_gradient, activation.map(this.activationFn.df))
         ]
     }
 }

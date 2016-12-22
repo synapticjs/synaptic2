@@ -21,11 +21,11 @@ export class Layer extends NeuralNetGraphEdge {
         return input;
     }
 
-    _propagate(activation: Activations, err: Err, activation_gradient: Gradient): [Deltas, Err, Gradient] {
+    _propagate(activation: Activations, gradient: Gradient): [Deltas, Gradient] {
         if (!(activation instanceof Matrix))
             throw new Error();
 
-        return [undefined, err, activation_gradient]
+        return [undefined, gradient]
     }
 
     _applyDeltas(deltas: Deltas, activations: Activations, optimizer: optimizerFn): void {
