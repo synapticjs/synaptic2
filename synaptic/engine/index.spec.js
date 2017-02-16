@@ -1,6 +1,6 @@
 //@flow
 import {expect} from 'chai';
-import * as mnist from '../_examples/util/mnist';
+import * as mnist from '../datasets/mnist';
 import {Graph} from './Graph';
 import * as layers from './layers';
 
