@@ -4,29 +4,29 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --recursive synaptic/**/*.spec.js"
   },
-  "author": "Juan Cazala <cazala@mail.sfsu.edu> (http://caza.la/)",
   "license": "MIT",
   "devDependencies": {
-    "babel-core": "^6.14.0",
-    "babel-jest": "^16.0.0",
-    "babel-loader": "^6.2.5",
-    "babel-polyfill": "^6.16.0",
-    "babel-preset-latest": "^6.16.0",
-    "flow-bin": "^0.36.0",
-    "jest-cli": "^16.0.2"
-  },
-  "jest": {
-    "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
-    "testEnvironment": "node"
-  },
-  "dependencies": {
+    "babel-core": "^6.23.1",
     "babel-plugin-syntax-flow": "^6.18.0",
     "babel-plugin-transform-class-properties": "^6.18.0",
     "babel-plugin-transform-flow-strip-types": "^6.18.0",
+    "babel-polyfill": "^6.16.0",
+    "babel-preset-latest": "^6.16.0",
     "babel-preset-stage-1": "^6.16.0",
-    "ramda": "^0.22.1",
-    "vectorious": "^4.3.3", "seed-random": "latest"
+    "babel-register": "^6.23.0",
+    "chai": "latest",
+    "flow-bin": "^0.36.0",
+    "mocha": "^3.2.0",
+    "seed-random": "latest"
+  },
+  "dependencies": {
+    "cwise": "^1.0.9",
+    "ndarray": "^1.0.18",
+    "ndarray-blas-level1": "latest",
+    "ndarray-blas-level2": "latest",
+    "ndarray-gemm": "latest",
+    "ramda": "^0.22.1"
   }
 }
