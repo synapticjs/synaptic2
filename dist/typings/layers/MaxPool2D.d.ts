@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class MaxPool2D {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class MaxPool2D implements INetworkLayer {
     downsampling: number;
     gater: number[];
     layer: number[];

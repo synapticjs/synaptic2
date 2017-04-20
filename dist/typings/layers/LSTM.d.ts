@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class LSTM {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class LSTM implements INetworkLayer {
     memoryBlocks: number;
     peepholes: boolean;
     prevLayer: any;

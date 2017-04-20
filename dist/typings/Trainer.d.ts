@@ -7,11 +7,6 @@ export declare enum CostTypes {
 export default class Trainer {
     network: Network;
     constructor(network: Network);
-    train(dataset: any, {learningRate, minError, maxIterations, costFunction}: {
-        learningRate: any;
-        minError: any;
-        maxIterations: any;
-        costFunction: any;
-    }): Promise<{}>;
+    train(dataset: any, {learningRate, minError, maxIterations, costFunction}?: any): Promise<{}>;
     test(dataset: any, options: any): void;
 }

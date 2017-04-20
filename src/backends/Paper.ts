@@ -253,7 +253,6 @@ export default class Paper {
   }
 
   train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
-    console.log({ learningRate, minError, maxIterations, costFunction })
     return new Promise(resolve => {
 
       // start training
@@ -275,11 +274,6 @@ export default class Paper {
         }
         error /= dataset.length
         iterations++
-        console.log({
-          error,
-          iterations,
-          time: new Date().getTime() - startTime
-        })
       }
 
       // end training
@@ -297,11 +291,5 @@ export default class Paper {
 
 // helper for doing summations
 function Σ(indexes: number[], fn: (num: number) => number) {
-  // return indexes.reduce((sum, value) => sum + fn(value), 0)
-  let acumulator = 0
-  for (let i = 0; i < indexes.length; i++) {
-    acumulator += fn(indexes[i])
-  }
-
-  return acumulator
+  return indexes.reduce((sum, value) => sum + fn(value), 0)
 }

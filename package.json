@@ -5,7 +5,10 @@
   "main": "engine.js",
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js",
-    "test": "jest",
+    "build:test": "NODE_ENV=test webpack --config webpack.config.js",
+    "test": "npm run build:test && jest",
+    "test:watch": "npm run build:test && jest --watch",
+    "test:coverage": "npm run build:test && jest --coverage",
     "dev": "webpack-dashboard -- webpack-dev-server --config ./webpack.config.js"
   },
   "author": "Juan Cazala <cazala@mail.sfsu.edu> (http://caza.la/)",

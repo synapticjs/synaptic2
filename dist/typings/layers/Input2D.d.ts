@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class Input2D {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class Input2D implements INetworkLayer {
     width: number;
     height: number;
     layer: number[];

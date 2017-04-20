@@ -1,18 +1,20 @@
 import Engine from '../Engine';
+import { CostTypes } from '../Trainer';
 export default class Paper {
     engine: Engine;
     constructor(engine?: Engine);
-    activateUnit(unit: any, input: any): any;
-    propagateUnit(unit: any, target: any): void;
-    bigParenthesisTerm(k: any, j: any): any;
-    activationFunction(unit: any): any;
-    activationFunctionDerivative(unit: any): number;
-    costFunction(target: any, predicted: any, costType: any): number;
-    activate(inputs: any): any;
-    propagate(targets: any): void;
+    activateUnit(unit: number, input: number): number;
+    propagateUnit(unit: number, target?: number): void;
+    /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
+    bigParenthesisTerm(k: number, j: number): number;
+    activationFunction(unit: number): number;
+    activationFunctionDerivative(unit: number): number;
+    costFunction(target: number[], predicted: number[], costType: CostTypes): number;
+    activate(inputs: number[]): number[];
+    propagate(targets: number[]): void;
     train(dataset: Array<{
-        input: any;
-        output: any;
+        input: number[];
+        output: number[];
     }>, {learningRate, minError, maxIterations, costFunction}: {
         learningRate: any;
         minError: any;

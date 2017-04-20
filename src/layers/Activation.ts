@@ -7,7 +7,7 @@ export class ReLU implements INetworkLayer {
 
   init(network: Network, boundary: IBoundary): IBoundary {
     if (boundary == null) {
-      throw new Error('\'Activation.ReLU\' cannot be the first layer of the network!')
+      throw new Error('\'Activation.ReLU\' can\'t be the first layer of the network!')
     }
 
     const prevLayer = boundary.layer

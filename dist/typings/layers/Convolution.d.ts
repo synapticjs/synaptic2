@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class Convolution {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class Convolution implements INetworkLayer {
     filter: number;
     height: number;
     depth: number;

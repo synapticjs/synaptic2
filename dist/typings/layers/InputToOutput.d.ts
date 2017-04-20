@@ -1,4 +1,4 @@
 import Network, { IBoundary } from '../Network';
-export declare class Direct {
+export default class Direct {
     reverseInit(network: Network, boundary: IBoundary): void;
 }

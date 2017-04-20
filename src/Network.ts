@@ -1,5 +1,5 @@
 import Engine, { StatusTypes, ActivationTypes } from './Engine'
-import Backend from './backends/Paper'
+import Backend from './backends/CPU'
 
 export interface IBoundary {
   width: number
@@ -64,8 +64,6 @@ export default class Network {
 
     // done
     this.engine.status = StatusTypes.IDLE
-
-    console.log(layers)
   }
 
   addUnit(activationFunction?: ActivationTypes) {

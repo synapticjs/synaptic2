@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class ZeroPadding2D {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class ZeroPadding2D implements INetworkLayer {
     padding: number;
     layer: number[];
     constructor(padding: number);

@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class Input3D {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class Input3D implements INetworkLayer {
     width: number;
     height: number;
     depth: number;

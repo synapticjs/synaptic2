@@ -1,11 +1,12 @@
 import Engine from './Engine';
 import Network from './Network';
 import Trainer from './Trainer';
+import CPU from './backends/CPU';
 import Paper from './backends/Paper';
 declare const backends: {
     ASM: {};
     BLAS: {};
-    CPU: {};
+    CPU: typeof CPU;
     GPU: {};
     Paper: typeof Paper;
     WebWorker: {};
@@ -19,7 +20,7 @@ import Dropout from './layers/Dropout';
 import Input from './layers/Input';
 import Input2D from './layers/Input2D';
 import Input3D from './layers/Input3D';
-import InputToOutput = require('./layers/InputToOutput');
+import InputToOutput from './layers/InputToOutput';
 import LSTM from './layers/LSTM';
 import MaxPool from './layers/MaxPool';
 import MaxPool2D from './layers/MaxPool2D';

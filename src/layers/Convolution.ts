@@ -24,7 +24,7 @@ export default class Convolution implements INetworkLayer {
   init(network: Network, boundary: IBoundary) {
 
     if (boundary == null) {
-      throw new Error('\'Convolution\' cannot be the first layer of the network!')
+      throw new Error('\'Convolution\' can\'t be the first layer of the network!')
     }
 
     this.layer = network.addLayer()

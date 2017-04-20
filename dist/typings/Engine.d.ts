@@ -37,7 +37,7 @@ export default class Engine {
     connections: any[];
     gates: any[];
     learningRate: number;
-    layers: any[];
+    layers: number[][];
     size: number;
     random: any;
     biasUnit: any;

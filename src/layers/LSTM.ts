@@ -24,7 +24,7 @@ export default class LSTM implements INetworkLayer {
   init(network: Network, boundary: IBoundary): IBoundary {
 
     if (boundary == null) {
-      throw new Error('\'LSTM\' cannot be the first layer of the network!')
+      throw new Error('\'LSTM\' can\'t be the first layer of the network!')
     }
 
     this.prevLayer = boundary.layer

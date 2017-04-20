@@ -20,7 +20,7 @@ export default class Convolution2D implements INetworkLayer {
   init(network: Network, boundary: IBoundary): IBoundary {
 
     if (boundary == null) {
-      throw new Error('\'Convolution2D\' cannot be the first layer of the network!')
+      throw new Error('\'Convolution2D\' can\'t be the first layer of the network!')
     }
 
     this.layer = network.addLayer()

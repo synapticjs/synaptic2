@@ -1,5 +1,5 @@
-import Network, { IBoundary } from '../Network';
-export default class Dropout {
+import Network, { IBoundary, INetworkLayer } from '../Network';
+export default class Dropout implements INetworkLayer {
     chances: number;
     gater: number[];
     layer: number[];

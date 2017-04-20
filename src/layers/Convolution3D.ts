@@ -16,7 +16,7 @@ export default class Convolution3D implements INetworkLayer {
 
   init(network: Network, boundary: IBoundary): IBoundary {
     if (boundary == null) {
-      throw new Error('\'Convolution3D\' cannot be the first layer of the network!')
+      throw new Error('\'Convolution3D\' can\'t be the first layer of the network!')
     }
 
     this.layer = network.addLayer()

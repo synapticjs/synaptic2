@@ -13,7 +13,7 @@ export default class MaxPool implements INetworkLayer {
   init(network: Network, boundary: IBoundary): IBoundary {
 
     if (boundary == null) {
-      throw new Error('\'MaxPool\' cannot be the first layer of the network!')
+      throw new Error('\'MaxPool\' can\'t be the first layer of the network!')
     }
 
     this.gater = network.addLayer()

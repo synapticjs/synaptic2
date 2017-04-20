@@ -301,7 +301,7 @@ export default class Engine {
   }
 
   static fromJSON(json) {
-    const data = JSON.parse(json)
+    const data = typeof json === 'string' ? JSON.parse(json) : json;
     const engine = new Engine()
     Object.keys(data).forEach(key => engine[key] = data[key])
     return engine
