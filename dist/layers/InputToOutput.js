@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// this is a direct all-to-all connection from input to output
 var Direct = (function () {
     function Direct() {
     }
@@ -17,6 +19,5 @@ var Direct = (function () {
     };
     return Direct;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Direct;
 //# sourceMappingURL=InputToOutput.js.map

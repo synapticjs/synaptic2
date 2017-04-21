@@ -1,11 +1,12 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Engine_1 = require("./Engine");
-var Paper_1 = require("./backends/Paper");
+var CPU_1 = require("./backends/CPU");
 var Network = (function () {
     function Network() {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i - 0] = arguments[_i];
+            args[_i] = arguments[_i];
         }
         var _this = this;
         var layers;
@@ -15,27 +16,29 @@ var Network = (function () {
                 this.backend = options.backend;
             }
             else if ('engine' in options) {
-                this.backend = new Paper_1.default(options.engine);
+                this.backend = new CPU_1.default(options.engine);
             }
             else if ('bias' in options || 'generator' in options) {
                 var engine = new Engine_1.default(options);
-                this.backend = new Paper_1.default(engine);
+                this.backend = new CPU_1.default(engine);
             }
             layers = options.layers || [];
         }
         else {
-            this.backend = new Paper_1.default();
+            this.backend = new CPU_1.default();
             layers = args.slice();
         }
         this.engine = this.backend.engine;
         var prevBoundary = null;
         var nextBoundary = null;
+        // init layers
         this.engine.status = Engine_1.StatusTypes.INIT;
         var boundaries = [];
         layers.forEach(function (layer) {
             prevBoundary = layer.init && layer.init(_this, prevBoundary) || prevBoundary;
             boundaries.push(prevBoundary);
         });
+        // reverse init layers
         this.engine.status = Engine_1.StatusTypes.REVERSE_INIT;
         boundaries.reverse();
         layers.concat().reverse()
@@ -43,8 +46,8 @@ var Network = (function () {
             nextBoundary = boundaries[index - 1] || nextBoundary;
             layer.reverseInit && layer.reverseInit(_this, nextBoundary);
         });
+        // done
         this.engine.status = Engine_1.StatusTypes.IDLE;
-        console.log(layers);
     }
     Network.prototype.addUnit = function (activationFunction) {
         return this.engine.addUnit(activationFunction);
@@ -63,7 +66,7 @@ var Network = (function () {
         return this.engine.addLayer(width * height * depth);
     };
     Network.prototype.getLayers = function () {
-        return this.engine.layers.slice();
+        return this.engine.layers.slice(); // return a clone of the layers array
     };
     Network.prototype.toJSON = function () {
         return this.engine.toJSON();
@@ -83,8 +86,8 @@ var Network = (function () {
     };
     return Network;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Network;
+// -- helper to figure out if the user passed options or just layers
 function hasOptions(args) {
     return args && (args.layers || args.engine || args.backend || args.bias || args.generator) && !args[0];
 }

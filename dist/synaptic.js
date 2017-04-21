@@ -55,6 +55,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// core
 	var Engine_1 = __webpack_require__(1);
 	exports.Engine = Engine_1.default;
@@ -125,7 +126,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 	// trying to keep the code as close as posible to the equations and as verbose as possible.
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// -- Activation Types
+	var ActivationTypes;
 	(function (ActivationTypes) {
 	    ActivationTypes[ActivationTypes["LOGISTIC_SIGMOID"] = 0] = "LOGISTIC_SIGMOID";
 	    ActivationTypes[ActivationTypes["TANH"] = 1] = "TANH";
@@ -133,9 +136,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ActivationTypes[ActivationTypes["MAX_POOLING"] = 3] = "MAX_POOLING";
 	    ActivationTypes[ActivationTypes["DROPOUT"] = 4] = "DROPOUT";
 	    ActivationTypes[ActivationTypes["IDENTITY"] = 5] = "IDENTITY";
-	})(exports.ActivationTypes || (exports.ActivationTypes = {}));
-	var ActivationTypes = exports.ActivationTypes;
+	})(ActivationTypes = exports.ActivationTypes || (exports.ActivationTypes = {}));
 	// -- Status Types
+	var StatusTypes;
 	(function (StatusTypes) {
 	    StatusTypes[StatusTypes["IDLE"] = 0] = "IDLE";
 	    StatusTypes[StatusTypes["INIT"] = 1] = "INIT";
@@ -143,8 +146,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    StatusTypes[StatusTypes["ACTIVATING"] = 3] = "ACTIVATING";
 	    StatusTypes[StatusTypes["PROPAGATING"] = 4] = "PROPAGATING";
 	    StatusTypes[StatusTypes["TRAINING"] = 5] = "TRAINING";
-	})(exports.StatusTypes || (exports.StatusTypes = {}));
-	var StatusTypes = exports.StatusTypes;
+	})(StatusTypes = exports.StatusTypes || (exports.StatusTypes = {}));
 	// -- Engine
 	var defaults = {
 	    bias: true,
@@ -399,13 +401,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Engine;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Engine;
 	// helper for removing duplicated ints from an array
 	function uniq() {
 	    var arrays = [];
 	    for (var _i = 0; _i < arguments.length; _i++) {
-	        arrays[_i - 0] = arguments[_i];
+	        arrays[_i] = arguments[_i];
 	    }
 	    var concated = arrays.reduce(function (concated, array) { return concated.concat(array || []); }, []);
 	    var o = {}, a = [], i;
@@ -422,15 +423,16 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var CPU_1 = __webpack_require__(3);
 	var Network = (function () {
 	    function Network() {
-	        var _this = this;
 	        var args = [];
 	        for (var _i = 0; _i < arguments.length; _i++) {
-	            args[_i - 0] = arguments[_i];
+	            args[_i] = arguments[_i];
 	        }
+	        var _this = this;
 	        var layers;
 	        var options = args[0];
 	        if (hasOptions(options)) {
@@ -508,7 +510,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Network;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Network;
 	// -- helper to figure out if the user passed options or just layers
 	function hasOptions(args) {
@@ -523,51 +524,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 	// trying to keep the code as close as posible to the equations and as verbose as possible.
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var Trainer_1 = __webpack_require__(4);
 	var CPU = (function () {
 	    function CPU(engine) {
 	        if (engine === void 0) { engine = new Engine_1.default(); }
 	        this.engine = engine;
-	        this.activateUnit = this.activateUnit.bind(this);
-	        this.propagateUnit = this.propagateUnit.bind(this);
-	        this.activate = this.activate.bind(this);
-	        this.propagate = this.propagate.bind(this);
-	        this.bigParenthesisTerm = this.bigParenthesisTerm.bind(this);
-	        this.activationFunction = this.activationFunction.bind(this);
-	        this.activationFunctionDerivative = this.activationFunctionDerivative.bind(this);
-	        this.costFunction = this.costFunction.bind(this);
-	        this.train = this.train.bind(this);
 	    }
 	    CPU.prototype.activateUnit = function (j, input) {
+	        var engine = this.engine;
+	        var weight = engine.weight;
+	        var gain = engine.gain;
+	        var gatedBy = engine.gatedBy[j];
+	        var activation = engine.activation;
+	        var inputSet = engine.inputSet[j];
+	        var inputsOfGatedBy = engine.inputsOfGatedBy;
+	        var state = engine.state;
 	        if (typeof input !== 'undefined') {
-	            this.engine.activation[j] = input;
+	            activation[j] = input;
 	        }
 	        else {
 	            var i = void 0, k = void 0, h = void 0, g = void 0, to = void 0, from = void 0;
-	            this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j];
-	            for (h = 0; h < this.engine.inputSet[j].length; h++) {
-	                i = this.engine.inputSet[j][h];
-	                this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i];
+	            state[j] *= gain[j][j] * weight[j][j];
+	            for (h = 0; h < inputSet.length; h++) {
+	                i = inputSet[h];
+	                state[j] += gain[j][i] * weight[j][i] * activation[i];
 	            }
-	            this.engine.activation[j] = this.activationFunction(j);
-	            for (h = 0; h < this.engine.inputSet[j].length; h++) {
-	                i = this.engine.inputSet[j][h];
-	                this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i];
-	                for (g = 0; g < this.engine.gatedBy[j].length; g++) {
-	                    k = this.engine.gatedBy[j][g];
-	                    this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j);
+	            activation[j] = this.activationFunction(j);
+	            for (h = 0; h < inputSet.length; h++) {
+	                i = inputSet[h];
+	                var elegibilityTrace = engine.elegibilityTrace[j][i];
+	                engine.elegibilityTrace[j][i] = gain[j][j] * weight[j][j] * elegibilityTrace + gain[j][i] * activation[i];
+	                for (g = 0; g < gatedBy.length; g++) {
+	                    k = gatedBy[g];
+	                    var extElegibilityTrace = engine.extendedElegibilityTrace[j][i];
+	                    extElegibilityTrace[k] = gain[k][k] * weight[k][k] * extElegibilityTrace[k] + this.activationFunctionDerivative(j) * elegibilityTrace * this.bigParenthesisTerm(k, j);
 	                }
 	            }
-	            for (h = 0; h < this.engine.gatedBy[j].length; h++) {
-	                to = this.engine.gatedBy[j][h];
-	                for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
-	                    from = this.engine.inputsOfGatedBy[to][j][g];
-	                    this.engine.gain[to][from] = this.engine.activation[j];
+	            for (h = 0; h < gatedBy.length; h++) {
+	                to = gatedBy[h];
+	                for (g = 0; g < inputsOfGatedBy[to][j].length; g++) {
+	                    from = inputsOfGatedBy[to][j][g];
+	                    gain[to][from] = activation[j];
 	                }
 	            }
 	        }
-	        return this.engine.activation[j];
+	        return activation[j];
 	    };
 	    CPU.prototype.propagateUnit = function (j, target) {
 	        var i, k, h, g;
@@ -580,13 +583,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                k = this.engine.projectionSet[j][h];
 	                this.engine.projectedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j];
 	            }
-	            this.engine.projectedErrorResponsibility[j] *= this.activationFunctionDerivative(j);
+	            var derivative = this.activationFunctionDerivative(j);
+	            this.engine.projectedErrorResponsibility[j] *= derivative;
 	            this.engine.gatedErrorResponsibility[j] = 0;
 	            for (h = 0; h < this.engine.gateSet[j].length; h++) {
 	                k = this.engine.gateSet[j][h];
 	                this.engine.gatedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j);
 	            }
-	            this.engine.gatedErrorResponsibility[j] *= this.activationFunctionDerivative(j);
+	            this.engine.gatedErrorResponsibility[j] *= derivative;
 	            this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] + this.engine.gatedErrorResponsibility[j];
 	        }
 	        for (h = 0; h < this.engine.inputSet[j].length; h++) {
@@ -647,10 +651,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var type = this.engine.activationFunction[unit];
 	        switch (type) {
 	            case Engine_1.ActivationTypes.LOGISTIC_SIGMOID:
-	                x = this.activationFunction(unit);
+	                x = this.engine.activation[unit];
 	                return x * (1 - x);
 	            case Engine_1.ActivationTypes.TANH:
-	                x = this.activationFunction(unit);
+	                x = this.engine.activation[unit];
 	                return 1 - Math.pow(x, 2);
 	            case Engine_1.ActivationTypes.RELU:
 	                return 0;
@@ -749,7 +753,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return CPU;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = CPU;
 
 
@@ -758,12 +761,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// -- Cost Types
-	exports.CostTypes = {
-	    MSE: 0,
-	    CROSS_ENTROPY: 1,
-	    BINARY: 2
-	};
+	var CostTypes;
+	(function (CostTypes) {
+	    CostTypes[CostTypes["MSE"] = 0] = "MSE";
+	    CostTypes[CostTypes["CROSS_ENTROPY"] = 1] = "CROSS_ENTROPY";
+	    CostTypes[CostTypes["BINARY"] = 2] = "BINARY";
+	})(CostTypes = exports.CostTypes || (exports.CostTypes = {}));
 	// -- Trainer
 	var Trainer = (function () {
 	    function Trainer(network) {
@@ -775,16 +780,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            learningRate: learningRate || 0.3,
 	            minError: minError || 0.0005,
 	            maxIterations: maxIterations || 5000,
-	            costFunction: costFunction || exports.CostTypes.MSE
+	            costFunction: costFunction || CostTypes.MSE
 	        });
 	    };
 	    Trainer.prototype.test = function (dataset, options) {
 	        // TODO
 	    };
-	    Trainer.CostTypes = exports.CostTypes;
 	    return Trainer;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
+	Trainer.CostTypes = CostTypes;
 	exports.default = Trainer;
 
 
@@ -794,6 +798,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
+	// TODO
 	exports.default = {};
 
 
@@ -803,6 +808,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
+	// TODO
 	exports.default = {};
 
 
@@ -812,6 +818,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
+	// TODO
 	exports.default = {};
 
 
@@ -822,6 +829,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 	// trying to keep the code as close as posible to the equations and as verbose as possible.
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var Trainer_1 = __webpack_require__(4);
 	var Paper = (function () {
@@ -917,13 +925,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // eq. 23
 	            δ[j] = δP[j] + δG[j];
 	        }
-	        // step 2: compute deltas (Δw) and adjust the weights for all the inputs of j
-	        var _loop_1 = function(i) {
+	        var _loop_1 = function (i) {
 	            // eq. 24
 	            var Δw = α * δP[j] * ε[j][i] + α * Σ(G[j], function (k) { return δ[k] * xε[j][i][k]; });
 	            // adjust the weights using delta
 	            w[j][i] += Δw;
 	        };
+	        // step 2: compute deltas (Δw) and adjust the weights for all the inputs of j
 	        for (var _i = 0, _a = inputSet[j]; _i < _a.length; _i++) {
 	            var i = _a[_i];
 	            _loop_1(i);
@@ -1074,7 +1082,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Paper;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Paper;
 	// --
 	// helper for doing summations
@@ -1089,6 +1096,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
+	// TODO
 	exports.default = {};
 
 
@@ -1097,6 +1105,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var ReLU = (function () {
 	    function ReLU() {
@@ -1129,6 +1138,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// this is based on this article: http://cs231n.github.io/convolutional-networks/
 	var Convolution = (function () {
 	    function Convolution(_a) {
@@ -1187,7 +1197,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Convolution;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Convolution;
 
 
@@ -1196,6 +1205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// this is based on this article: http://cs231n.github.io/convolutional-networks/
 	var Convolution2D = (function () {
 	    function Convolution2D(_a) {
@@ -1254,7 +1264,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Convolution2D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Convolution2D;
 
 
@@ -1263,6 +1272,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// this is based on this article: http://cs231n.github.io/convolutional-networks/
 	var Convolution3D = (function () {
 	    function Convolution3D(_a) {
@@ -1321,7 +1331,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Convolution3D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Convolution3D;
 
 
@@ -1330,6 +1339,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Dense = (function () {
 	    function Dense(size) {
 	        this.size = size;
@@ -1356,7 +1366,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Dense;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Dense;
 
 
@@ -1365,6 +1374,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var Dropout = (function () {
 	    function Dropout(chances) {
@@ -1405,7 +1415,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Dropout;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Dropout;
 
 
@@ -1414,6 +1423,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Input = (function () {
 	    function Input(size) {
 	        this.size = size;
@@ -1433,7 +1443,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Input;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Input;
 
 
@@ -1442,6 +1451,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Input2D = (function () {
 	    function Input2D(width, height) {
 	        this.width = width;
@@ -1463,7 +1473,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Input2D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Input2D;
 
 
@@ -1472,6 +1481,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Input3D = (function () {
 	    function Input3D(width, height, depth) {
 	        this.width = width;
@@ -1494,7 +1504,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Input3D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Input3D;
 
 
@@ -1503,6 +1512,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// this is a direct all-to-all connection from input to output
 	var Direct = (function () {
 	    function Direct() {
@@ -1522,7 +1532,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return Direct;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Direct;
 
 
@@ -1531,6 +1540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 	var defaults = {
 	    peepholes: true
@@ -1590,7 +1600,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return LSTM;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = LSTM;
 	// ---
 	// helper to connect layers
@@ -1606,7 +1615,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// helper to gate layers
 	function gateLayer(network, gaterLayer, gatedLayer, gateType) {
 	    var from, to, gater;
-	    var _loop_1 = function(index) {
+	    var _loop_1 = function (index) {
 	        switch (gateType) {
 	            // the gater layer will gate all the self connections of the gated layer
 	            case 'SELF':
@@ -1650,6 +1659,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var MaxPool = (function () {
 	    function MaxPool(downsampling) {
@@ -1708,7 +1718,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return MaxPool;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = MaxPool;
 
 
@@ -1717,6 +1726,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var MaxPool2D = (function () {
 	    function MaxPool2D(downsampling) {
@@ -1777,7 +1787,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return MaxPool2D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = MaxPool2D;
 
 
@@ -1786,6 +1795,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var MaxPool3D = (function () {
 	    function MaxPool3D(downsampling) {
@@ -1849,7 +1859,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return MaxPool3D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = MaxPool3D;
 
 
@@ -1858,6 +1867,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var ZeroPadding = (function () {
 	    function ZeroPadding(padding) {
@@ -1902,7 +1912,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return ZeroPadding;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = ZeroPadding;
 
 
@@ -1911,6 +1920,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var ZeroPadding2D = (function () {
 	    function ZeroPadding2D(padding) {
@@ -1955,7 +1965,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return ZeroPadding2D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = ZeroPadding2D;
 
 
@@ -1964,6 +1973,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
 	var Engine_1 = __webpack_require__(1);
 	var ZeroPadding3D = (function () {
 	    function ZeroPadding3D(padding) {
@@ -2008,7 +2018,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    return ZeroPadding3D;
 	}());
-	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = ZeroPadding3D;
 
 

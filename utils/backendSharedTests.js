@@ -62,7 +62,7 @@ function isAlmostEqual(description, received, expected, precision, logLevel, lev
 
 function getLSTM(Backend) {
     var json = JSON.parse(JSON.stringify(lstmJSON))
-    var lstm = new synaptic.Network.fromJSON(json)
+    var lstm = synaptic.Network.fromJSON(json)
     lstm.backend = new Backend(lstm.engine)
     return lstm
 }
@@ -97,7 +97,7 @@ function testTimingTask(Backend) {
 
 function testDiscreteSequenceRecallTask(Backend, options) {
   describe('Tasks', () => {
-    test('should pass Descrete Sequence Recall Task in less than 200 iterations', done => {
+    test('should pass Descrete Sequence Recall Task with more than 80% success rate', done => {
       var lstm = new synaptic.Network(
         new synaptic.layers.Input(6),
         new synaptic.layers.LSTM(7),
@@ -107,17 +107,15 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       lstm.backend = new Backend(lstm.engine)
       lstm.learningRate = 0.1;
 
-      options = options || {};
-      var targets = options.targets || [2, 4];
-      var distractors = options.distractors || [3, 5, 6, 9];
-      var prompts = options.prompts || [0, 1];
-      var length = options.length || 10;
-      var criterion = options.success || 0.80;
-      var iterations = options.iterations || 100000;
-      var rate = options.rate || .1;
-      var log = options.log || 1000;
-      var schedule = options.schedule || {};
-      var cost = options.cost || this.cost || synaptic.Trainer.CostTypes.CROSS_ENTROPY;
+      var targets = [2, 4];
+      var distractors = [3, 5, 6, 9];
+      var prompts = [0, 1];
+      var length = 10;
+      var criterion = 0.80;
+      var iterations = 100000;
+      var rate = .1;
+      var schedule = {};
+      var cost = synaptic.Trainer.CostTypes.CROSS_ENTROPY;
 
       var trial, correct, i, j, success;
       trial = correct = i = j = success = 0;
@@ -140,7 +138,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         return true;
       };
 
-      var start = Date.now();
+      var start = new Date;
 
       while (trial < iterations && (success < criterion || trial % 1000 != 0)) {
         // generate sequence
@@ -209,30 +207,16 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         divideError = divideError == 0 ? 1000 : divideError;
         success = correct / divideError;
         error /= length;
-
-        // log
-        if (log && trial % log == 0)
-          console.log("iterations:", trial, " success:", success, " correct:",
-            correct, " time:", Date.now() - start, " error:", error);
-        if (schedule.do && schedule.every && trial % schedule.every == 0)
-          schedule.do({
-            iterations: trial,
-            success: success,
-            error: error,
-            time: Date.now() - start,
-            correct: correct
-          });
       }
 
-      var result = {
+      var results = {
         iterations: trial,
         success: success,
         error: error,
         time: Date.now() - start
       }
 
-      console.log(result)
-      expect(result.success).toBeLessThan(0.9)
+      expect(results.success).toBeGreaterThan(0.8)
       done()
     })
   })
@@ -241,8 +225,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 function testBackend(description, Backend, options) {
   describe(description, () => {
     //testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
-    testDiscreteSequenceRecallTask(Backend);
-    //testTimingTask(Backend)
+    //testDiscreteSequenceRecallTask(Backend);
+    testTimingTask(Backend)
   })
 }
 

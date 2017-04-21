@@ -1,10 +1,13 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// -- Cost Types
+var CostTypes;
 (function (CostTypes) {
     CostTypes[CostTypes["MSE"] = 0] = "MSE";
     CostTypes[CostTypes["CROSS_ENTROPY"] = 1] = "CROSS_ENTROPY";
     CostTypes[CostTypes["BINARY"] = 2] = "BINARY";
-})(exports.CostTypes || (exports.CostTypes = {}));
-var CostTypes = exports.CostTypes;
+})(CostTypes = exports.CostTypes || (exports.CostTypes = {}));
+// -- Trainer
 var Trainer = (function () {
     function Trainer(network) {
         this.network = network;
@@ -19,9 +22,10 @@ var Trainer = (function () {
         });
     };
     Trainer.prototype.test = function (dataset, options) {
+        // TODO
     };
     return Trainer;
 }());
-Object.defineProperty(exports, "__esModule", { value: true });
+Trainer.CostTypes = CostTypes;
 exports.default = Trainer;
 //# sourceMappingURL=Trainer.js.map

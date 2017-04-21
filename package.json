@@ -9,16 +9,17 @@
     "test": "npm run build:test && jest",
     "test:watch": "npm run build:test && jest --watch",
     "test:coverage": "npm run build:test && jest --coverage",
-    "dev": "webpack-dashboard -- webpack-dev-server --config ./webpack.config.js"
+    "dev": "webpack-dashboard -- webpack-dev-server --config ./webpack.config.js",
+    "build:node": "`npm bin`/tsc"
   },
   "author": "Juan Cazala <cazala@mail.sfsu.edu> (http://caza.la/)",
   "license": "MIT",
   "devDependencies": {
     "jest-cli": "^16.0.2",
-    "ts-loader": "^1.2.2",
+    "ts-loader": "^2.0.3",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
-    "typescript": "^2.0.10",
+    "typescript": "^2.2.2",
     "webpack": "^1.13.2",
     "webpack-dashboard": "^0.2.0",
     "webpack-dev-server": "^1.16.2"

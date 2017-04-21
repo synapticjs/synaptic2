@@ -1,10 +1,13 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// core
 var Engine_1 = require("./Engine");
 exports.Engine = Engine_1.default;
 var Network_1 = require("./Network");
 exports.Network = Network_1.default;
 var Trainer_1 = require("./Trainer");
 exports.Trainer = Trainer_1.default;
+// backends
 var ASM_1 = require("./backends/ASM");
 var BLAS_1 = require("./backends/BLAS");
 var CPU_1 = require("./backends/CPU");
@@ -20,6 +23,7 @@ var backends = {
     WebWorker: WebWorker_1.default
 };
 exports.backends = backends;
+// layers
 var Activation = require("./layers/Activation");
 var Convolution_1 = require("./layers/Convolution");
 var Convolution2D_1 = require("./layers/Convolution2D");

@@ -6,51 +6,45 @@ import { CostTypes } from '../Trainer'
 
 export default class CPU {
   constructor(public engine = new Engine()) {
-    this.activateUnit = this.activateUnit.bind(this)
-    this.propagateUnit = this.propagateUnit.bind(this)
-    this.activate = this.activate.bind(this)
-    this.propagate = this.propagate.bind(this)
-    this.bigParenthesisTerm = this.bigParenthesisTerm.bind(this)
-    this.activationFunction = this.activationFunction.bind(this)
-    this.activationFunctionDerivative = this.activationFunctionDerivative.bind(this)
-    this.costFunction = this.costFunction.bind(this)
-    this.train = this.train.bind(this)
+    
   }
 
   activateUnit(j: number, input?: number): number {
+    const engine = this.engine
+
     if (typeof input !== 'undefined') {
 
-      this.engine.activation[j] = input
+      engine.activation[j] = input
 
     } else {
       let i, k, h, g, to, from
-      this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j]
-      for (h = 0; h < this.engine.inputSet[j].length; h++) {
-        i = this.engine.inputSet[j][h]
-        this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i]
+      engine.state[j] *= engine.gain[j][j] * engine.weight[j][j]
+      for (h = 0; h < engine.inputSet[j].length; h++) {
+        i = engine.inputSet[j][h]
+        engine.state[j] += engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
       }
 
-      this.engine.activation[j] = this.activationFunction(j)
+      engine.activation[j] = this.activationFunction(j)
 
-      for (h = 0; h < this.engine.inputSet[j].length; h++) {
-        i = this.engine.inputSet[j][h]
-        this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
-        for (g = 0; g < this.engine.gatedBy[j].length; g++) {
-          k = this.engine.gatedBy[j][g]
-          this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
+      for (h = 0; h < engine.inputSet[j].length; h++) {
+        i = engine.inputSet[j][h]
+        engine.elegibilityTrace[j][i] = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
+        for (g = 0; g < engine.gatedBy[j].length; g++) {
+          k = engine.gatedBy[j][g]
+          engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
         }
       }
 
-      for (h = 0; h < this.engine.gatedBy[j].length; h++) {
-        to = this.engine.gatedBy[j][h]
-        for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
-          from = this.engine.inputsOfGatedBy[to][j][g]
-          this.engine.gain[to][from] = this.engine.activation[j]
+      for (h = 0; h < engine.gatedBy[j].length; h++) {
+        to = engine.gatedBy[j][h]
+        for (g = 0; g < engine.inputsOfGatedBy[to][j].length; g++) {
+          from = engine.inputsOfGatedBy[to][j][g]
+          engine.gain[to][from] = engine.activation[j]
         }
       }
     }
 
-    return this.engine.activation[j]
+    return engine.activation[j]
   }
 
   propagateUnit(j: number, target?: number) {
@@ -65,14 +59,15 @@ export default class CPU {
         k = this.engine.projectionSet[j][h]
         this.engine.projectedErrorResponsibility[j] +=  this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
       }
-      this.engine.projectedErrorResponsibility[j] *= this.activationFunctionDerivative(j)
+      const derivative = this.activationFunctionDerivative(j)
+      this.engine.projectedErrorResponsibility[j] *= derivative
 
       this.engine.gatedErrorResponsibility[j] = 0
       for (h = 0; h < this.engine.gateSet[j].length; h++) {
         k = this.engine.gateSet[j][h]
         this.engine.gatedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
       }
-      this.engine.gatedErrorResponsibility[j] *= this.activationFunctionDerivative(j)
+      this.engine.gatedErrorResponsibility[j] *= derivative
 
       this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] + this.engine.gatedErrorResponsibility[j]
 
@@ -142,11 +137,11 @@ export default class CPU {
     const type = this.engine.activationFunction[unit]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.activationFunction(unit)
+        x = this.engine.activation[unit]
         return x * (1 - x)
 
       case ActivationTypes.TANH:
-        x = this.activationFunction(unit)
+        x = this.engine.activation[unit]
         return 1 - Math.pow(x, 2)
 
       case ActivationTypes.RELU:
@@ -163,7 +158,7 @@ export default class CPU {
     }
   }
 
-  costFunction(target: number[], predicted: number[], costType: number) {
+  costFunction(target: number[], predicted: number[], costType: CostTypes) {
     let i: number, x = 0
     switch (costType) {
       case CostTypes.MSE:
