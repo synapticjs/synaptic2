@@ -759,12 +759,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	// -- Cost Types
-	(function (CostTypes) {
-	    CostTypes[CostTypes["MSE"] = 0] = "MSE";
-	    CostTypes[CostTypes["CROSS_ENTROPY"] = 1] = "CROSS_ENTROPY";
-	    CostTypes[CostTypes["BINARY"] = 2] = "BINARY";
-	})(exports.CostTypes || (exports.CostTypes = {}));
-	var CostTypes = exports.CostTypes;
+	exports.CostTypes = {
+	    MSE: 0,
+	    CROSS_ENTROPY: 1,
+	    BINARY: 2
+	};
 	// -- Trainer
 	var Trainer = (function () {
 	    function Trainer(network) {
@@ -776,12 +775,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            learningRate: learningRate || 0.3,
 	            minError: minError || 0.0005,
 	            maxIterations: maxIterations || 5000,
-	            costFunction: costFunction || CostTypes.MSE
+	            costFunction: costFunction || exports.CostTypes.MSE
 	        });
 	    };
 	    Trainer.prototype.test = function (dataset, options) {
 	        // TODO
 	    };
+	    Trainer.CostTypes = exports.CostTypes;
 	    return Trainer;
 	}());
 	Object.defineProperty(exports, "__esModule", { value: true });

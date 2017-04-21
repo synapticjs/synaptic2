@@ -200,7 +200,7 @@ export default class Paper {
     }
   }
 
-  costFunction(target: number[], predicted: number[], costType: CostTypes) {
+  costFunction(target: number[], predicted: number[], costType: number) {
     let i: number, x = 0
     switch (costType) {
       case CostTypes.MSE:

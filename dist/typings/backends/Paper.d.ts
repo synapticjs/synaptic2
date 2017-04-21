@@ -1,5 +1,4 @@
 import Engine from '../Engine';
-import { CostTypes } from '../Trainer';
 export default class Paper {
     engine: Engine;
     constructor(engine?: Engine);
@@ -9,7 +8,7 @@ export default class Paper {
     bigParenthesisTerm(k: number, j: number): number;
     activationFunction(unit: number): number;
     activationFunctionDerivative(unit: number): number;
-    costFunction(target: number[], predicted: number[], costType: CostTypes): number;
+    costFunction(target: number[], predicted: number[], costType: number): number;
     activate(inputs: number[]): number[];
     propagate(targets: number[]): void;
     train(dataset: Array<{

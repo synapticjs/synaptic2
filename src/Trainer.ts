@@ -1,15 +1,18 @@
 import Network from './Network'
 // -- Cost Types
 
-export enum CostTypes {
-  MSE,
-  CROSS_ENTROPY,
-  BINARY
+export const CostTypes = {
+  MSE: 0,
+  CROSS_ENTROPY: 1,
+  BINARY: 2
 }
 
 // -- Trainer
 
 export default class Trainer {
+
+  static CostTypes = CostTypes
+
   constructor(public network: Network) {
 
   }
