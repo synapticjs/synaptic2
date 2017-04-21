@@ -9,39 +9,52 @@ export default class CPU {
     
   }
 
+  computeState (j: number) {
+    const engine = this.engine
+    let i, h
+    engine.state[j] *= engine.gain[j][j] * engine.weight[j][j]
+    for (h = 0; h < engine.inputSet[j].length; h++) {
+      i = engine.inputSet[j][h]
+      engine.state[j] += engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
+    }
+  }
+
+  computeTraces(j: number) {
+    const engine = this.engine
+    let i, h, g, k
+    for (h = 0; h < engine.inputSet[j].length; h++) {
+      i = engine.inputSet[j][h]
+      engine.elegibilityTrace[j][i] = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
+      for (g = 0; g < engine.gatedBy[j].length; g++) {
+        k = engine.gatedBy[j][g]
+        engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
+      }
+    }
+  }
+
+  gateUnits(j: number) {
+    const engine = this.engine
+    let h, g, to, from
+    for (h = 0; h < engine.gatedBy[j].length; h++) {
+      to = engine.gatedBy[j][h]
+      for (g = 0; g < engine.inputsOfGatedBy[to][j].length; g++) {
+        from = engine.inputsOfGatedBy[to][j][g]
+        engine.gain[to][from] = engine.activation[j]
+      }
+    }
+  }
+
   activateUnit(j: number, input?: number): number {
     const engine = this.engine
 
     if (typeof input !== 'undefined') {
-
       engine.activation[j] = input
-
     } else {
       let i, k, h, g, to, from
-      engine.state[j] *= engine.gain[j][j] * engine.weight[j][j]
-      for (h = 0; h < engine.inputSet[j].length; h++) {
-        i = engine.inputSet[j][h]
-        engine.state[j] += engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
-      }
-
+      this.computeState(j)
       engine.activation[j] = this.activationFunction(j)
-
-      for (h = 0; h < engine.inputSet[j].length; h++) {
-        i = engine.inputSet[j][h]
-        engine.elegibilityTrace[j][i] = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
-        for (g = 0; g < engine.gatedBy[j].length; g++) {
-          k = engine.gatedBy[j][g]
-          engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
-        }
-      }
-
-      for (h = 0; h < engine.gatedBy[j].length; h++) {
-        to = engine.gatedBy[j][h]
-        for (g = 0; g < engine.inputsOfGatedBy[to][j].length; g++) {
-          from = engine.inputsOfGatedBy[to][j][g]
-          engine.gain[to][from] = engine.activation[j]
-        }
-      }
+      this.computeTraces(j)
+      this.gateUnits(j)
     }
 
     return engine.activation[j]
