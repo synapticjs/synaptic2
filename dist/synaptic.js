@@ -532,51 +532,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (engine === void 0) { engine = new Engine_1.default(); }
 	        this.engine = engine;
 	    }
-	    CPU.prototype.computeState = function (j) {
-	        var engine = this.engine;
-	        var i, h;
-	        engine.state[j] *= engine.gain[j][j] * engine.weight[j][j];
-	        for (h = 0; h < engine.inputSet[j].length; h++) {
-	            i = engine.inputSet[j][h];
-	            engine.state[j] += engine.gain[j][i] * engine.weight[j][i] * engine.activation[i];
-	        }
-	    };
-	    CPU.prototype.computeTraces = function (j) {
-	        var engine = this.engine;
-	        var i, h, g, k;
-	        for (h = 0; h < engine.inputSet[j].length; h++) {
-	            i = engine.inputSet[j][h];
-	            engine.elegibilityTrace[j][i] = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i];
-	            for (g = 0; g < engine.gatedBy[j].length; g++) {
-	                k = engine.gatedBy[j][g];
-	                engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j);
-	            }
-	        }
-	    };
-	    CPU.prototype.gateUnits = function (j) {
-	        var engine = this.engine;
-	        var h, g, to, from;
-	        for (h = 0; h < engine.gatedBy[j].length; h++) {
-	            to = engine.gatedBy[j][h];
-	            for (g = 0; g < engine.inputsOfGatedBy[to][j].length; g++) {
-	                from = engine.inputsOfGatedBy[to][j][g];
-	                engine.gain[to][from] = engine.activation[j];
-	            }
-	        }
-	    };
 	    CPU.prototype.activateUnit = function (j, input) {
-	        var engine = this.engine;
 	        if (typeof input !== 'undefined') {
-	            engine.activation[j] = input;
+	            this.engine.activation[j] = input;
 	        }
 	        else {
 	            var i = void 0, k = void 0, h = void 0, g = void 0, to = void 0, from = void 0;
-	            this.computeState(j);
-	            engine.activation[j] = this.activationFunction(j);
-	            this.computeTraces(j);
-	            this.gateUnits(j);
+	            this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j];
+	            for (h = 0; h < this.engine.inputSet[j].length; h++) {
+	                i = this.engine.inputSet[j][h];
+	                this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i];
+	            }
+	            this.engine.activation[j] = this.activationFunction(j);
+	            for (h = 0; h < this.engine.inputSet[j].length; h++) {
+	                i = this.engine.inputSet[j][h];
+	                this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i];
+	                for (g = 0; g < this.engine.gatedBy[j].length; g++) {
+	                    k = this.engine.gatedBy[j][g];
+	                    this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j);
+	                }
+	            }
+	            for (h = 0; h < this.engine.gatedBy[j].length; h++) {
+	                to = this.engine.gatedBy[j][h];
+	                for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
+	                    from = this.engine.inputsOfGatedBy[to][j][g];
+	                    this.engine.gain[to][from] = this.engine.activation[j];
+	                }
+	            }
 	        }
-	        return engine.activation[j];
+	        return this.engine.activation[j];
 	    };
 	    CPU.prototype.propagateUnit = function (j, target) {
 	        var i, k, h, g;

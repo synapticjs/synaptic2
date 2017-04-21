@@ -81,13 +81,14 @@ function testTimingTask(Backend) {
     var lstm = getLSTM(Backend)
     var trainer = new synaptic.Trainer(lstm)
 
-    test('should pass Timing Task in less than 200 iterations', done => {
+    test('should pass Timing Task with an error lower than 0.05 in less than 200 iterations', done => {
       trainer.train(samplesTimingTask.train, {
           learningRate: 0.03,
           minError: 0.05,
           maxIterations: 200
       })
       .then(result => {
+        expect(result.error).toBeLessThan(0.05);
         expect(result.iterations).toBeLessThan(200);
         done()
       })
@@ -97,7 +98,7 @@ function testTimingTask(Backend) {
 
 function testDiscreteSequenceRecallTask(Backend, options) {
   describe('Tasks', () => {
-    test('should pass Descrete Sequence Recall Task with more than 80% success rate', done => {
+    test('should pass Descrete Sequence Recall Task with at least 80% success rate in less than 100k iterations', done => {
       var lstm = new synaptic.Network(
         new synaptic.layers.Input(6),
         new synaptic.layers.LSTM(7),
@@ -108,7 +109,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       lstm.learningRate = 0.1;
 
       var targets = [2, 4];
-      var distractors = [3, 5, 6, 9];
+      var distractors = [3, 5];
       var prompts = [0, 1];
       var length = 10;
       var criterion = 0.80;
@@ -140,7 +141,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 
       var start = new Date;
 
-      while (trial < iterations && (success < criterion || trial % 1000 != 0)) {
+      while (trial < iterations && success < criterion) {
         // generate sequence
         var sequence = [],
           sequenceLength = length - prompts.length;
@@ -216,7 +217,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         time: Date.now() - start
       }
 
-      expect(results.success).toBeGreaterThan(0.8)
+      expect(results.success).toBeGreaterThanOrEqual(0.8)
+      expect(results.iterations).toBeLessThan(100 * 1000)
       done()
     })
   })
@@ -224,8 +226,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 
 function testBackend(description, Backend, options) {
   describe(description, () => {
-    //testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
-    //testDiscreteSequenceRecallTask(Backend);
+    testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
+    testDiscreteSequenceRecallTask(Backend);
     testTimingTask(Backend)
   })
 }

@@ -3,9 +3,6 @@ import { CostTypes } from '../Trainer';
 export default class CPU {
     engine: Engine;
     constructor(engine?: Engine);
-    computeState(j: number): void;
-    computeTraces(j: number): void;
-    gateUnits(j: number): void;
     activateUnit(j: number, input?: number): number;
     propagateUnit(j: number, target?: number): void;
     /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
