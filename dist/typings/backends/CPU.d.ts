@@ -2,7 +2,14 @@ import Engine from '../Engine';
 import { CostTypes } from '../Trainer';
 export default class CPU {
     engine: Engine;
+    inputActivationOrder: number[];
+    hiddenActivationOrder: number[];
+    outputActivationOrder: number[];
+    hiddenPropagationOrder: number[];
+    outputPropagationOrder: number[];
+    isOrderCached: boolean;
     constructor(engine?: Engine);
+    cacheOrder(): void;
     activateUnit(j: number, input?: number): number;
     propagateUnit(j: number, target?: number): void;
     /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */

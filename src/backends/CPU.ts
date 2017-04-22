@@ -5,13 +5,56 @@ import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
 
 export default class CPU {
+
+  public inputActivationOrder: number[] = []
+  public hiddenActivationOrder: number[] = []
+  public outputActivationOrder: number[] = []
+  public hiddenPropagationOrder: number[] = []
+  public outputPropagationOrder: number[] = []
+  public isOrderCached: boolean = false
+
   constructor(public engine = new Engine()) {
     
   }
 
+  cacheOrder() {
+
+    this.inputActivationOrder = []
+    this.hiddenActivationOrder = []
+    this.outputActivationOrder = []
+    this.outputPropagationOrder = []
+    this.hiddenPropagationOrder = []
+
+    let outputLayerIndex = this.engine.layers.length - 1
+    for (let i = 0; i < this.engine.layers.length; i++) {
+      for (let j = 0; j < this.engine.layers[i].length; j++) {
+        switch(i) {
+          case 0:
+            this.inputActivationOrder.push(this.engine.layers[i][j])
+            break;
+          case outputLayerIndex:
+            this.outputActivationOrder.push(this.engine.layers[i][j])
+            break;
+          default:
+            this.hiddenActivationOrder.push(this.engine.layers[i][j])
+        }
+      }
+    }
+    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
+      this.outputPropagationOrder.push(this.engine.layers[outputLayerIndex][j])
+    }
+    for (let i = this.engine.layers.length - 2; i > 0; i--) {
+      for (let j = this.engine.layers[i].length - 1; j >= 0 ; j--) {
+        this.hiddenPropagationOrder.push(this.engine.layers[i][j])
+      }
+    }
+    
+    this.isOrderCached = true
+  }
+
   activateUnit(j: number, input?: number): number {
 
-    if (typeof input !== 'undefined') {
+    if (input !== null) {
 
       this.engine.activation[j] = input
 
@@ -49,7 +92,7 @@ export default class CPU {
 
   propagateUnit(j: number, target?: number) {
     let i, k, h, g
-    if (typeof target !== 'undefined') {
+    if (target !== null) {
 
       this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] = target - this.engine.activation[j]
 
@@ -181,22 +224,20 @@ export default class CPU {
   }
 
   activate(inputs: number[]): number[] {
+    if (!this.isOrderCached) {
+      this.cacheOrder()
+    }
     this.engine.status = StatusTypes.ACTIVATING
     let activation = []
-    let outputLayerIndex = this.engine.layers.length - 1
-    for (let i = 0; i < this.engine.layers.length; i++) {
-      for (let j = 0; j < this.engine.layers[i].length; j++) {
-        switch(i) {
-          case 0:
-            this.activateUnit(this.engine.layers[i][j], inputs[j])
-            break;
-          case outputLayerIndex:
-            activation.push(this.activateUnit(this.engine.layers[i][j]))
-            break;
-          default:
-            this.activateUnit(this.engine.layers[i][j])
-        }
-      }
+    let i
+    for (i = 0; i < this.inputActivationOrder.length; i++) {
+      this.activateUnit(this.inputActivationOrder[i], inputs[i])
+    }
+    for (i = 0; i < this.hiddenActivationOrder.length; i++) {
+      this.activateUnit(this.hiddenActivationOrder[i], null)
+    }
+    for (i = 0; i < this.outputActivationOrder.length; i++) {
+      activation.push(this.activateUnit(this.outputActivationOrder[i], null))
     }
     this.engine.status = StatusTypes.IDLE
     return activation;
@@ -204,14 +245,12 @@ export default class CPU {
 
   propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
-    let outputLayerIndex = this.engine.layers.length - 1
-    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
-      this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j])
+    let i
+    for (i = 0; i < this.outputPropagationOrder.length; i++) {
+      this.propagateUnit(this.outputPropagationOrder[i], targets[i])
     }
-    for (let i = this.engine.layers.length - 2; i > 0; i--) {
-      for (let j = this.engine.layers[i].length - 1; j >= 0 ; j--) {
-        this.propagateUnit(this.engine.layers[i][j])
-      }
+    for (i = 0; i < this.hiddenPropagationOrder.length; i++) {
+      this.propagateUnit(this.hiddenPropagationOrder[i], null)
     }
     this.engine.status = StatusTypes.IDLE
   }

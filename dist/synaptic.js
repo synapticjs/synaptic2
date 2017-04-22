@@ -534,9 +534,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function CPU(engine) {
 	        if (engine === void 0) { engine = new Engine_1.default(); }
 	        this.engine = engine;
+	        this.inputActivationOrder = [];
+	        this.hiddenActivationOrder = [];
+	        this.outputActivationOrder = [];
+	        this.hiddenPropagationOrder = [];
+	        this.outputPropagationOrder = [];
+	        this.isOrderCached = false;
 	    }
+	    CPU.prototype.cacheOrder = function () {
+	        this.inputActivationOrder = [];
+	        this.hiddenActivationOrder = [];
+	        this.outputActivationOrder = [];
+	        this.outputPropagationOrder = [];
+	        this.hiddenPropagationOrder = [];
+	        var outputLayerIndex = this.engine.layers.length - 1;
+	        for (var i = 0; i < this.engine.layers.length; i++) {
+	            for (var j = 0; j < this.engine.layers[i].length; j++) {
+	                switch (i) {
+	                    case 0:
+	                        this.inputActivationOrder.push(this.engine.layers[i][j]);
+	                        break;
+	                    case outputLayerIndex:
+	                        this.outputActivationOrder.push(this.engine.layers[i][j]);
+	                        break;
+	                    default:
+	                        this.hiddenActivationOrder.push(this.engine.layers[i][j]);
+	                }
+	            }
+	        }
+	        for (var j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
+	            this.outputPropagationOrder.push(this.engine.layers[outputLayerIndex][j]);
+	        }
+	        for (var i = this.engine.layers.length - 2; i > 0; i--) {
+	            for (var j = this.engine.layers[i].length - 1; j >= 0; j--) {
+	                this.hiddenPropagationOrder.push(this.engine.layers[i][j]);
+	            }
+	        }
+	        this.isOrderCached = true;
+	    };
 	    CPU.prototype.activateUnit = function (j, input) {
-	        if (typeof input !== 'undefined') {
+	        if (input !== null) {
 	            this.engine.activation[j] = input;
 	        }
 	        else {
@@ -568,7 +605,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	    CPU.prototype.propagateUnit = function (j, target) {
 	        var i, k, h, g;
-	        if (typeof target !== 'undefined') {
+	        if (target !== null) {
 	            this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] = target - this.engine.activation[j];
 	        }
 	        else {
@@ -680,36 +717,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    };
 	    CPU.prototype.activate = function (inputs) {
+	        if (!this.isOrderCached) {
+	            this.cacheOrder();
+	        }
 	        this.engine.status = Engine_1.StatusTypes.ACTIVATING;
 	        var activation = [];
-	        var outputLayerIndex = this.engine.layers.length - 1;
-	        for (var i = 0; i < this.engine.layers.length; i++) {
-	            for (var j = 0; j < this.engine.layers[i].length; j++) {
-	                switch (i) {
-	                    case 0:
-	                        this.activateUnit(this.engine.layers[i][j], inputs[j]);
-	                        break;
-	                    case outputLayerIndex:
-	                        activation.push(this.activateUnit(this.engine.layers[i][j]));
-	                        break;
-	                    default:
-	                        this.activateUnit(this.engine.layers[i][j]);
-	                }
-	            }
+	        var i;
+	        for (i = 0; i < this.inputActivationOrder.length; i++) {
+	            this.activateUnit(this.inputActivationOrder[i], inputs[i]);
+	        }
+	        for (i = 0; i < this.hiddenActivationOrder.length; i++) {
+	            this.activateUnit(this.hiddenActivationOrder[i], null);
+	        }
+	        for (i = 0; i < this.outputActivationOrder.length; i++) {
+	            activation.push(this.activateUnit(this.outputActivationOrder[i], null));
 	        }
 	        this.engine.status = Engine_1.StatusTypes.IDLE;
 	        return activation;
 	    };
 	    CPU.prototype.propagate = function (targets) {
 	        this.engine.status = Engine_1.StatusTypes.PROPAGATING;
-	        var outputLayerIndex = this.engine.layers.length - 1;
-	        for (var j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
-	            this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j]);
+	        var i;
+	        for (i = 0; i < this.outputPropagationOrder.length; i++) {
+	            this.propagateUnit(this.outputPropagationOrder[i], targets[i]);
 	        }
-	        for (var i = this.engine.layers.length - 2; i > 0; i--) {
-	            for (var j = this.engine.layers[i].length - 1; j >= 0; j--) {
-	                this.propagateUnit(this.engine.layers[i][j]);
-	            }
+	        for (i = 0; i < this.hiddenPropagationOrder.length; i++) {
+	            this.propagateUnit(this.hiddenPropagationOrder[i], null);
 	        }
 	        this.engine.status = Engine_1.StatusTypes.IDLE;
 	    };
