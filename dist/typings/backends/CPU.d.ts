@@ -2,11 +2,11 @@ import Engine from '../Engine';
 import { CostTypes } from '../Trainer';
 export default class CPU {
     engine: Engine;
-    inputActivationOrder: number[];
-    hiddenActivationOrder: number[];
-    outputActivationOrder: number[];
-    hiddenPropagationOrder: number[];
-    outputPropagationOrder: number[];
+    private inputActivationOrder;
+    private hiddenActivationOrder;
+    private outputActivationOrder;
+    private hiddenPropagationOrder;
+    private outputPropagationOrder;
     isOrderCached: boolean;
     constructor(engine?: Engine);
     cacheOrder(): void;

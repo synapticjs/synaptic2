@@ -6,11 +6,11 @@ import { CostTypes } from '../Trainer'
 
 export default class CPU {
 
-  public inputActivationOrder: number[] = []
-  public hiddenActivationOrder: number[] = []
-  public outputActivationOrder: number[] = []
-  public hiddenPropagationOrder: number[] = []
-  public outputPropagationOrder: number[] = []
+  private inputActivationOrder: number[] = []
+  private hiddenActivationOrder: number[] = []
+  private outputActivationOrder: number[] = []
+  private hiddenPropagationOrder: number[] = []
+  private outputPropagationOrder: number[] = []
   public isOrderCached: boolean = false
 
   constructor(public engine = new Engine()) {
