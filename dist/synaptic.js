@@ -64,14 +64,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Trainer_1 = __webpack_require__(4);
 	exports.Trainer = Trainer_1.default;
 	// backends
-	var ASM_1 = __webpack_require__(5);
-	var BLAS_1 = __webpack_require__(6);
+	//import ASM from './backends/ASM'
+	var BLAS_1 = __webpack_require__(5);
 	var CPU_1 = __webpack_require__(3);
-	var GPU_1 = __webpack_require__(7);
-	var Paper_1 = __webpack_require__(8);
-	var WebWorker_1 = __webpack_require__(9);
+	var GPU_1 = __webpack_require__(6);
+	var Paper_1 = __webpack_require__(7);
+	var WebWorker_1 = __webpack_require__(8);
 	var backends = {
-	    ASM: ASM_1.default,
+	    //ASM,
 	    BLAS: BLAS_1.default,
 	    CPU: CPU_1.default,
 	    GPU: GPU_1.default,
@@ -80,23 +80,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	exports.backends = backends;
 	// layers
-	var Activation = __webpack_require__(10);
-	var Convolution_1 = __webpack_require__(11);
-	var Convolution2D_1 = __webpack_require__(12);
-	var Convolution3D_1 = __webpack_require__(13);
-	var Dense_1 = __webpack_require__(14);
-	var Dropout_1 = __webpack_require__(15);
-	var Input_1 = __webpack_require__(16);
-	var Input2D_1 = __webpack_require__(17);
-	var Input3D_1 = __webpack_require__(18);
-	var InputToOutput_1 = __webpack_require__(19);
-	var LSTM_1 = __webpack_require__(20);
-	var MaxPool_1 = __webpack_require__(21);
-	var MaxPool2D_1 = __webpack_require__(22);
-	var MaxPool3D_1 = __webpack_require__(23);
-	var ZeroPadding_1 = __webpack_require__(24);
-	var ZeroPadding2D_1 = __webpack_require__(25);
-	var ZeroPadding3D_1 = __webpack_require__(26);
+	var Activation = __webpack_require__(9);
+	var Convolution_1 = __webpack_require__(10);
+	var Convolution2D_1 = __webpack_require__(11);
+	var Convolution3D_1 = __webpack_require__(12);
+	var Dense_1 = __webpack_require__(13);
+	var Dropout_1 = __webpack_require__(14);
+	var Input_1 = __webpack_require__(15);
+	var Input2D_1 = __webpack_require__(16);
+	var Input3D_1 = __webpack_require__(17);
+	var InputToOutput_1 = __webpack_require__(18);
+	var LSTM_1 = __webpack_require__(19);
+	var MaxPool_1 = __webpack_require__(20);
+	var MaxPool2D_1 = __webpack_require__(21);
+	var MaxPool3D_1 = __webpack_require__(22);
+	var ZeroPadding_1 = __webpack_require__(23);
+	var ZeroPadding2D_1 = __webpack_require__(24);
+	var ZeroPadding3D_1 = __webpack_require__(25);
 	var layers = {
 	    Activation: Activation,
 	    Convolution: Convolution_1.default,
@@ -159,6 +159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.weight = {};
 	        this.gain = {};
 	        this.activation = {};
+	        this.derivative = {};
 	        this.elegibilityTrace = {};
 	        this.extendedElegibilityTrace = {};
 	        this.errorResponsibility = {};
@@ -198,6 +199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.elegibilityTrace[unit] = {};
 	        this.extendedElegibilityTrace[unit] = {};
 	        this.activation[unit] = 0;
+	        this.derivative[unit] = 0;
 	        this.weight[unit][unit] = 0; // since it's not self-connected the weight of the self-connection is 0 (this is explained in the text between eq. 14 and eq. 15)
 	        this.gain[unit][unit] = 1; // ungated connections have a gain of 1 (eq. 14)
 	        this.elegibilityTrace[unit][unit] = 0;
@@ -364,6 +366,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            weight: this.weight,
 	            gain: this.gain,
 	            activation: this.activation,
+	            derivative: this.derivative,
 	            elegibilityTrace: this.elegibilityTrace,
 	            extendedElegibilityTrace: this.extendedElegibilityTrace,
 	            errorResponsibility: this.errorResponsibility,
@@ -544,12 +547,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i];
 	            }
 	            this.engine.activation[j] = this.activationFunction(j);
+	            this.engine.derivative[j] = this.activationFunctionDerivative(j);
 	            for (h = 0; h < this.engine.inputSet[j].length; h++) {
 	                i = this.engine.inputSet[j][h];
 	                this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i];
 	                for (g = 0; g < this.engine.gatedBy[j].length; g++) {
 	                    k = this.engine.gatedBy[j][g];
-	                    this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j);
+	                    this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j);
 	                }
 	            }
 	            for (h = 0; h < this.engine.gatedBy[j].length; h++) {
@@ -573,14 +577,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                k = this.engine.projectionSet[j][h];
 	                this.engine.projectedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j];
 	            }
-	            var derivative = this.activationFunctionDerivative(j);
-	            this.engine.projectedErrorResponsibility[j] *= derivative;
+	            this.engine.projectedErrorResponsibility[j] *= this.engine.derivative[j];
 	            this.engine.gatedErrorResponsibility[j] = 0;
 	            for (h = 0; h < this.engine.gateSet[j].length; h++) {
 	                k = this.engine.gateSet[j][h];
 	                this.engine.gatedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j);
 	            }
-	            this.engine.gatedErrorResponsibility[j] *= derivative;
+	            this.engine.gatedErrorResponsibility[j] *= this.engine.derivative[j];
 	            this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] + this.engine.gatedErrorResponsibility[j];
 	        }
 	        for (h = 0; h < this.engine.inputSet[j].length; h++) {
@@ -804,16 +807,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 7 */
-/***/ function(module, exports) {
-
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	// TODO
-	exports.default = {};
-
-
-/***/ },
-/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
@@ -1081,7 +1074,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1091,7 +1084,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1124,7 +1117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1191,7 +1184,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1258,7 +1251,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1325,7 +1318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1360,7 +1353,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1409,7 +1402,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1437,7 +1430,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1467,7 +1460,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1498,7 +1491,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1526,7 +1519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1645,7 +1638,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1712,7 +1705,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1781,7 +1774,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1853,7 +1846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1906,7 +1899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1959,7 +1952,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";

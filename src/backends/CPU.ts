@@ -24,13 +24,14 @@ export default class CPU {
       }
 
       this.engine.activation[j] = this.activationFunction(j)
+      this.engine.derivative[j] = this.activationFunctionDerivative(j)
 
       for (h = 0; h < this.engine.inputSet[j].length; h++) {
         i = this.engine.inputSet[j][h]
         this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
         for (g = 0; g < this.engine.gatedBy[j].length; g++) {
           k = this.engine.gatedBy[j][g]
-          this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.activationFunctionDerivative(j) * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
+          this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
         }
       }
 
@@ -58,15 +59,14 @@ export default class CPU {
         k = this.engine.projectionSet[j][h]
         this.engine.projectedErrorResponsibility[j] +=  this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
       }
-      const derivative = this.activationFunctionDerivative(j)
-      this.engine.projectedErrorResponsibility[j] *= derivative
+      this.engine.projectedErrorResponsibility[j] *= this.engine.derivative[j]
 
       this.engine.gatedErrorResponsibility[j] = 0
       for (h = 0; h < this.engine.gateSet[j].length; h++) {
         k = this.engine.gateSet[j][h]
         this.engine.gatedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
       }
-      this.engine.gatedErrorResponsibility[j] *= derivative
+      this.engine.gatedErrorResponsibility[j] *= this.engine.derivative[j]
 
       this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] + this.engine.gatedErrorResponsibility[j]
 

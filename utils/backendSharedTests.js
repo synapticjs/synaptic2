@@ -226,8 +226,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 
 function testBackend(description, Backend, options) {
   describe(description, () => {
-    testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
-    testDiscreteSequenceRecallTask(Backend);
+    //testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
+    //testDiscreteSequenceRecallTask(Backend);
     testTimingTask(Backend)
   })
 }

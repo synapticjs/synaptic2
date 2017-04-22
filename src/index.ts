@@ -4,7 +4,7 @@ import Network from './Network'
 import Trainer from './Trainer'
 
 // backends
-import ASM from './backends/ASM'
+//import ASM from './backends/ASM'
 import BLAS from './backends/BLAS'
 import CPU from './backends/CPU'
 import GPU from './backends/GPU'
@@ -12,7 +12,7 @@ import Paper from './backends/Paper'
 import WebWorker from './backends/WebWorker'
 
 const backends = {
-  ASM,
+  //ASM,
   BLAS,
   CPU,
   GPU,

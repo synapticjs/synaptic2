@@ -19,6 +19,7 @@ export default class Engine {
     weight: {};
     gain: {};
     activation: {};
+    derivative: {};
     elegibilityTrace: {};
     extendedElegibilityTrace: {};
     errorResponsibility: {};

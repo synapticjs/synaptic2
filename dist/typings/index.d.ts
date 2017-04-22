@@ -4,7 +4,6 @@ import Trainer from './Trainer';
 import CPU from './backends/CPU';
 import Paper from './backends/Paper';
 declare const backends: {
-    ASM: {};
     BLAS: {};
     CPU: typeof CPU;
     GPU: {};

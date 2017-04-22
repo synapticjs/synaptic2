@@ -36,6 +36,7 @@ export default class Engine {
   weight = {}
   gain = {}
   activation = {}
+  derivative = {}
   elegibilityTrace = {}
   extendedElegibilityTrace = {}
   errorResponsibility = {}
@@ -79,6 +80,7 @@ export default class Engine {
     this.elegibilityTrace[unit] = {}
     this.extendedElegibilityTrace[unit] = {}
     this.activation[unit] = 0
+    this.derivative[unit] = 0
     this.weight[unit][unit] = 0 // since it's not self-connected the weight of the self-connection is 0 (this is explained in the text between eq. 14 and eq. 15)
     this.gain[unit][unit] = 1 // ungated connections have a gain of 1 (eq. 14)
     this.elegibilityTrace[unit][unit] = 0
@@ -272,6 +274,7 @@ export default class Engine {
       weight: this.weight,
       gain: this.gain,
       activation: this.activation,
+      derivative: this.derivative,
       elegibilityTrace: this.elegibilityTrace,
       extendedElegibilityTrace: this.extendedElegibilityTrace,
       errorResponsibility: this.errorResponsibility,
