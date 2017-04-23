@@ -2,7 +2,7 @@ var lstmJSON = require('../__tests__/mocks/lstm.json');
 var samplesTimingTask = require('../__tests__/mocks/samples-timing-task');
 var LSTMTimingTaskActivationMock = require('../__tests__/mocks/lstm-timing-task-activation');
 var LSTMTimingTaskPropagationMock = require('../__tests__/mocks/lstm-timing-task-propagation');
-var synaptic = require('../dist/synaptic');
+var synaptic = process.env.NODE_ENV == 'node' ? require('../dist') : require('../dist/synaptic');
 
 var MersenneTwister = require('mersenne-twister');
 
