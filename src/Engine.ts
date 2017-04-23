@@ -45,26 +45,26 @@ export enum StatusTypes {
 export default class Engine {
   static RandomGenerator = () => Math.random() * 2 - 1
 
-  state: Dictionary<number> = {}
-  weight: Dictionary<Dictionary<number>> = {}
-  gain: Dictionary<Dictionary<number>> = {}
-  activation: Dictionary<number> = {}
-  derivative: Dictionary<number> = {}
-  elegibilityTrace: Dictionary<Dictionary<number>> = {}
-  extendedElegibilityTrace: Dictionary<Dictionary<Dictionary<number>>> = {}
-  errorResponsibility: Dictionary<number> = {}
-  projectedErrorResponsibility: Dictionary<number> = {}
-  gatedErrorResponsibility: Dictionary<number> = {}
-  activationFunction: Dictionary<number> = {}
-  inputsOf: Dictionary<number[]> = {}
-  projectedBy: Dictionary<number[]> = {}
-  gatersOf: Dictionary<number[]> = {}
-  gatedBy: Dictionary<number[]> = {}
-  inputsOfGatedBy: Dictionary<Dictionary<number[]>> = {}
-  projectionSet: Dictionary<number[]> = {}
-  gateSet: Dictionary<number[]> = {}
-  inputSet: Dictionary<number[]> = {}
-  derivativeTerm: Dictionary<Dictionary<number>> = {}
+  state: number[] = []
+  weight: number[][] = []
+  gain: number[][] = []
+  activation: number[] = []
+  derivative: number[] = []
+  elegibilityTrace: number[][] = []
+  extendedElegibilityTrace: number[][][] = []
+  errorResponsibility: number[] = []
+  projectedErrorResponsibility: number[] = []
+  gatedErrorResponsibility: number[] = []
+  activationFunction: ActivationTypes[] = []
+  inputsOf: number[][] = []
+  projectedBy: number[][] = []
+  gatersOf: number[][] = []
+  gatedBy: number[][] = []
+  inputsOfGatedBy: number[][][] = []
+  projectionSet: number[][] = []
+  gateSet: number[][] = []
+  inputSet: number[][] = []
+  derivativeTerm: number[][] = []
   connections: Connection[] = []
   gates: Gate[] = []
   learningRate: number = 0.1
@@ -88,16 +88,16 @@ export default class Engine {
   addUnit(activationFunction = ActivationTypes.LOGISTIC_SIGMOID) {
     const unit = this.size
     this.state[unit] = this.random()
-    this.weight[unit] = {}
-    this.gain[unit] = {}
-    this.elegibilityTrace[unit] = {}
-    this.extendedElegibilityTrace[unit] = {}
+    this.weight[unit] = []
+    this.gain[unit] = []
+    this.elegibilityTrace[unit] = []
+    this.extendedElegibilityTrace[unit] = []
     this.activation[unit] = 0
     this.derivative[unit] = 0
     this.weight[unit][unit] = 0 // since it's not self-connected the weight of the self-connection is 0 (this is explained in the text between eq. 14 and eq. 15)
     this.gain[unit][unit] = 1 // ungated connections have a gain of 1 (eq. 14)
     this.elegibilityTrace[unit][unit] = 0
-    this.extendedElegibilityTrace[unit][unit] = {}
+    this.extendedElegibilityTrace[unit][unit] = []
     this.activationFunction[unit] = activationFunction
     this.errorResponsibility[unit] = 0
     this.projectedErrorResponsibility[unit] = 0
@@ -106,8 +106,8 @@ export default class Engine {
     this.projectedBy[unit] = []
     this.gatersOf[unit] = []
     this.gatedBy[unit] = []
-    this.inputsOfGatedBy[unit] = {}
-    this.derivativeTerm[unit] = {}
+    this.inputsOfGatedBy[unit] = []
+    this.derivativeTerm[unit] = []
     this.inputSet[unit] = []
     this.projectionSet[unit] = []
     this.gateSet[unit] = []
@@ -136,7 +136,7 @@ export default class Engine {
     this.gain[j][i] = 1 // ungated connections have a gain of 1 (eq. 14)
     this.weight[j][i] = isSelfConnection ? 1 : weight == null ? this.random() : weight // self-connections have a fixed weight of 1 (this is explained in the text between eq. 14 and eq. 15)
     this.elegibilityTrace[j][i] = 0
-    this.extendedElegibilityTrace[j][i] = {}
+    this.extendedElegibilityTrace[j][i] = []
 
     // track units
     this.track(to)
@@ -321,6 +321,50 @@ export default class Engine {
     const engine = new Engine()
     Object.keys(data).forEach(key => engine[key] = data[key])
     return engine
+  }
+
+  // JUST FOR PROFILING, DO NOT USE
+  // @internal
+  seal() {
+    this.state = (new Float64Array(this.activation) as any)
+    this.activation = (new Float64Array(this.activation) as any)
+    this.derivative = (new Float64Array(this.derivative) as any)
+    this.errorResponsibility = (new Float64Array(this.errorResponsibility) as any)
+    this.projectedErrorResponsibility = (new Float64Array(this.projectedErrorResponsibility) as any)
+    this.gatedErrorResponsibility = (new Float64Array(this.gatedErrorResponsibility) as any)
+    for (let i in this.weight) {
+      this.weight[i] = (new Float64Array(this.weight[i]) as any)
+    }
+    for (let i in this.gain) {
+      this.gain[i] = (new Float64Array(this.gain[i]) as any)
+    }
+    for (let i in this.elegibilityTrace) {
+      this.elegibilityTrace[i] = (new Float64Array(this.elegibilityTrace[i]) as any)
+    }
+    for (let i in this.inputsOf) {
+      this.inputsOf[i] = (new Uint32Array(this.inputsOf[i]) as any)
+    }
+    for (let i in this.projectedBy) {
+      this.projectedBy[i] = (new Uint32Array(this.projectedBy[i]) as any)
+    }
+    for (let i in this.gatersOf) {
+      this.gatersOf[i] = (new Uint32Array(this.gatersOf[i]) as any)
+    }
+    for (let i in this.gatedBy) {
+      this.gatedBy[i] = (new Uint32Array(this.gatedBy[i]) as any)
+    }
+    for (let i in this.projectionSet) {
+      this.projectionSet[i] = (new Uint32Array(this.projectionSet[i]) as any)
+    }
+    for (let i in this.gateSet) {
+      this.gateSet[i] = (new Uint32Array(this.gateSet[i]) as any)
+    }
+    for (let i in this.inputSet) {
+      this.inputSet[i] = (new Uint32Array(this.inputSet[i]) as any)
+    }
+    for (let i in this.derivativeTerm) {
+      this.derivativeTerm[i] = (new Float64Array(this.derivativeTerm[i]) as any)
+    }
   }
 
   clear() {

@@ -117,6 +117,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 
       lstm.backend = new Backend(lstm.engine)
       lstm.engine.random = random;
+      lstm.engine.seal()
       lstm.learningRate = 0.1;
 
       var targets = [2, 4];

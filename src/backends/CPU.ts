@@ -17,10 +17,13 @@ export default class CPU implements Backend {
     let derivative = 0
     let elegibilityTrace = 0
     let elegibilityTraceDerivated = 0
-
+    let inputSetLength = 0
+    let localGainByWeight = engine.gain[j][j] * engine.weight[j][j]
     state = engine.state[j]
-    state = state * engine.gain[j][j] * engine.weight[j][j]
-    for (h = 0; h < engine.inputSet[j].length; h++) {
+    state = state * localGainByWeight
+
+    inputSetLength = engine.inputSet[j].length
+    for (h = 0; h < inputSetLength; h++) {
       i = engine.inputSet[j][h]
       state = state + engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
     }
@@ -28,12 +31,13 @@ export default class CPU implements Backend {
 
     activation = this.activationFunction(j)
     engine.activation[j] = activation
+
     derivative = this.activationFunctionDerivative(j)
     engine.derivative[j] = derivative
 
-    for (h = 0; h < engine.inputSet[j].length; h++) {
+    for (h = 0; h < inputSetLength; h++) {
       i = engine.inputSet[j][h]
-      elegibilityTrace = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
+      elegibilityTrace = localGainByWeight * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
       engine.elegibilityTrace[j][i] = elegibilityTrace
       elegibilityTraceDerivated = elegibilityTrace * derivative
       for (g = 0; g < engine.gatedBy[j].length; g++) {
@@ -151,7 +155,7 @@ export default class CPU implements Backend {
         x = this.engine.activation[unit]
         return 1 - Math.pow(x, 2)
 
-      case ActivationTypes.RELU:
+      /*case ActivationTypes.RELU:
         return 0
 
       case ActivationTypes.IDENTITY:
@@ -161,6 +165,8 @@ export default class CPU implements Backend {
         return 0
 
       case ActivationTypes.DROPOUT:
+        return 0*/
+      default:
         return 0
     }
   }
