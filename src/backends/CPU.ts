@@ -56,19 +56,21 @@ export default class CPU implements Backend {
 
   propagateUnit(j: number, target?: number) {
     let i = 0, k = 0, h = 0, g = 0, engine = this.engine
+    let gatedErrorResponsibility = 0
+    let projectedErrorResponsibility = 0
+    let Δw = 0
+
     if (typeof target !== 'undefined') {
 
       engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] = target - engine.activation[j]
 
     } else {
-      let projectedErrorResponsibility = 0
       for (h = 0; h < engine.projectionSet[j].length; h++) {
         k = engine.projectionSet[j][h]
         projectedErrorResponsibility = projectedErrorResponsibility + engine.errorResponsibility[k] * engine.gain[k][j] * engine.weight[k][j]
       }
       engine.projectedErrorResponsibility[j] = projectedErrorResponsibility * engine.derivative[j]
 
-      let gatedErrorResponsibility = 0
       for (h = 0; h < engine.gateSet[j].length; h++) {
         k = engine.gateSet[j][h]
         gatedErrorResponsibility = gatedErrorResponsibility + engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
@@ -76,11 +78,10 @@ export default class CPU implements Backend {
       engine.gatedErrorResponsibility[j] = gatedErrorResponsibility * engine.derivative[j]
 
       engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] + engine.gatedErrorResponsibility[j]
-
     }
     for (h = 0; h < engine.inputSet[j].length; h++) {
       i = engine.inputSet[j][h]
-      let Δw = engine.projectedErrorResponsibility[j] * engine.elegibilityTrace[j][i]
+      Δw = engine.projectedErrorResponsibility[j] * engine.elegibilityTrace[j][i]
       for (g = 0; g < engine.gateSet[j].length; g++) {
         k = engine.gateSet[j][g]
         Δw += engine.errorResponsibility[k] * engine.extendedElegibilityTrace[j][i][k]
