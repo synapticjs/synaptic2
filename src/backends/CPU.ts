@@ -49,19 +49,19 @@ export default class CPU implements Backend {
       engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] = target - engine.activation[j]
 
     } else {
-      engine.projectedErrorResponsibility[j] = 0
+      let projectedErrorResponsibility = 0
       for (h = 0; h < engine.projectionSet[j].length; h++) {
         k = engine.projectionSet[j][h]
-        engine.projectedErrorResponsibility[j] += engine.errorResponsibility[k] * engine.gain[k][j] * engine.weight[k][j]
+        projectedErrorResponsibility = projectedErrorResponsibility + engine.errorResponsibility[k] * engine.gain[k][j] * engine.weight[k][j]
       }
-      engine.projectedErrorResponsibility[j] *= engine.derivative[j]
+      engine.projectedErrorResponsibility[j] = projectedErrorResponsibility * engine.derivative[j]
 
-      engine.gatedErrorResponsibility[j] = 0
+      let gatedErrorResponsibility = 0
       for (h = 0; h < engine.gateSet[j].length; h++) {
         k = engine.gateSet[j][h]
-        engine.gatedErrorResponsibility[j] += engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
+        gatedErrorResponsibility = gatedErrorResponsibility + engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
       }
-      engine.gatedErrorResponsibility[j] *= engine.derivative[j]
+      engine.gatedErrorResponsibility[j] = gatedErrorResponsibility * engine.derivative[j]
 
       engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] + engine.gatedErrorResponsibility[j]
 
