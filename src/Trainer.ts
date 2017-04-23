@@ -1,8 +1,9 @@
 import Network from './Network'
+import { TrainResult, TrainOptions } from './backends'
 // -- Cost Types
 
 export enum CostTypes {
-  MSE,
+  MEAN_SQUARE_ERROR,
   CROSS_ENTROPY,
   BINARY
 }
@@ -10,18 +11,22 @@ export enum CostTypes {
 // -- Trainer
 
 export default class Trainer {
+  
   static CostTypes = CostTypes;
 
-  constructor(public network: Network) {
+  constructor(public network: Network) { }
 
-  }
-
-  train(dataset, { learningRate, minError, maxIterations, costFunction } = {} as any) {
-    return this.network.backend.train(dataset, {
-      learningRate: learningRate || 0.3,
-      minError: minError || 0.0005,
-      maxIterations: maxIterations || 5000,
-      costFunction: costFunction || CostTypes.MSE
+  async train(dataset, { 
+    learningRate = 0.3, 
+    minError = 0.05, 
+    maxIterations = 1000, 
+    costFunction = CostTypes.MEAN_SQUARE_ERROR 
+  }:TrainOptions): Promise<TrainResult> {
+    return await this.network.backend.train(dataset, {
+      learningRate,
+      minError,
+      maxIterations,
+      costFunction
     })
   }
 

@@ -1,7 +1,7 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { Boundary, Layer } from '../Network'
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution3D implements INetworkLayer {
+export default class Convolution3D implements Layer {
   filter: number
   stride: number
   padding: number
@@ -14,7 +14,7 @@ export default class Convolution3D implements INetworkLayer {
     this.layer = null
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: Boundary): Boundary {
     if (boundary == null) {
       throw new Error('\'Convolution3D\' can\'t be the first layer of the network!')
     }

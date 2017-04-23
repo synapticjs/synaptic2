@@ -1,4 +1,4 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { Boundary, Layer } from '../Network'
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
@@ -6,7 +6,7 @@ const defaults = {
   peepholes: true
 }
 
-export default class LSTM implements INetworkLayer {
+export default class LSTM implements Layer {
 
   peepholes: boolean
 
@@ -21,7 +21,7 @@ export default class LSTM implements INetworkLayer {
     this.peepholes = peepholes
   }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: Boundary): Boundary {
 
     if (boundary == null) {
       throw new Error('\'LSTM\' can\'t be the first layer of the network!')

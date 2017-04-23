@@ -1,13 +1,12 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { Boundary, Layer } from '../Network'
 
-export default class Input2D implements INetworkLayer {
-  layer: number[]
+export default class Input2D implements Layer {
+  
+  layer: number[] = null
 
-  constructor(public width: number, public height: number) {
-    this.layer = null
-  }
+  constructor(public width: number, public height: number) { }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: Boundary): Boundary {
 
     if (boundary != null) {
       throw new Error('\'Input2D\' must be the first layer of the network!')

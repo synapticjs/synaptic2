@@ -1,25 +1,25 @@
 import Engine, { StatusTypes, ActivationTypes } from './Engine'
 import Backend from './backends/CPU'
 
-export interface IBoundary {
+export interface Boundary {
   width: number
   height: number
   depth: number
   layer: number[]
 }
 
-export interface INetworkLayer {
+export interface Layer {
   layer?: number[]
-  init?(network: Network, boundary: IBoundary): IBoundary
-  reverseInit?(network: Network, boundary: IBoundary)
+  init?(network: Network, boundary: Boundary): Boundary
+  reverseInit?(network: Network, boundary: Boundary)
 }
 
 export default class Network {
   engine: Engine
   backend: Backend
 
-  constructor(...layers: INetworkLayer[]);
-  constructor(options: { backend?: Backend; engine?: Engine; bias?: boolean; generator?: any; layers?: INetworkLayer[] });
+  constructor(...layers: Layer[]);
+  constructor(options: { backend?: Backend; engine?: Engine; bias?: boolean; generator?: any; layers?: Layer[] });
   constructor(...args) {
     let layers
 
@@ -42,12 +42,12 @@ export default class Network {
 
     this.engine = this.backend.engine
 
-    let prevBoundary = null
-    let nextBoundary = null
+    let prevBoundary: Boundary = null
+    let nextBoundary: Boundary = null
 
     // init layers
     this.engine.status = StatusTypes.INIT
-    const boundaries = []
+    const boundaries: Boundary[] = []
     layers.forEach(layer => {
       prevBoundary = layer.init && layer.init(this, prevBoundary) || prevBoundary
       boundaries.push(prevBoundary)

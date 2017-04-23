@@ -3,6 +3,7 @@
 
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
+import { TrainEntry } from '.'
 
 export default class Paper {
   constructor(public engine = new Engine()) {
@@ -165,7 +166,7 @@ export default class Paper {
         const gatedUnit = this.engine.gatedBy[unit][0]
         const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit]
         const maxActivation = inputsOfGatedUnit.reduce((max, input) => Math.max(this.engine.activation[input], max), -Infinity)
-        const inputUnitWithHigherActivation = inputsOfGatedUnit.find(input => this.engine.activation[input] === maxActivation)
+        const inputUnitWithHigherActivation = inputsOfGatedUnit.reduce((found, each) => this.engine.activation[each] === maxActivation ? each : found, null)
         return inputUnitWithHigherActivation === inputUnit ? 1 : 0
 
       case ActivationTypes.DROPOUT:
@@ -203,7 +204,7 @@ export default class Paper {
   costFunction(target: number[], predicted: number[], costType: CostTypes) {
     let i: number, x = 0
     switch (costType) {
-      case CostTypes.MSE:
+      case CostTypes.MEAN_SQUARE_ERROR:
         for (i = 0; i < target.length; i++) {
           x += Math.pow(target[i] - predicted[i], 2)
         }
@@ -252,7 +253,7 @@ export default class Paper {
     this.engine.status = StatusTypes.IDLE
   }
 
-  train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
+  train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }) {
     return new Promise(resolve => {
 
       // start training
