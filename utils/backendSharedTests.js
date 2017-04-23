@@ -4,6 +4,15 @@ var LSTMTimingTaskActivationMock = require('../__tests__/mocks/lstm-timing-task-
 var LSTMTimingTaskPropagationMock = require('../__tests__/mocks/lstm-timing-task-propagation');
 var synaptic = require('../dist/synaptic');
 
+var MersenneTwister = require('mersenne-twister');
+
+var generator = new MersenneTwister(100010);
+
+var random = generator.random.bind(generator);
+
+synaptic.Engine.RandomGenerator = () => random() * 2 - 1;
+
+
 const COMPUTED_KEYS = [
   'state',
   'weight',
@@ -64,6 +73,7 @@ function getLSTM(Backend) {
   var json = JSON.parse(JSON.stringify(lstmJSON))
   var lstm = synaptic.Network.fromJSON(json)
   lstm.backend = new Backend(lstm.engine)
+  lstm.engine.random = random;
   return lstm
 }
 
@@ -106,6 +116,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       )
 
       lstm.backend = new Backend(lstm.engine)
+      lstm.engine.random = random;
       lstm.learningRate = 0.1;
 
       var targets = [2, 4];
@@ -124,7 +135,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         symbols = targets.length + distractors.length + prompts.length;
 
       var noRepeat = function (range, avoid) {
-        var number = Math.random() * range | 0;
+        var number = random() * range | 0;
         var used = false;
         for (var i in avoid)
           if (number == avoid[i])
@@ -139,20 +150,20 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         return true;
       };
 
-      var start = new Date;
+      var start = Date.now();
 
       while (trial < iterations && success < criterion) {
         // generate sequence
         var sequence = [],
           sequenceLength = length - prompts.length;
         for (i = 0; i < sequenceLength; i++) {
-          var any = Math.random() * distractors.length | 0;
+          var any = random() * distractors.length | 0;
           sequence.push(distractors[any]);
         }
         var indexes = [],
           positions = [];
         for (i = 0; i < prompts.length; i++) {
-          indexes.push(Math.random() * targets.length | 0);
+          indexes.push(random() * targets.length | 0);
           positions.push(noRepeat(sequenceLength, positions));
         }
         positions = positions.sort();

@@ -41,9 +41,9 @@ export enum StatusTypes {
 
 // -- Engine
 
-const RandomGenerator = () => Math.random() * 2 - 1
 
 export default class Engine {
+  static RandomGenerator = () => Math.random() * 2 - 1
 
   state: Dictionary<number> = {}
   weight: Dictionary<Dictionary<number>> = {}
@@ -74,7 +74,7 @@ export default class Engine {
   biasUnit: number = null
   status: StatusTypes = StatusTypes.IDLE
 
-  constructor({ bias = true, generator = RandomGenerator } = {}) {
+  constructor({ bias = true, generator = Engine.RandomGenerator } = {}) {
     this.random = generator
     this.status = StatusTypes.IDLE
 

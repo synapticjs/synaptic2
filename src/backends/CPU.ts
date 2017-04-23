@@ -10,77 +10,71 @@ export default class CPU implements Backend {
 
   }
 
-  activateUnit(j: number, input?: number): number {
+  activateUnit(j: number): number {
+    let i, k, h, g, to, from
+    this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j]
+    for (h = 0; h < this.engine.inputSet[j].length; h++) {
+      i = this.engine.inputSet[j][h]
+      this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i]
+    }
 
-    if (typeof input !== 'undefined') {
+    this.engine.activation[j] = this.activationFunction(j)
+    this.engine.derivative[j] = this.activationFunctionDerivative(j)
 
-      this.engine.activation[j] = input
-
-    } else {
-      let i, k, h, g, to, from
-      this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j]
-      for (h = 0; h < this.engine.inputSet[j].length; h++) {
-        i = this.engine.inputSet[j][h]
-        this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i]
-      }
-
-      this.engine.activation[j] = this.activationFunction(j)
-      this.engine.derivative[j] = this.activationFunctionDerivative(j)
-
-      for (h = 0; h < this.engine.inputSet[j].length; h++) {
-        i = this.engine.inputSet[j][h]
-        this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
-        for (g = 0; g < this.engine.gatedBy[j].length; g++) {
-          k = this.engine.gatedBy[j][g]
-          this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
-        }
-      }
-
-      for (h = 0; h < this.engine.gatedBy[j].length; h++) {
-        to = this.engine.gatedBy[j][h]
-        for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
-          from = this.engine.inputsOfGatedBy[to][j][g]
-          this.engine.gain[to][from] = this.engine.activation[j]
-        }
+    for (h = 0; h < this.engine.inputSet[j].length; h++) {
+      i = this.engine.inputSet[j][h]
+      this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
+      for (g = 0; g < this.engine.gatedBy[j].length; g++) {
+        k = this.engine.gatedBy[j][g]
+        this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
       }
     }
+
+    for (h = 0; h < this.engine.gatedBy[j].length; h++) {
+      to = this.engine.gatedBy[j][h]
+      for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
+        from = this.engine.inputsOfGatedBy[to][j][g]
+        this.engine.gain[to][from] = this.engine.activation[j]
+      }
+    }
+
 
     return this.engine.activation[j]
   }
 
   propagateUnit(j: number, target?: number) {
-    let i, k, h, g
+    let i, k, h, g, engine = this.engine
     if (typeof target !== 'undefined') {
 
-      this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] = target - this.engine.activation[j]
+      engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] = target - engine.activation[j]
 
     } else {
-      this.engine.projectedErrorResponsibility[j] = 0
-      for (h = 0; h < this.engine.projectionSet[j].length; h++) {
-        k = this.engine.projectionSet[j][h]
-        this.engine.projectedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
+      engine.projectedErrorResponsibility[j] = 0
+      for (h = 0; h < engine.projectionSet[j].length; h++) {
+        k = engine.projectionSet[j][h]
+        engine.projectedErrorResponsibility[j] += engine.errorResponsibility[k] * engine.gain[k][j] * engine.weight[k][j]
       }
-      this.engine.projectedErrorResponsibility[j] *= this.engine.derivative[j]
+      engine.projectedErrorResponsibility[j] *= engine.derivative[j]
 
-      this.engine.gatedErrorResponsibility[j] = 0
-      for (h = 0; h < this.engine.gateSet[j].length; h++) {
-        k = this.engine.gateSet[j][h]
-        this.engine.gatedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
+      engine.gatedErrorResponsibility[j] = 0
+      for (h = 0; h < engine.gateSet[j].length; h++) {
+        k = engine.gateSet[j][h]
+        engine.gatedErrorResponsibility[j] += engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j)
       }
-      this.engine.gatedErrorResponsibility[j] *= this.engine.derivative[j]
+      engine.gatedErrorResponsibility[j] *= engine.derivative[j]
 
-      this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] + this.engine.gatedErrorResponsibility[j]
+      engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] + engine.gatedErrorResponsibility[j]
 
     }
-    for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      i = this.engine.inputSet[j][h]
-      let Δw = this.engine.projectedErrorResponsibility[j] * this.engine.elegibilityTrace[j][i]
-      for (g = 0; g < this.engine.gateSet[j].length; g++) {
-        k = this.engine.gateSet[j][g]
-        Δw += this.engine.errorResponsibility[k] * this.engine.extendedElegibilityTrace[j][i][k]
+    for (h = 0; h < engine.inputSet[j].length; h++) {
+      i = engine.inputSet[j][h]
+      let Δw = engine.projectedErrorResponsibility[j] * engine.elegibilityTrace[j][i]
+      for (g = 0; g < engine.gateSet[j].length; g++) {
+        k = engine.gateSet[j][g]
+        Δw += engine.errorResponsibility[k] * engine.extendedElegibilityTrace[j][i][k]
       }
-      Δw *= this.engine.learningRate
-      this.engine.weight[j][i] += Δw
+      Δw *= engine.learningRate
+      engine.weight[j][i] += Δw
     }
   }
 
@@ -183,24 +177,25 @@ export default class CPU implements Backend {
 
   activate(inputs: number[]): number[] {
     this.engine.status = StatusTypes.ACTIVATING
-    let activation = []
     let outputLayerIndex = this.engine.layers.length - 1
-    for (let i = 0; i < this.engine.layers.length; i++) {
-      for (let j = 0; j < this.engine.layers[i].length; j++) {
-        switch (i) {
-          case 0:
-            this.activateUnit(this.engine.layers[i][j], inputs[j])
-            break;
-          case outputLayerIndex:
-            activation.push(this.activateUnit(this.engine.layers[i][j]))
-            break;
-          default:
-            this.activateUnit(this.engine.layers[i][j])
-        }
+    let activation = new Array(this.engine.layers[outputLayerIndex].length)
+
+    for (let j = 0; j < this.engine.layers[0].length; j++) {
+      this.engine.activation[this.engine.layers[0][j]] = inputs[j]
+    }
+
+    for (let layer = 1; layer < this.engine.layers.length - 1; layer++) {
+      for (let j = 0; j < this.engine.layers[layer].length; j++) {
+        this.activateUnit(this.engine.layers[layer][j])
       }
     }
+
+    for (let j = 0; j < this.engine.layers[outputLayerIndex].length; j++) {
+      activation[j] = this.activateUnit(this.engine.layers[outputLayerIndex][j])
+    }
+
     this.engine.status = StatusTypes.IDLE
-    return activation;
+    return activation
   }
 
   propagate(targets: number[]) {
