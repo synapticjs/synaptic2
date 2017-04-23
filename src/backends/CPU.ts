@@ -11,9 +11,14 @@ export default class CPU implements Backend {
   }
 
   activateUnit(j: number): number {
-    let i, k, h, g, to, from, engine = this.engine
+    let i = 0, k = 0, h = 0, g = 0, to = 0, from = 0, engine = this.engine
+    let state = 0
+    let activation = 0
+    let derivative = 0
+    let elegibilityTrace = 0
+    let elegibilityTraceDerivated = 0
 
-    let state = engine.state[j]
+    state = engine.state[j]
     state = state * engine.gain[j][j] * engine.weight[j][j]
     for (h = 0; h < engine.inputSet[j].length; h++) {
       i = engine.inputSet[j][h]
@@ -21,13 +26,10 @@ export default class CPU implements Backend {
     }
     engine.state[j] = state
 
-    let activation = this.activationFunction(j)
+    activation = this.activationFunction(j)
     engine.activation[j] = activation
-    let derivative = this.activationFunctionDerivative(j)
+    derivative = this.activationFunctionDerivative(j)
     engine.derivative[j] = derivative
-
-    let elegibilityTrace = 0
-    let elegibilityTraceDerivated = 0
 
     for (h = 0; h < engine.inputSet[j].length; h++) {
       i = engine.inputSet[j][h]
@@ -53,7 +55,7 @@ export default class CPU implements Backend {
   }
 
   propagateUnit(j: number, target?: number) {
-    let i, k, h, g, engine = this.engine
+    let i = 0, k = 0, h = 0, g = 0, engine = this.engine
     if (typeof target !== 'undefined') {
 
       engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] = target - engine.activation[j]
