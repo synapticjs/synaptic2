@@ -1,3 +1,5 @@
+declare var global
+
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
@@ -14,17 +16,25 @@ export class Variable {
     public value: number
   ) { }
 }
+export type AsmModule = {
+  activate: (inputs: number[]) => number[],
+  propagate: (targets: number[]) => void,
+}
 
 export default class ASM implements Backend {
 
   id: number = 0
   heap: ArrayBuffer = null
+  view: Float32Array = null
+  inputs: number[] = []
+  outputs: number[] = []
+  targets: number[] = []
   variables: Variables = {}
   activationStatements: Statement[][] = []
   propagationStatements: Statement[][] = []
-
-  constructor(public engine = new Engine()) {
-  }
+  asm: AsmModule = null
+  learningRateId: number = null
+  constructor(public engine = new Engine()) { }
 
   alloc(key: string, value: number): Variable {
     if (!(key in this.variables)) {
@@ -41,9 +51,9 @@ export default class ASM implements Backend {
     this.propagationStatements.push(parts)
   }
 
-  buildActivateUnit(j: number, inputIndex?: number): void {
+  buildActivateUnit(j: number): Variable {
     const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
-    let i, k, h, g, to, from
+    let i, k, h, g, l, a, to, from
     const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
 
     const isSelfConnected = this.engine.connections.some(connection => connection.to === j && connection.from === j)
@@ -76,12 +86,12 @@ export default class ASM implements Backend {
     const type = this.engine.activationFunction[j]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
-        this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', 'Math.exp(-', stateJ, '))')
+        this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', 'exp(-', stateJ, '))')
         break
       case ActivationTypes.TANH:
         const eP = this.alloc('eP', null)
         const eN = this.alloc('eN', null)
-        this.buildActivationStatement(eP, '=', 'Math.exp(', stateJ, ')')
+        this.buildActivationStatement(eP, '=', 'exp(', stateJ, ')')
         this.buildActivationStatement(activationJ, '=', '(', eP, '-', eN, ')', '/', '(', eP, '+', eN, ')')
         break
       case ActivationTypes.RELU:
@@ -130,15 +140,15 @@ export default class ASM implements Backend {
         switch (type) {
           case ActivationTypes.LOGISTIC_SIGMOID:
             this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
-            break;
+            break
           case ActivationTypes.TANH:
             this.buildActivationStatement(derivativeJ, '=', '1.0', '-', 'Math.pow', '(', activationJ, ',', '2.0', ')')
-            break;
+            break
           case ActivationTypes.RELU:
           case ActivationTypes.IDENTITY:
           case ActivationTypes.MAX_POOLING:
           case ActivationTypes.DROPOUT:
-            break;
+            break
         }
 
         const bigParenthesisTermResult = this.alloc('bigParenthesisTermResult', null)
@@ -154,8 +164,8 @@ export default class ASM implements Backend {
         }
 
 
-        for (var l = 0; l < this.engine.inputsOfGatedBy[k][j].length; l++) {
-          var a = this.engine.inputsOfGatedBy[k][j][l]
+        for (l = 0; l < this.engine.inputsOfGatedBy[k][j].length; l++) {
+          a = this.engine.inputsOfGatedBy[k][j][l]
           if (a !== k) {
             if (initializeBigParenthesisTerm) {
               this.buildActivationStatement(bigParenthesisTermResult, '=', '0.0')
@@ -201,42 +211,127 @@ export default class ASM implements Backend {
         this.buildActivationStatement(gainToFrom, '=', activationJ)
       }
     }
+
+    return activationJ
   }
 
-  propagateUnit(j: number, target?: number) {
-    let i, k, h, g
+  buildPropagateUnit(j: number, target?: Variable) {
+    let i, k, h, g, l, a
+    const hasProjections = this.engine.projectionSet[j].length > 0
+    const hasGates = this.engine.gateSet[j].length > 0
     if (typeof target !== 'undefined') {
-
-      this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] = target - this.engine.activation[j]
-
+      const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
+      const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
+      const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
+      this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '=', target, '-', activationJ)
     } else {
-      this.engine.projectedErrorResponsibility[j] = 0
+      const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
+      if (hasProjections) {
+        this.buildPropagationStatement(projectedErrorResponsibilityJ, '=', '0.0')
+      }
       for (h = 0; h < this.engine.projectionSet[j].length; h++) {
         k = this.engine.projectionSet[j][h]
-        this.engine.projectedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
+        const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
+        const isGated = this.engine.gates.some(gate => gate.to === k && gate.from === j)
+        if (isGated) {
+          const gainKJ = this.alloc(`gain[${k}][${j}]`, this.engine.gain[k][j])
+          const weightKJ = this.alloc(`weight[${k}][${j}]`, this.engine.weight[k][j])
+          this.buildPropagationStatement(projectedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', gainKJ, '*', weightKJ)
+        } else {
+          const weightKJ = this.alloc(`weight[${k}][${j}]`, this.engine.weight[k][j])
+          this.buildPropagationStatement(projectedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', weightKJ)
+        }
       }
-      const derivative = 0//asd: this.activationFunctionDerivative(j)
-      this.engine.projectedErrorResponsibility[j] *= derivative
-
-      this.engine.gatedErrorResponsibility[j] = 0
+      const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
+      if (hasProjections) {
+        this.buildPropagationStatement(projectedErrorResponsibilityJ, '*=', derivativeJ)
+      }
+      const gatedErrorResponsibilityJ = this.alloc(`gatedErrorResponsibility[${j}]`, this.engine.gatedErrorResponsibility[j])
+      if (hasGates) {
+        this.buildPropagationStatement(gatedErrorResponsibilityJ, '=', '0.0')
+      }
       for (h = 0; h < this.engine.gateSet[j].length; h++) {
         k = this.engine.gateSet[j][h]
-        this.engine.gatedErrorResponsibility[j] += this.engine.errorResponsibility[k] * 0//asd: this.bigParenthesisTerm(k, j)
+        const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
+        const bigParenthesisTermResult = this.alloc('bigParenthesisTermResult', null)
+        let keepBigParenthesisTerm = false
+        let initializeBigParenthesisTerm = false
+        if (isSelfConnectedK && this.engine.derivativeTerm[k][j]) {
+          const stateK = this.alloc(`state[${k}]`, this.engine.state[k])
+          this.buildActivationStatement(bigParenthesisTermResult, '=', stateK)
+          keepBigParenthesisTerm = true
+        } else {
+          initializeBigParenthesisTerm = true
+        }
+        for (l = 0; l < this.engine.inputsOfGatedBy[k][j].length; l++) {
+          a = this.engine.inputsOfGatedBy[k][j][l]
+          if (a !== k) {
+            if (initializeBigParenthesisTerm) {
+              this.buildActivationStatement(bigParenthesisTermResult, '=', '0.0')
+              initializeBigParenthesisTerm = false
+            }
+            const weightKA = this.alloc(`weight[${k}][${a}]`, this.engine.weight[k][a])
+            const activationA = this.alloc(`activation[${a}]`, this.engine.activation[a])
+            this.buildActivationStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
+            keepBigParenthesisTerm = true
+          }
+        }
+        if (keepBigParenthesisTerm) {
+          const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
+          this.buildPropagationStatement(gatedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', bigParenthesisTermResult)
+        }
       }
-      this.engine.gatedErrorResponsibility[j] *= derivative
-
-      this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] + this.engine.gatedErrorResponsibility[j]
-
+      if (hasGates) {
+        this.buildPropagationStatement(gatedErrorResponsibilityJ, '*=', derivativeJ)
+      }
+      const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
+      if (hasProjections && hasGates) {
+        this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '+', gatedErrorResponsibilityJ)
+      } else if (hasProjections) {
+        this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ)
+      } else if (hasGates) {
+        this.buildPropagationStatement(errorResponsibilityJ, '=', gatedErrorResponsibilityJ)
+      }
     }
     for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      i = this.engine.inputSet[j][h]
-      let Δw = this.engine.projectedErrorResponsibility[j] * this.engine.elegibilityTrace[j][i]
-      for (g = 0; g < this.engine.gateSet[j].length; g++) {
-        k = this.engine.gateSet[j][g]
-        Δw += this.engine.errorResponsibility[k] * this.engine.extendedElegibilityTrace[j][i][k]
+      if (hasProjections && hasGates) {
+        i = this.engine.inputSet[j][h]
+        const Δw = this.alloc(`Δw`, null)
+        const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
+        const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
+        this.buildPropagationStatement(Δw, '=', projectedErrorResponsibilityJ, '*', elegibilityTraceJI)
+        for (g = 0; g < this.engine.gateSet[j].length; g++) {
+          k = this.engine.gateSet[j][g]
+          const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
+          const extendedElegibilityTraceJIK = this.alloc(`errorResponsibility[${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
+          this.buildPropagationStatement(Δw, '+=', errorResponsibilityK, '*', extendedElegibilityTraceJIK)
+        }
+        const learningRate = this.alloc('learningRate', this.engine.learningRate)
+        this.buildPropagationStatement(Δw, '*=', learningRate)
+        const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
+        this.buildPropagationStatement(weightJI, '+=', Δw)
+      } else if (hasProjections) {
+        i = this.engine.inputSet[j][h]
+        const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
+        const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
+        const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
+        const learningRate = this.alloc('learningRate', this.engine.learningRate)
+        this.buildPropagationStatement(weightJI, '+=', projectedErrorResponsibilityJ, '*', elegibilityTraceJI, '*', learningRate)
+      } else if (hasGates) {
+        i = this.engine.inputSet[j][h]
+        const Δw = this.alloc(`Δw`, null)
+        this.buildPropagationStatement(Δw, '=', '0.0')
+        for (g = 0; g < this.engine.gateSet[j].length; g++) {
+          k = this.engine.gateSet[j][g]
+          const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
+          const extendedElegibilityTraceJIK = this.alloc(`errorResponsibility[${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
+          this.buildPropagationStatement(Δw, '+=', errorResponsibilityK, '*', extendedElegibilityTraceJIK)
+        }
+        const learningRate = this.alloc('learningRate', this.engine.learningRate)
+        this.buildPropagationStatement(Δw, '*=', learningRate)
+        const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
+        this.buildPropagationStatement(weightJI, '+=', Δw)
       }
-      Δw *= this.engine.learningRate
-      this.engine.weight[j][i] += Δw
     }
   }
 
@@ -263,46 +358,115 @@ export default class ASM implements Backend {
     }
   }
 
-  activate(inputs: number[]): number[] {
-    this.engine.status = StatusTypes.ACTIVATING
-    if (!this){//asd: .activateFn) {
-      this.activationStatements = []
-      let outputLayerIndex = this.engine.layers.length - 1
-      for (let i = 0; i < this.engine.layers.length; i++) {
-        for (let j = 0; j < this.engine.layers[i].length; j++) {
-          let activationJ
-          switch (i) {
-            case 0:
-              activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
-              this.buildActivationStatement(activationJ, '=', `input[${j}]`)
-              break;
-            case outputLayerIndex:
-              activationJ = this.buildActivateUnit(this.engine.layers[i][j])
-              this.buildActivationStatement(`output[${j}]`, '=', activationJ)
-              break;
-            default:
-              this.buildActivateUnit(this.engine.layers[i][j])
-          }
+  buildBody(statements: Statement[][]): string {
+    return statements.map(statement => statement.map(x => x instanceof Variable ? `H[${x.id}]` : x).join('')).join(';\n\t')
+  }
+
+  buildAsm(): AsmModule {
+    this.id = 0
+    this.inputs = []
+    this.outputs = []
+    this.targets = []
+    this.learningRateId = this.alloc(`learningRate`, this.engine.learningRate).id
+    this.variables = {}
+    this.activationStatements = []
+    this.propagationStatements = []
+    let outputLayerIndex = this.engine.layers.length - 1
+    for (let i = 0; i < this.engine.layers.length; i++) {
+      for (let j = 0; j < this.engine.layers[i].length; j++) {
+        let activationJ
+        switch (i) {
+          case 0:
+            activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
+            this.inputs.push(activationJ.id)
+            break
+          case outputLayerIndex:
+            activationJ = this.buildActivateUnit(this.engine.layers[i][j])
+            this.outputs.push(activationJ.id)
+            break
+          default:
+            this.buildActivateUnit(this.engine.layers[i][j])
         }
       }
-      //this.activateFn = this.buildActivate()
     }
-    const activation = [0]//asd: this.activateFn(inputs)
+    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
+      let targetJ = this.alloc(`target[${j}]`, null)
+      this.targets.push(targetJ.id)
+      this.buildPropagateUnit(this.engine.layers[outputLayerIndex][j], targetJ)
+    }
+    for (let i = this.engine.layers.length - 2; i > 0; i--) {
+      for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
+        this.buildPropagateUnit(this.engine.layers[i][j])
+      }
+    }
+
+    this.heap = new ArrayBuffer(this.id * 4)
+    this.view = new Float32Array(this.heap)
+    Object.keys(this.variables).forEach(key => {
+      const variable = this.variables[key]
+      if (typeof variable.value === 'number') {
+        this.view[variable.id] = variable.value
+      }
+    })
+    const activationBody = this.buildBody(this.activationStatements)
+    const propagationBody = this.buildBody(this.propagationStatements)
+    const constructor = new Function(`
+function module(stdlib, foreign, heap) {
+  "use asm";
+  var H = new stdlib.Float32Array(heap);
+  var exp = stdlib.Math.exp;
+  var random = foreign.random;
+  function activate() {
+    ${activationBody}
+  }
+  function propagate() {
+    ${propagationBody}
+  }
+  return {
+    activate: activate,
+    propagate: propagate
+  }
+}
+return { module: module }
+    `)
+    const module = constructor().module
+    const foreign = { random: this.engine.random }
+    const asm = module(global, foreign, this.heap)
+    return {
+      activate: (inputs: number[]) => {
+        for (let i = 0; i < this.inputs.length; i++) {
+          this.view[this.inputs[i]] = inputs[i]
+        }
+        asm.activate()
+        let activation = new Array(this.outputs.length)
+        for (let i = 0; i < this.outputs.length; i++) {
+          activation[i] = this.view[this.outputs[i]]
+        }
+        return activation
+      },
+      propagate: (targets: number[]) => {
+        for (let i = 0; i < this.targets.length; i++) {
+          this.view[this.targets[i]] = targets[i]
+        }
+        this.view[this.learningRateId] = this.engine.learningRate
+        asm.propagate()
+      }
+    }
+  }
+
+  activate(inputs: number[]): number[] {
+    this.engine.status = StatusTypes.ACTIVATING
+    if (this.asm == null) {
+      this.asm = this.buildAsm()
+    }
+    const activation = this.asm.activate(inputs)
     this.engine.status = StatusTypes.IDLE
     return activation
   }
 
   propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
-    let outputLayerIndex = this.engine.layers.length - 1
-    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
-      this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j])
-    }
-    for (let i = this.engine.layers.length - 2; i > 0; i--) {
-      for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
-        this.propagateUnit(this.engine.layers[i][j])
-      }
-    }
+    this.asm.propagate(targets)
     this.engine.status = StatusTypes.IDLE
   }
 
