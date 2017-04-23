@@ -12,21 +12,31 @@ export default class CPU implements Backend {
 
   activateUnit(j: number): number {
     let i, k, h, g, to, from, engine = this.engine
-    engine.state[j] *= engine.gain[j][j] * engine.weight[j][j]
+
+    let state = engine.state[j]
+    state = state * engine.gain[j][j] * engine.weight[j][j]
     for (h = 0; h < engine.inputSet[j].length; h++) {
       i = engine.inputSet[j][h]
-      engine.state[j] += engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
+      state = state + engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
     }
+    engine.state[j] = state
 
-    engine.activation[j] = this.activationFunction(j)
-    engine.derivative[j] = this.activationFunctionDerivative(j)
+    let activation = this.activationFunction(j)
+    engine.activation[j] = activation
+    let derivative = this.activationFunctionDerivative(j)
+    engine.derivative[j] = derivative
+
+    let elegibilityTrace = 0
+    let elegibilityTraceDerivated = 0
 
     for (h = 0; h < engine.inputSet[j].length; h++) {
       i = engine.inputSet[j][h]
-      engine.elegibilityTrace[j][i] = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
+      elegibilityTrace = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
+      engine.elegibilityTrace[j][i] = elegibilityTrace
+      elegibilityTraceDerivated = elegibilityTrace * derivative
       for (g = 0; g < engine.gatedBy[j].length; g++) {
         k = engine.gatedBy[j][g]
-        engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + engine.derivative[j] * engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
+        engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + elegibilityTraceDerivated * this.bigParenthesisTerm(k, j)
       }
     }
 
@@ -34,12 +44,12 @@ export default class CPU implements Backend {
       to = engine.gatedBy[j][h]
       for (g = 0; g < engine.inputsOfGatedBy[to][j].length; g++) {
         from = engine.inputsOfGatedBy[to][j][g]
-        engine.gain[to][from] = engine.activation[j]
+        engine.gain[to][from] = activation
       }
     }
 
 
-    return engine.activation[j]
+    return activation
   }
 
   propagateUnit(j: number, target?: number) {
