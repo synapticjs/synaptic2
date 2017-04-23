@@ -265,7 +265,11 @@ export default class ASM implements Backend {
 
   activate(inputs: number[]): number[] {
     this.engine.status = StatusTypes.ACTIVATING
+<<<<<<< HEAD
     if (!this){//asd: .activateFn) {
+=======
+    if (!this.activateFn) {
+>>>>>>> origin/develop
       this.activationStatements = []
       let outputLayerIndex = this.engine.layers.length - 1
       for (let i = 0; i < this.engine.layers.length; i++) {
