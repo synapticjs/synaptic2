@@ -6,56 +6,13 @@ import { CostTypes } from '../Trainer'
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.'
 
 export default class CPU implements Backend {
-
-  private inputUnitsActivation: number[] = []
-  private hiddenUnitsActivation: number[] = []
-  private outputUnitsActivation: number[] = []
-  private hiddenUnitsPropagation: number[] = []
-  private outputUnitsPropagation: number[] = []
-  public cached: boolean = false
-
   constructor(public engine = new Engine()) {
 
   }
 
-  cache() {
-
-    this.inputUnitsActivation = []
-    this.hiddenUnitsActivation = []
-    this.outputUnitsActivation = []
-    this.outputUnitsPropagation = []
-    this.hiddenUnitsPropagation = []
-
-    let outputLayerIndex = this.engine.layers.length - 1
-    for (let i = 0; i < this.engine.layers.length; i++) {
-      for (let j = 0; j < this.engine.layers[i].length; j++) {
-        switch (i) {
-          case 0:
-            this.inputUnitsActivation.push(this.engine.layers[i][j])
-            break;
-          case outputLayerIndex:
-            this.outputUnitsActivation.push(this.engine.layers[i][j])
-            break;
-          default:
-            this.hiddenUnitsActivation.push(this.engine.layers[i][j])
-        }
-      }
-    }
-    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
-      this.outputUnitsPropagation.push(this.engine.layers[outputLayerIndex][j])
-    }
-    for (let i = this.engine.layers.length - 2; i > 0; i--) {
-      for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
-        this.hiddenUnitsPropagation.push(this.engine.layers[i][j])
-      }
-    }
-
-    this.cached = true
-  }
-
   activateUnit(j: number, input?: number): number {
 
-    if (input !== null) {
+    if (typeof input !== 'undefined') {
 
       this.engine.activation[j] = input
 
@@ -93,7 +50,7 @@ export default class CPU implements Backend {
 
   propagateUnit(j: number, target?: number) {
     let i, k, h, g
-    if (target !== null) {
+    if (typeof target !== 'undefined') {
 
       this.engine.errorResponsibility[j] = this.engine.projectedErrorResponsibility[j] = target - this.engine.activation[j]
 
@@ -225,20 +182,22 @@ export default class CPU implements Backend {
   }
 
   activate(inputs: number[]): number[] {
-    if (!this.cached) {
-      this.cache()
-    }
     this.engine.status = StatusTypes.ACTIVATING
     let activation = []
-    let i
-    for (i = 0; i < this.inputUnitsActivation.length; i++) {
-      this.activateUnit(this.inputUnitsActivation[i], inputs[i])
-    }
-    for (i = 0; i < this.hiddenUnitsActivation.length; i++) {
-      this.activateUnit(this.hiddenUnitsActivation[i], null)
-    }
-    for (i = 0; i < this.outputUnitsActivation.length; i++) {
-      activation.push(this.activateUnit(this.outputUnitsActivation[i], null))
+    let outputLayerIndex = this.engine.layers.length - 1
+    for (let i = 0; i < this.engine.layers.length; i++) {
+      for (let j = 0; j < this.engine.layers[i].length; j++) {
+        switch (i) {
+          case 0:
+            this.activateUnit(this.engine.layers[i][j], inputs[j])
+            break;
+          case outputLayerIndex:
+            activation.push(this.activateUnit(this.engine.layers[i][j]))
+            break;
+          default:
+            this.activateUnit(this.engine.layers[i][j])
+        }
+      }
     }
     this.engine.status = StatusTypes.IDLE
     return activation;
@@ -246,12 +205,14 @@ export default class CPU implements Backend {
 
   propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
-    let i
-    for (i = 0; i < this.outputUnitsPropagation.length; i++) {
-      this.propagateUnit(this.outputUnitsPropagation[i], targets[i])
+    let outputLayerIndex = this.engine.layers.length - 1
+    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
+      this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j])
     }
-    for (i = 0; i < this.hiddenUnitsPropagation.length; i++) {
-      this.propagateUnit(this.hiddenUnitsPropagation[i], null)
+    for (let i = this.engine.layers.length - 2; i > 0; i--) {
+      for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
+        this.propagateUnit(this.engine.layers[i][j])
+      }
     }
     this.engine.status = StatusTypes.IDLE
   }
