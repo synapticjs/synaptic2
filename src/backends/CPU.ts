@@ -11,35 +11,35 @@ export default class CPU implements Backend {
   }
 
   activateUnit(j: number): number {
-    let i, k, h, g, to, from
-    this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j]
-    for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      i = this.engine.inputSet[j][h]
-      this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i]
+    let i, k, h, g, to, from, engine = this.engine
+    engine.state[j] *= engine.gain[j][j] * engine.weight[j][j]
+    for (h = 0; h < engine.inputSet[j].length; h++) {
+      i = engine.inputSet[j][h]
+      engine.state[j] += engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
     }
 
-    this.engine.activation[j] = this.activationFunction(j)
-    this.engine.derivative[j] = this.activationFunctionDerivative(j)
+    engine.activation[j] = this.activationFunction(j)
+    engine.derivative[j] = this.activationFunctionDerivative(j)
 
-    for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      i = this.engine.inputSet[j][h]
-      this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
-      for (g = 0; g < this.engine.gatedBy[j].length; g++) {
-        k = this.engine.gatedBy[j][g]
-        this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
+    for (h = 0; h < engine.inputSet[j].length; h++) {
+      i = engine.inputSet[j][h]
+      engine.elegibilityTrace[j][i] = engine.gain[j][j] * engine.weight[j][j] * engine.elegibilityTrace[j][i] + engine.gain[j][i] * engine.activation[i]
+      for (g = 0; g < engine.gatedBy[j].length; g++) {
+        k = engine.gatedBy[j][g]
+        engine.extendedElegibilityTrace[j][i][k] = engine.gain[k][k] * engine.weight[k][k] * engine.extendedElegibilityTrace[j][i][k] + engine.derivative[j] * engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
       }
     }
 
-    for (h = 0; h < this.engine.gatedBy[j].length; h++) {
-      to = this.engine.gatedBy[j][h]
-      for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
-        from = this.engine.inputsOfGatedBy[to][j][g]
-        this.engine.gain[to][from] = this.engine.activation[j]
+    for (h = 0; h < engine.gatedBy[j].length; h++) {
+      to = engine.gatedBy[j][h]
+      for (g = 0; g < engine.inputsOfGatedBy[to][j].length; g++) {
+        from = engine.inputsOfGatedBy[to][j][g]
+        engine.gain[to][from] = engine.activation[j]
       }
     }
 
 
-    return this.engine.activation[j]
+    return engine.activation[j]
   }
 
   propagateUnit(j: number, target?: number) {
