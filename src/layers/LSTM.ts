@@ -2,13 +2,11 @@ import Network, { Boundary, Layer } from '../Network'
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
-<<<<<<< HEAD
 const defaults = {
   peepholes: true
 }
 
-=======
->>>>>>> origin/develop
+
 export default class LSTM implements Layer {
 
   peepholes: boolean
@@ -20,7 +18,7 @@ export default class LSTM implements Layer {
   memoryCell = null
   outputGate = null
 
-  constructor(public memoryBlocks: number, { peepholes = true }) {
+  constructor(public memoryBlocks: number, { peepholes } = defaults) {
     this.peepholes = peepholes
   }
 
