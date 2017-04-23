@@ -3,56 +3,59 @@
 
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
+import { TrainEntry, Dictionary, Backend, TrainOptions, TrainResult } from '.'
 
-let index = 0
-class Variable {
-  public id: string
-  public value: number
-  public index: number
-
-  constructor (id: string, value: number) {
-    this.id = id
-    this.value = value
-    this.index = index++
-  }
+export type Statement = Variable | string
+export type Variables = Dictionary<Variable>
+export class Variable {
+  constructor(
+    public id: number,
+    public key: string,
+    public value: number
+  ) { }
 }
 
-export default class ASM {
-  
-  public activateFn: Function = null
-  public heap: Float32Array = null
-  public variables: any = {}
-  public statements: any[] = []
+export default class ASM implements Backend {
+
+  id: number = 0
+  heap: ArrayBuffer = null
+  variables: Variables = {}
+  activationStatements: Statement[][] = []
+  propagationStatements: Statement[][] = []
 
   constructor(public engine = new Engine()) {
   }
 
-  alloc (id: string, value: number): any {
-    if (!(id in this.variables)) {
-      this.variables[id] = new Variable(id, value)
+  alloc(key: string, value: number): Variable {
+    if (!(key in this.variables)) {
+      this.variables[key] = new Variable(this.id++, key, value)
     }
-    return this.variables[id]
+    return this.variables[key]
   }
 
-  buildStatement (...parts) {
-    this.statements.push(parts)
+  buildActivationStatement(...parts: Statement[]) {
+    this.activationStatements.push(parts)
+  }
+
+  buildPropagationStatement(...parts: Statement[]) {
+    this.propagationStatements.push(parts)
   }
 
   buildActivateUnit(j: number, inputIndex?: number): void {
     const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
     let i, k, h, g, to, from
     const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
-    
+
     const isSelfConnected = this.engine.connections.some(connection => connection.to === j && connection.from === j)
     const isSelfConnectionGated = this.engine.gates.some(gate => gate.to === j && gate.from === j)
-    
+
     if (isSelfConnected && isSelfConnectionGated) {
       const gainJJ = this.alloc(`gain[${j}][${j}]`, this.engine.gain[j][j])
       const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-      this.buildStatement(stateJ, '*=', gainJJ, '*', weightJJ)
+      this.buildActivationStatement(stateJ, '*=', gainJJ, '*', weightJJ)
     } else if (isSelfConnected) {
       const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-      this.buildStatement(stateJ, '*=', weightJJ)
+      this.buildActivationStatement(stateJ, '*=', weightJJ)
     }
 
     for (h = 0; h < this.engine.inputSet[j].length; h++) {
@@ -62,30 +65,30 @@ export default class ASM {
         const gainJI = this.alloc(`gain[${j}][${i}]`, this.engine.gain[j][i])
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
-        this.buildStatement(stateJ, '+=', gainJI, '*', weightJI, '*', activationI)
+        this.buildActivationStatement(stateJ, '+=', gainJI, '*', weightJI, '*', activationI)
       } else {
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
-        this.buildStatement(stateJ, '+=', weightJI, '*', activationI)
+        this.buildActivationStatement(stateJ, '+=', weightJI, '*', activationI)
       }
     }
 
     const type = this.engine.activationFunction[j]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
-        this.buildStatement(activationJ, '=', '1.0', '/', '1.0', '+', 'Math.exp(-', stateJ, ')')
+        this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', 'Math.exp(-', stateJ, '))')
         break
       case ActivationTypes.TANH:
         const eP = this.alloc('eP', null)
         const eN = this.alloc('eN', null)
-        this.buildStatement(eP, '=', 'Math.exp(', stateJ, ')')
-        this.buildStatement(activationJ, '=', '(', eP, '-', eN, ')', '/', '(', eP, '+', eN, ')')
-        break 
+        this.buildActivationStatement(eP, '=', 'Math.exp(', stateJ, ')')
+        this.buildActivationStatement(activationJ, '=', '(', eP, '-', eN, ')', '/', '(', eP, '+', eN, ')')
+        break
       case ActivationTypes.RELU:
-        this.buildStatement(activationJ, '=', stateJ, '>', '0.0', '?', stateJ, ':', '0.0')
+        this.buildActivationStatement(activationJ, '=', stateJ, '>', '0.0', '?', stateJ, ':', '0.0')
         break
       case ActivationTypes.IDENTITY:
-        this.buildStatement(activationJ, '=', stateJ)
+        this.buildActivationStatement(activationJ, '=', stateJ)
         break
       /*case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0]
@@ -104,32 +107,32 @@ export default class ASM {
       const gainJI = this.alloc(`gain[${j}][${i}]`, this.engine.gain[j][i])
       const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
       const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
-      
+
       if (isSelfConnected && isSelfConnectionGated) {
         const gainJJ = this.alloc(`gain[${j}][${j}]`, this.engine.gain[j][j])
         const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-        this.buildStatement(elegibilityTraceJI, '=', gainJJ, '*', weightJJ, '*', elegibilityTraceJI, '+', gainJI, '*', activationI)
+        this.buildActivationStatement(elegibilityTraceJI, '=', gainJJ, '*', weightJJ, '*', elegibilityTraceJI, '+', gainJI, '*', activationI)
       } else if (isSelfConnected) {
         const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-        this.buildStatement(elegibilityTraceJI, '=', weightJJ, '*', elegibilityTraceJI, '+', gainJI, '*', activationI)
+        this.buildActivationStatement(elegibilityTraceJI, '=', weightJJ, '*', elegibilityTraceJI, '+', gainJI, '*', activationI)
       } else {
-        this.buildStatement(elegibilityTraceJI, '=', gainJI, '*', activationI)
+        this.buildActivationStatement(elegibilityTraceJI, '=', gainJI, '*', activationI)
       }
-      
+
       for (g = 0; g < this.engine.gatedBy[j].length; g++) {
         k = this.engine.gatedBy[j][g]
 
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
         const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
-        
+
         const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
         const type = this.engine.activationFunction[j]
         switch (type) {
           case ActivationTypes.LOGISTIC_SIGMOID:
-            this.buildStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
+            this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
             break;
           case ActivationTypes.TANH:
-            this.buildStatement(derivativeJ, '=', '1.0', '-', 'Math.pow', '(', activationJ, ',', '2.0', ')')
+            this.buildActivationStatement(derivativeJ, '=', '1.0', '-', 'Math.pow', '(', activationJ, ',', '2.0', ')')
             break;
           case ActivationTypes.RELU:
           case ActivationTypes.IDENTITY:
@@ -144,23 +147,23 @@ export default class ASM {
         let initializeBigParenthesisTerm = false
         if (isSelfConnectedK && this.engine.derivativeTerm[k][j]) {
           const stateK = this.alloc(`state[${k}]`, this.engine.state[k])
-          this.buildStatement(bigParenthesisTermResult, '=', stateK)
+          this.buildActivationStatement(bigParenthesisTermResult, '=', stateK)
           keepBigParenthesisTerm = true
         } else {
           initializeBigParenthesisTerm = true
         }
-        
-        
+
+
         for (var l = 0; l < this.engine.inputsOfGatedBy[k][j].length; l++) {
           var a = this.engine.inputsOfGatedBy[k][j][l]
           if (a !== k) {
             if (initializeBigParenthesisTerm) {
-              this.buildStatement(bigParenthesisTermResult, '=', '0.0')
+              this.buildActivationStatement(bigParenthesisTermResult, '=', '0.0')
               initializeBigParenthesisTerm = false
             }
             const weightKA = this.alloc(`weight[${k}][${a}]`, this.engine.weight[k][a])
             const activationA = this.alloc(`activation[${a}]`, this.engine.activation[a])
-            this.buildStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
+            this.buildActivationStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
             keepBigParenthesisTerm = true
           }
         }
@@ -171,22 +174,22 @@ export default class ASM {
           const gainKK = this.alloc(`gain[${k}][${k}]`, this.engine.gain[k][k])
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
-            this.buildStatement(extendedElegibilityTraceJIK, '=', gainKK, '*', weightKK, '*', extendedElegibilityTraceJIK, '+', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
+            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', gainKK, '*', weightKK, '*', extendedElegibilityTraceJIK, '+', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
           } else {
-            this.buildStatement(extendedElegibilityTraceJIK, '=', gainKK, '*', weightKK, '*', extendedElegibilityTraceJIK)
+            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', gainKK, '*', weightKK, '*', extendedElegibilityTraceJIK)
           }
         } else if (isSelfConnected) {
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
-            this.buildStatement(extendedElegibilityTraceJIK, '=', weightKK, '*', extendedElegibilityTraceJIK, '+', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
+            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', weightKK, '*', extendedElegibilityTraceJIK, '+', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
           } else {
-            this.buildStatement(extendedElegibilityTraceJIK, '=', weightKK, '*', extendedElegibilityTraceJIK)
+            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', weightKK, '*', extendedElegibilityTraceJIK)
           }
         } else {
           if (keepBigParenthesisTerm) {
-            this.buildStatement(extendedElegibilityTraceJIK, '=', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
+            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
           }
-        }          
+        }
       }
     }
 
@@ -195,10 +198,9 @@ export default class ASM {
       for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
         from = this.engine.inputsOfGatedBy[to][j][g]
         const gainToFrom = this.alloc(`gain[${to}][${from}]`, this.engine.gain[to][from])
-        this.buildStatement(gainToFrom, '=', activationJ)
+        this.buildActivationStatement(gainToFrom, '=', activationJ)
       }
     }
-    return activationJ
   }
 
   propagateUnit(j: number, target?: number) {
@@ -211,7 +213,7 @@ export default class ASM {
       this.engine.projectedErrorResponsibility[j] = 0
       for (h = 0; h < this.engine.projectionSet[j].length; h++) {
         k = this.engine.projectionSet[j][h]
-        this.engine.projectedErrorResponsibility[j] +=  this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
+        this.engine.projectedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
       }
       const derivative = this.activationFunctionDerivative(j)
       this.engine.projectedErrorResponsibility[j] *= derivative
@@ -238,84 +240,10 @@ export default class ASM {
     }
   }
 
-  /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
-  bigParenthesisTerm(k: number, j: number) {
-    let result = this.engine.derivativeTerm[k][j] * this.engine.weight[k][k] * this.engine.state[k]
-    for (var i = 0; i < this.engine.inputsOfGatedBy[k][j].length; i++) {
-      var a = this.engine.inputsOfGatedBy[k][j][i]
-      if (a !== k) {
-        result += this.engine.weight[k][a] * this.engine.activation[a]
-      }
-    }
-    return result
-  }
-
-  activationFunction(unit: number): number {
-    let x
-    const type = this.engine.activationFunction[unit]
-    switch (type) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.engine.state[unit]
-        return 1 / (1 + Math.exp(-x))
-
-      case ActivationTypes.TANH:
-        x = this.engine.state[unit]
-        const eP = Math.exp(x)
-        const eN = 1 / eP
-        return (eP - eN) / (eP + eN)
-
-      case ActivationTypes.RELU:
-        x = this.engine.state[unit]
-        return x > 0 ? x : 0
-
-      case ActivationTypes.IDENTITY:
-        x = this.engine.state[unit]
-        return x
-
-      case ActivationTypes.MAX_POOLING:
-        const inputUnit = this.engine.inputsOf[unit][0]
-        const gatedUnit = this.engine.gatedBy[unit][0]
-        const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit]
-        const maxActivation = inputsOfGatedUnit.reduce((max, input) => Math.max(this.engine.activation[input], max), -Infinity)
-        const inputUnitWithHigherActivation = inputsOfGatedUnit.find(input => this.engine.activation[input] === maxActivation)
-        return inputUnitWithHigherActivation === inputUnit ? 1 : 0
-
-      case ActivationTypes.DROPOUT:
-        const chances = this.engine.state[unit]
-        return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1
-    }
-  }
-
-  activationFunctionDerivative(unit: number) {
-    let x: number
-    const type = this.engine.activationFunction[unit]
-    switch (type) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.engine.activation[unit]
-        return x * (1 - x)
-
-      case ActivationTypes.TANH:
-        x = this.engine.activation[unit]
-        return 1 - Math.pow(x, 2)
-
-      case ActivationTypes.RELU:
-        return 0
-
-      case ActivationTypes.IDENTITY:
-        return 0
-
-      case ActivationTypes.MAX_POOLING:
-        return 0
-
-      case ActivationTypes.DROPOUT:
-        return 0
-    }
-  }
-
   costFunction(target: number[], predicted: number[], costType: CostTypes) {
     let i: number, x = 0
     switch (costType) {
-      case CostTypes.MSE:
+      case CostTypes.MEAN_SQUARE_ERROR:
         for (i = 0; i < target.length; i++) {
           x += Math.pow(target[i] - predicted[i], 2)
         }
@@ -338,22 +266,22 @@ export default class ASM {
   activate(inputs: number[]): number[] {
     this.engine.status = StatusTypes.ACTIVATING
     if (!this.activateFn) {
-      this.statements = []
+      this.activationStatements = []
       let outputLayerIndex = this.engine.layers.length - 1
       for (let i = 0; i < this.engine.layers.length; i++) {
         for (let j = 0; j < this.engine.layers[i].length; j++) {
           let activationJ
-          switch(i) {
+          switch (i) {
             case 0:
               activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
-              this.buildStatement(activationJ, '=', `input[${j}]`)
+              this.buildActivationStatement(activationJ, '=', `input[${j}]`)
               break;
             case outputLayerIndex:
-              this.buildActivateUnit(this.engine.layers[i][j])
+              activationJ = this.buildActivateUnit(this.engine.layers[i][j])
+              this.buildActivationStatement(`output[${j}]`, '=', activationJ)
               break;
             default:
-              activationJ = this.buildActivateUnit(this.engine.layers[i][j])
-              this.buildStatement( `output[${j}]`, '=', activationJ)
+              this.buildActivateUnit(this.engine.layers[i][j])
           }
         }
       }
@@ -371,44 +299,42 @@ export default class ASM {
       this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j])
     }
     for (let i = this.engine.layers.length - 2; i > 0; i--) {
-      for (let j = this.engine.layers[i].length - 1; j >= 0 ; j--) {
+      for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
         this.propagateUnit(this.engine.layers[i][j])
       }
     }
     this.engine.status = StatusTypes.IDLE
   }
 
-  train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
-    return new Promise(resolve => {
+  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
+    // start training
+    let startTime = new Date().getTime()
+    let error = Infinity
+    let iterations = 0
 
-      // start training
-      let startTime = new Date().getTime()
-      let error = Infinity
-      let iterations = 0
+    this.engine.learningRate = learningRate
+    this.engine.status = StatusTypes.TRAINING
 
-      this.engine.learningRate = learningRate
-      this.engine.status = StatusTypes.TRAINING
-
-      // train
-      while (error > minError && iterations < maxIterations) {
-        error = 0
-        for (let index = 0; index < dataset.length; index++) {
-          const { input, output } = dataset[index]
-          const predictedOutput = this.activate(input)
-          this.propagate(output)
-          error += this.costFunction(output, predictedOutput, costFunction)
-        }
-        error /= dataset.length
-        iterations++
+    // train
+    while (error > minError && iterations < maxIterations) {
+      error = 0
+      for (let index = 0; index < dataset.length; index++) {
+        const { input, output } = dataset[index]
+        const predictedOutput = this.activate(input)
+        this.propagate(output)
+        error += this.costFunction(output, predictedOutput, costFunction)
       }
+      error /= dataset.length
+      iterations++
+    }
 
-      // end training
-      this.engine.status = StatusTypes.IDLE
-      resolve({
-        error,
-        iterations,
-        time: new Date().getTime() - startTime
-      })
-    })
+    // end training
+    this.engine.status = StatusTypes.IDLE
+
+    return {
+      error,
+      iterations,
+      time: new Date().getTime() - startTime
+    }
   }
 }

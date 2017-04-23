@@ -1,3 +1,19 @@
+export interface Dictionary<T> {
+  [key: string]: T;
+}
+
+export interface Connection {
+  to: number,
+  from: number
+}
+
+export interface Gate {
+  to: number,
+  from: number,
+  gater: number
+}
+
+
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
@@ -25,43 +41,40 @@ export enum StatusTypes {
 
 // -- Engine
 
-const defaults = {
-  bias: true,
-  generator: () => Math.random() * 2 - 1
-}
+const RandomGenerator = () => Math.random() * 2 - 1
 
 export default class Engine {
 
-  state = {}
-  weight = {}
-  gain = {}
-  activation = {}
-  derivative = {}
-  elegibilityTrace = {}
-  extendedElegibilityTrace = {}
-  errorResponsibility = {}
-  projectedErrorResponsibility = {}
-  gatedErrorResponsibility = {}
-  activationFunction = {}
-  inputsOf = {}
-  projectedBy = {}
-  gatersOf = {}
-  gatedBy = {}
-  inputsOfGatedBy = {}
-  projectionSet = {}
-  gateSet = {}
-  inputSet = {}
-  derivativeTerm = {}
-  connections = []
-  gates = []
-  learningRate = 0.1
+  state: Dictionary<number> = {}
+  weight: Dictionary<Dictionary<number>> = {}
+  gain: Dictionary<Dictionary<number>> = {}
+  activation: Dictionary<number> = {}
+  derivative: Dictionary<number> = {}
+  elegibilityTrace: Dictionary<Dictionary<number>> = {}
+  extendedElegibilityTrace: Dictionary<Dictionary<Dictionary<number>>> = {}
+  errorResponsibility: Dictionary<number> = {}
+  projectedErrorResponsibility: Dictionary<number> = {}
+  gatedErrorResponsibility: Dictionary<number> = {}
+  activationFunction: Dictionary<number> = {}
+  inputsOf: Dictionary<number[]> = {}
+  projectedBy: Dictionary<number[]> = {}
+  gatersOf: Dictionary<number[]> = {}
+  gatedBy: Dictionary<number[]> = {}
+  inputsOfGatedBy: Dictionary<Dictionary<number[]>> = {}
+  projectionSet: Dictionary<number[]> = {}
+  gateSet: Dictionary<number[]> = {}
+  inputSet: Dictionary<number[]> = {}
+  derivativeTerm: Dictionary<Dictionary<number>> = {}
+  connections: Connection[] = []
+  gates: Gate[] = []
+  learningRate: number = 0.1
   layers: number[][] = []
-  size = 0
-  random: any
-  biasUnit = null
-  status = StatusTypes.IDLE
+  size: number = 0
+  random: Function = null
+  biasUnit: number = null
+  status: StatusTypes = StatusTypes.IDLE
 
-  constructor({ bias, generator } = defaults) {
+  constructor({ bias = true, generator = RandomGenerator } = {}) {
     this.random = generator
     this.status = StatusTypes.IDLE
 
@@ -146,7 +159,7 @@ export default class Engine {
     this.track(gater)
   }
 
-  addLayer(size = 0, activationFunction?) {
+  addLayer(size = 0, activationFunction?: ActivationTypes) {
     if (this.status === StatusTypes.REVERSE_INIT) {
       throw new Error('You can\'t add layers during REVERSE_INIT phase!')
     }
@@ -303,7 +316,7 @@ export default class Engine {
     return Engine.fromJSON(this.toJSON())
   }
 
-  static fromJSON(json) {
+  static fromJSON(json: string | object) {
     const data = typeof json === 'string' ? JSON.parse(json) : json;
     const engine = new Engine()
     Object.keys(data).forEach(key => engine[key] = data[key])
@@ -317,7 +330,7 @@ export default class Engine {
 
 
 // helper for removing duplicated ints from an array
-function uniq(...arrays) {
+function uniq(...arrays): number[] {
   const concated = arrays.reduce((concated, array) => concated.concat(array || []), [])
   let o = {}, a = [], i
   for (i = 0; i < concated.length; o[concated[i++]] = 1);

@@ -174,7 +174,7 @@ var Paper = (function () {
     Paper.prototype.costFunction = function (target, predicted, costType) {
         var i, x = 0;
         switch (costType) {
-            case Trainer_1.CostTypes.MSE:
+            case Trainer_1.CostTypes.MEAN_SQUARE_ERROR:
                 for (i = 0; i < target.length; i++) {
                     x += Math.pow(target[i] - predicted[i], 2);
                 }

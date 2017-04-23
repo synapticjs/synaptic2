@@ -3,53 +3,54 @@
 
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
+import { TrainEntry, Backend, TrainOptions, TrainResult } from '.'
 
-export default class CPU {
+export default class CPU implements Backend {
 
-  private inputActivationOrder: number[] = []
-  private hiddenActivationOrder: number[] = []
-  private outputActivationOrder: number[] = []
-  private hiddenPropagationOrder: number[] = []
-  private outputPropagationOrder: number[] = []
-  public isOrderCached: boolean = false
+  private inputUnitsActivation: number[] = []
+  private hiddenUnitsActivation: number[] = []
+  private outputUnitsActivation: number[] = []
+  private hiddenUnitsPropagation: number[] = []
+  private outputUnitsPropagation: number[] = []
+  public cached: boolean = false
 
   constructor(public engine = new Engine()) {
-    
+
   }
 
-  cacheOrder() {
+  cache() {
 
-    this.inputActivationOrder = []
-    this.hiddenActivationOrder = []
-    this.outputActivationOrder = []
-    this.outputPropagationOrder = []
-    this.hiddenPropagationOrder = []
+    this.inputUnitsActivation = []
+    this.hiddenUnitsActivation = []
+    this.outputUnitsActivation = []
+    this.outputUnitsPropagation = []
+    this.hiddenUnitsPropagation = []
 
     let outputLayerIndex = this.engine.layers.length - 1
     for (let i = 0; i < this.engine.layers.length; i++) {
       for (let j = 0; j < this.engine.layers[i].length; j++) {
-        switch(i) {
+        switch (i) {
           case 0:
-            this.inputActivationOrder.push(this.engine.layers[i][j])
+            this.inputUnitsActivation.push(this.engine.layers[i][j])
             break;
           case outputLayerIndex:
-            this.outputActivationOrder.push(this.engine.layers[i][j])
+            this.outputUnitsActivation.push(this.engine.layers[i][j])
             break;
           default:
-            this.hiddenActivationOrder.push(this.engine.layers[i][j])
+            this.hiddenUnitsActivation.push(this.engine.layers[i][j])
         }
       }
     }
     for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
-      this.outputPropagationOrder.push(this.engine.layers[outputLayerIndex][j])
+      this.outputUnitsPropagation.push(this.engine.layers[outputLayerIndex][j])
     }
     for (let i = this.engine.layers.length - 2; i > 0; i--) {
-      for (let j = this.engine.layers[i].length - 1; j >= 0 ; j--) {
-        this.hiddenPropagationOrder.push(this.engine.layers[i][j])
+      for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
+        this.hiddenUnitsPropagation.push(this.engine.layers[i][j])
       }
     }
-    
-    this.isOrderCached = true
+
+    this.cached = true
   }
 
   activateUnit(j: number, input?: number): number {
@@ -100,7 +101,7 @@ export default class CPU {
       this.engine.projectedErrorResponsibility[j] = 0
       for (h = 0; h < this.engine.projectionSet[j].length; h++) {
         k = this.engine.projectionSet[j][h]
-        this.engine.projectedErrorResponsibility[j] +=  this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
+        this.engine.projectedErrorResponsibility[j] += this.engine.errorResponsibility[k] * this.engine.gain[k][j] * this.engine.weight[k][j]
       }
       this.engine.projectedErrorResponsibility[j] *= this.engine.derivative[j]
 
@@ -165,7 +166,7 @@ export default class CPU {
         const gatedUnit = this.engine.gatedBy[unit][0]
         const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit]
         const maxActivation = inputsOfGatedUnit.reduce((max, input) => Math.max(this.engine.activation[input], max), -Infinity)
-        const inputUnitWithHigherActivation = inputsOfGatedUnit.find(input => this.engine.activation[input] === maxActivation)
+        const inputUnitWithHigherActivation = inputsOfGatedUnit.reduce((found, unit) => this.engine.activation[unit] === maxActivation ? unit : found, null)
         return inputUnitWithHigherActivation === inputUnit ? 1 : 0
 
       case ActivationTypes.DROPOUT:
@@ -203,7 +204,7 @@ export default class CPU {
   costFunction(target: number[], predicted: number[], costType: CostTypes) {
     let i: number, x = 0
     switch (costType) {
-      case CostTypes.MSE:
+      case CostTypes.MEAN_SQUARE_ERROR:
         for (i = 0; i < target.length; i++) {
           x += Math.pow(target[i] - predicted[i], 2)
         }
@@ -224,20 +225,20 @@ export default class CPU {
   }
 
   activate(inputs: number[]): number[] {
-    if (!this.isOrderCached) {
-      this.cacheOrder()
+    if (!this.cached) {
+      this.cache()
     }
     this.engine.status = StatusTypes.ACTIVATING
     let activation = []
     let i
-    for (i = 0; i < this.inputActivationOrder.length; i++) {
-      this.activateUnit(this.inputActivationOrder[i], inputs[i])
+    for (i = 0; i < this.inputUnitsActivation.length; i++) {
+      this.activateUnit(this.inputUnitsActivation[i], inputs[i])
     }
-    for (i = 0; i < this.hiddenActivationOrder.length; i++) {
-      this.activateUnit(this.hiddenActivationOrder[i], null)
+    for (i = 0; i < this.hiddenUnitsActivation.length; i++) {
+      this.activateUnit(this.hiddenUnitsActivation[i], null)
     }
-    for (i = 0; i < this.outputActivationOrder.length; i++) {
-      activation.push(this.activateUnit(this.outputActivationOrder[i], null))
+    for (i = 0; i < this.outputUnitsActivation.length; i++) {
+      activation.push(this.activateUnit(this.outputUnitsActivation[i], null))
     }
     this.engine.status = StatusTypes.IDLE
     return activation;
@@ -246,46 +247,44 @@ export default class CPU {
   propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
     let i
-    for (i = 0; i < this.outputPropagationOrder.length; i++) {
-      this.propagateUnit(this.outputPropagationOrder[i], targets[i])
+    for (i = 0; i < this.outputUnitsPropagation.length; i++) {
+      this.propagateUnit(this.outputUnitsPropagation[i], targets[i])
     }
-    for (i = 0; i < this.hiddenPropagationOrder.length; i++) {
-      this.propagateUnit(this.hiddenPropagationOrder[i], null)
+    for (i = 0; i < this.hiddenUnitsPropagation.length; i++) {
+      this.propagateUnit(this.hiddenUnitsPropagation[i], null)
     }
     this.engine.status = StatusTypes.IDLE
   }
 
-  train(dataset: Array<{ input: number[]; output: number[]; }>, { learningRate, minError, maxIterations, costFunction }) {
-    return new Promise(resolve => {
+  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
 
-      // start training
-      let startTime = new Date().getTime()
-      let error = Infinity
-      let iterations = 0
+    // start training
+    let startTime = new Date().getTime()
+    let error = Infinity
+    let iterations = 0
 
-      this.engine.learningRate = learningRate
-      this.engine.status = StatusTypes.TRAINING
+    this.engine.learningRate = learningRate
+    this.engine.status = StatusTypes.TRAINING
 
-      // train
-      while (error > minError && iterations < maxIterations) {
-        error = 0
-        for (let index = 0; index < dataset.length; index++) {
-          const { input, output } = dataset[index]
-          const predictedOutput = this.activate(input)
-          this.propagate(output)
-          error += this.costFunction(output, predictedOutput, costFunction)
-        }
-        error /= dataset.length
-        iterations++
+    // train
+    while (error > minError && iterations < maxIterations) {
+      error = 0
+      for (let index = 0; index < dataset.length; index++) {
+        const { input, output } = dataset[index]
+        const predictedOutput = this.activate(input)
+        this.propagate(output)
+        error += this.costFunction(output, predictedOutput, costFunction)
       }
+      error /= dataset.length
+      iterations++
+    }
 
-      // end training
-      this.engine.status = StatusTypes.IDLE
-      resolve({
-        error,
-        iterations,
-        time: new Date().getTime() - startTime
-      })
-    })
+    // end training
+    this.engine.status = StatusTypes.IDLE
+    return {
+      error,
+      iterations,
+      time: new Date().getTime() - startTime
+    }
   }
 }

@@ -1,12 +1,12 @@
-import Network, { IBoundary, INetworkLayer } from '../Network'
+import Network, { Boundary, Layer } from '../Network'
 
-export default class Dense implements INetworkLayer {
+export default class Dense implements Layer {
 
   layer: number[]
 
   constructor(public size: number) { }
 
-  init(network: Network, boundary: IBoundary): IBoundary {
+  init(network: Network, boundary: Boundary): Boundary {
 
     if (boundary == null) {
       throw new Error('\'Dense\' can\'t be the first layer of the network!')

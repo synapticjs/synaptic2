@@ -5,7 +5,6 @@ var MaxPool3D = (function () {
     function MaxPool3D(downsampling) {
         if (downsampling === void 0) { downsampling = 2; }
         this.downsampling = downsampling;
-        this.downsampling = downsampling;
         this.gater = null;
         this.layer = null;
     }

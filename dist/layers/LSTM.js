@@ -1,12 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
-var defaults = {
-    peepholes: true
-};
 var LSTM = (function () {
     function LSTM(memoryBlocks, _a) {
-        var peepholes = (_a === void 0 ? defaults : _a).peepholes;
+        var _b = _a.peepholes, peepholes = _b === void 0 ? true : _b;
         this.memoryBlocks = memoryBlocks;
         this.prevLayer = null;
         this.nextLayer = null;

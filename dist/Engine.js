@@ -1,7 +1,7 @@
-// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
-// trying to keep the code as close as posible to the equations and as verbose as possible.
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
+// trying to keep the code as close as posible to the equations and as verbose as possible.
 // -- Activation Types
 var ActivationTypes;
 (function (ActivationTypes) {
@@ -23,17 +23,15 @@ var StatusTypes;
     StatusTypes[StatusTypes["TRAINING"] = 5] = "TRAINING";
 })(StatusTypes = exports.StatusTypes || (exports.StatusTypes = {}));
 // -- Engine
-var defaults = {
-    bias: true,
-    generator: function () { return Math.random() * 2 - 1; }
-};
+var RandomGenerator = function () { return Math.random() * 2 - 1; };
 var Engine = (function () {
     function Engine(_a) {
-        var _b = _a === void 0 ? defaults : _a, bias = _b.bias, generator = _b.generator;
+        var _b = _a === void 0 ? {} : _a, _c = _b.bias, bias = _c === void 0 ? true : _c, _d = _b.generator, generator = _d === void 0 ? RandomGenerator : _d;
         this.state = {};
         this.weight = {};
         this.gain = {};
         this.activation = {};
+        this.derivative = {};
         this.elegibilityTrace = {};
         this.extendedElegibilityTrace = {};
         this.errorResponsibility = {};
@@ -54,6 +52,7 @@ var Engine = (function () {
         this.learningRate = 0.1;
         this.layers = [];
         this.size = 0;
+        this.random = null;
         this.biasUnit = null;
         this.status = StatusTypes.IDLE;
         this.random = generator;
@@ -73,6 +72,7 @@ var Engine = (function () {
         this.elegibilityTrace[unit] = {};
         this.extendedElegibilityTrace[unit] = {};
         this.activation[unit] = 0;
+        this.derivative[unit] = 0;
         this.weight[unit][unit] = 0; // since it's not self-connected the weight of the self-connection is 0 (this is explained in the text between eq. 14 and eq. 15)
         this.gain[unit][unit] = 1; // ungated connections have a gain of 1 (eq. 14)
         this.elegibilityTrace[unit][unit] = 0;
@@ -239,6 +239,7 @@ var Engine = (function () {
             weight: this.weight,
             gain: this.gain,
             activation: this.activation,
+            derivative: this.derivative,
             elegibilityTrace: this.elegibilityTrace,
             extendedElegibilityTrace: this.extendedElegibilityTrace,
             errorResponsibility: this.errorResponsibility,
