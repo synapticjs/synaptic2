@@ -4,44 +4,37 @@
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.'
-
+declare var console
 export default class CPU implements Backend {
   constructor(public engine = new Engine()) {
 
   }
 
-  activateUnit(j: number, input?: number): number {
+  activateUnit(j: number): number {
+    let i, k, h, g, to, from
+    this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j]
+    for (h = 0; h < this.engine.inputSet[j].length; h++) {
+      i = this.engine.inputSet[j][h]
+      this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i]
+    }
 
-    if (typeof input !== 'undefined') {
+    this.engine.activation[j] = this.activationFunction(j)
+    this.engine.derivative[j] = this.activationFunctionDerivative(j)
 
-      this.engine.activation[j] = input
-
-    } else {
-      let i, k, h, g, to, from
-      this.engine.state[j] *= this.engine.gain[j][j] * this.engine.weight[j][j]
-      for (h = 0; h < this.engine.inputSet[j].length; h++) {
-        i = this.engine.inputSet[j][h]
-        this.engine.state[j] += this.engine.gain[j][i] * this.engine.weight[j][i] * this.engine.activation[i]
+    for (h = 0; h < this.engine.inputSet[j].length; h++) {
+      i = this.engine.inputSet[j][h]
+      this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
+      for (g = 0; g < this.engine.gatedBy[j].length; g++) {
+        k = this.engine.gatedBy[j][g]
+        this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
       }
+    }
 
-      this.engine.activation[j] = this.activationFunction(j)
-      this.engine.derivative[j] = this.activationFunctionDerivative(j)
-
-      for (h = 0; h < this.engine.inputSet[j].length; h++) {
-        i = this.engine.inputSet[j][h]
-        this.engine.elegibilityTrace[j][i] = this.engine.gain[j][j] * this.engine.weight[j][j] * this.engine.elegibilityTrace[j][i] + this.engine.gain[j][i] * this.engine.activation[i]
-        for (g = 0; g < this.engine.gatedBy[j].length; g++) {
-          k = this.engine.gatedBy[j][g]
-          this.engine.extendedElegibilityTrace[j][i][k] = this.engine.gain[k][k] * this.engine.weight[k][k] * this.engine.extendedElegibilityTrace[j][i][k] + this.engine.derivative[j] * this.engine.elegibilityTrace[j][i] * this.bigParenthesisTerm(k, j)
-        }
-      }
-
-      for (h = 0; h < this.engine.gatedBy[j].length; h++) {
-        to = this.engine.gatedBy[j][h]
-        for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
-          from = this.engine.inputsOfGatedBy[to][j][g]
-          this.engine.gain[to][from] = this.engine.activation[j]
-        }
+    for (h = 0; h < this.engine.gatedBy[j].length; h++) {
+      to = this.engine.gatedBy[j][h]
+      for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
+        from = this.engine.inputsOfGatedBy[to][j][g]
+        this.engine.gain[to][from] = this.engine.activation[j]
       }
     }
 
@@ -87,8 +80,8 @@ export default class CPU implements Backend {
   /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
   bigParenthesisTerm(k: number, j: number) {
     let result = this.engine.derivativeTerm[k][j] * this.engine.weight[k][k] * this.engine.state[k]
-    for (var i = 0; i < this.engine.inputsOfGatedBy[k][j].length; i++) {
-      var a = this.engine.inputsOfGatedBy[k][j][i]
+    for (let i = 0; i < this.engine.inputsOfGatedBy[k][j].length; i++) {
+      let a = this.engine.inputsOfGatedBy[k][j][i]
       if (a !== k) {
         result += this.engine.weight[k][a] * this.engine.activation[a]
       }
@@ -183,37 +176,41 @@ export default class CPU implements Backend {
 
   activate(inputs: number[]): number[] {
     this.engine.status = StatusTypes.ACTIVATING
-    let activation = []
     let outputLayerIndex = this.engine.layers.length - 1
-    for (let i = 0; i < this.engine.layers.length; i++) {
-      for (let j = 0; j < this.engine.layers[i].length; j++) {
-        switch (i) {
-          case 0:
-            this.activateUnit(this.engine.layers[i][j], inputs[j])
-            break;
-          case outputLayerIndex:
-            activation.push(this.activateUnit(this.engine.layers[i][j]))
-            break;
-          default:
-            this.activateUnit(this.engine.layers[i][j])
-        }
+    let activation = new Array(this.engine.layers[outputLayerIndex].length)
+
+    for (let j = 0; j < this.engine.layers[0].length; j++) {
+      this.engine.activation[j] = inputs[j]
+    }
+
+    for (let layer = 1; layer < this.engine.layers.length - 1; layer++) {
+      for (let j = 0; j < this.engine.layers[layer].length; j++) {
+        this.activateUnit(this.engine.layers[layer][j])
       }
     }
+
+    for (let j = 0; j < this.engine.layers[outputLayerIndex].length; j++) {
+      activation[j] = this.activateUnit(this.engine.layers[outputLayerIndex][j])
+    }
+
     this.engine.status = StatusTypes.IDLE
-    return activation;
+    return activation
   }
 
   propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING
     let outputLayerIndex = this.engine.layers.length - 1
+
     for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
       this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j])
     }
+
     for (let i = this.engine.layers.length - 2; i > 0; i--) {
       for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
         this.propagateUnit(this.engine.layers[i][j])
       }
     }
+
     this.engine.status = StatusTypes.IDLE
   }
 

@@ -5,74 +5,74 @@ var LSTMTimingTaskPropagationMock = require('../__tests__/mocks/lstm-timing-task
 var synaptic = require('../dist/synaptic');
 
 const COMPUTED_KEYS = [
-    'state',
-    'weight',
-    'gain',
-    'activation',
-    'elegibilityTrace',
-    'extendedElegibilityTrace',
-    'errorResponsibility',
-    'projectedErrorResponsibility',
-    'gatedErrorResponsibility'
+  'state',
+  'weight',
+  'gain',
+  'activation',
+  'elegibilityTrace',
+  'extendedElegibilityTrace',
+  'errorResponsibility',
+  'projectedErrorResponsibility',
+  'gatedErrorResponsibility'
 ];
 
 function copy(obj) {
-    const copied = {}
-    Object.keys(obj)
+  const copied = {}
+  Object.keys(obj)
     .forEach(key => {
-        if (typeof obj[key] === 'object') {
-            copied[key] = copy(obj[key])
-        } else {
-            copied[key] = obj[key]
-        }
+      if (typeof obj[key] === 'object') {
+        copied[key] = copy(obj[key])
+      } else {
+        copied[key] = obj[key]
+      }
     })
-    return copied
+  return copied
 }
 
 function getTitle(key) {
-    if (isNaN(Number(key))) {
-        return `should compute ${key}`
-    } else {
-        return `unit ${key}`
-    }
+  if (isNaN(Number(key))) {
+    return `should compute ${key}`
+  } else {
+    return `unit ${key}`
+  }
 }
 
 function isAlmostEqual(description, received, expected, precision, logLevel, level) {
-    const log = typeof level === 'undefined' || level <= logLevel
-    const spec = () => {
-        Object.keys(expected)
-        .forEach((key) => {
-            if (level || COMPUTED_KEYS.indexOf(key) !== -1) {
-                if (typeof received[key] === 'object') {
-                    isAlmostEqual(key, received[key], expected[key], precision, logLevel, (level|0) + 1)
-                } else {
-                    const precisionFn = typeof received[key] === 'number' ? 'toBeCloseTo' : 'toBe'
-                    const testFn = () => expect(received[key])[precisionFn](expected[key], precision)
-                    log ? test(getTitle(key), testFn) : testFn()
-                }
-            }
-        })
-    }
-    if (log){
-        describe(!level ? description : getTitle(description), spec)
-    } else {
-        test(getTitle(description), spec)
-    }
+  const log = typeof level === 'undefined' || level <= logLevel
+  const spec = () => {
+    Object.keys(expected)
+      .forEach((key) => {
+        if (level || COMPUTED_KEYS.indexOf(key) !== -1) {
+          if (typeof received[key] === 'object') {
+            isAlmostEqual(key, received[key], expected[key], precision, logLevel, (level | 0) + 1)
+          } else {
+            const precisionFn = typeof received[key] === 'number' ? 'toBeCloseTo' : 'toBe'
+            const testFn = () => expect(received[key])[precisionFn](expected[key], precision)
+            log ? test(getTitle(key), testFn) : testFn()
+          }
+        }
+      })
+  }
+  if (log) {
+    describe(!level ? description : getTitle(description), spec)
+  } else {
+    test(getTitle(description), spec)
+  }
 }
 
 function getLSTM(Backend) {
-    var json = JSON.parse(JSON.stringify(lstmJSON))
-    var lstm = synaptic.Network.fromJSON(json)
-    lstm.backend = new Backend(lstm.engine)
-    return lstm
+  var json = JSON.parse(JSON.stringify(lstmJSON))
+  var lstm = synaptic.Network.fromJSON(json)
+  lstm.backend = new Backend(lstm.engine)
+  return lstm
 }
 
 function testActivationAndPropagation(Backend, precision, logLevel) {
-    var lstm = getLSTM(Backend)
-    lstm.activate(samplesTimingTask.train[0].input)
-    isAlmostEqual('Activation', copy(lstm.engine), LSTMTimingTaskActivationMock, precision, logLevel)
-    lstm.propagate(samplesTimingTask.train[0].output)
-    isAlmostEqual('Propagation', copy(lstm.engine), LSTMTimingTaskPropagationMock, precision, logLevel)
+  var lstm = getLSTM(Backend)
+  lstm.activate(samplesTimingTask.train[0].input)
+  isAlmostEqual('Activation', copy(lstm.engine), LSTMTimingTaskActivationMock, precision, logLevel)
+  lstm.propagate(samplesTimingTask.train[0].output)
+  isAlmostEqual('Propagation', copy(lstm.engine), LSTMTimingTaskPropagationMock, precision, logLevel)
 }
 
 function testTimingTask(Backend) {
@@ -83,15 +83,15 @@ function testTimingTask(Backend) {
 
     test('should pass Timing Task with an error lower than 0.05 in less than 200 iterations', done => {
       trainer.train(samplesTimingTask.train, {
-          learningRate: 0.03,
-          minError: 0.05,
-          maxIterations: 200
+        learningRate: 0.03,
+        minError: 0.05,
+        maxIterations: 200
       })
-      .then(result => {
-        expect(result.error).toBeLessThan(0.05);
-        expect(result.iterations).toBeLessThan(200);
-        done()
-      })
+        .then(result => {
+          expect(result.error).toBeLessThan(0.05);
+          expect(result.iterations).toBeLessThan(200);
+          done()
+        })
     })
   })
 }
@@ -123,7 +123,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       var error = 1,
         symbols = targets.length + distractors.length + prompts.length;
 
-      var noRepeat = function(range, avoid) {
+      var noRepeat = function (range, avoid) {
         var number = Math.random() * range | 0;
         var used = false;
         for (var i in avoid)
@@ -132,7 +132,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         return used ? noRepeat(range, avoid) : number;
       };
 
-      var equal = function(prediction, output) {
+      var equal = function (prediction, output) {
         for (var i in prediction)
           if (Math.round(prediction[i]) != output[i])
             return false;
