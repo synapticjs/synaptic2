@@ -1,5 +1,5 @@
-import Network, { IBoundary, INetworkLayer } from '../Network';
-export default class Convolution implements INetworkLayer {
+import Network, { Boundary, Layer } from '../Network';
+export default class Convolution implements Layer {
     filter: number;
     height: number;
     depth: number;
@@ -13,7 +13,7 @@ export default class Convolution implements INetworkLayer {
         stride?: number;
         padding?: number;
     });
-    init(network: Network, boundary: IBoundary): {
+    init(network: Network, boundary: Boundary): {
         width: number;
         height: number;
         depth: number;

@@ -1,5 +1,5 @@
-import Network, { IBoundary, INetworkLayer } from '../Network';
-export declare class ReLU implements INetworkLayer {
+import Network, { Boundary, Layer } from '../Network';
+export declare class ReLU implements Layer {
     layer: number[];
-    init(network: Network, boundary: IBoundary): IBoundary;
+    init(network: Network, boundary: Boundary): Boundary;
 }

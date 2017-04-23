@@ -6,7 +6,8 @@
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js",
     "build:test": "NODE_ENV=test webpack --config webpack.config.js",
-    "test": "npm run build:test && jest",
+    "test": "npm run build:test && jest --logHeapUsage --runInBand",
+    "profile": "`npm bin`/tsc && npm run build:test && (rm *.log || true) && (NODE_ENV=node node --prof node_modules/.bin/jest --logHeapUsage --runInBand) && (for f in *.log; do node --prof-process $f; done)",
     "test:watch": "npm run build:test && jest --watch",
     "test:coverage": "npm run build:test && jest --coverage",
     "dev": "webpack-dashboard -- webpack-dev-server --config ./webpack.config.js",

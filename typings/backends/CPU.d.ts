@@ -1,9 +1,10 @@
 import Engine from '../Engine';
 import { CostTypes } from '../Trainer';
-export default class CPU {
+import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
+export default class CPU implements Backend {
     engine: Engine;
     constructor(engine?: Engine);
-    activateUnit(j: number, input?: number): number;
+    activateUnit(j: number): number;
     propagateUnit(j: number, target?: number): void;
     /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
     bigParenthesisTerm(k: number, j: number): number;
@@ -12,13 +13,5 @@ export default class CPU {
     costFunction(target: number[], predicted: number[], costType: CostTypes): number;
     activate(inputs: number[]): number[];
     propagate(targets: number[]): void;
-    train(dataset: Array<{
-        input: number[];
-        output: number[];
-    }>, {learningRate, minError, maxIterations, costFunction}: {
-        learningRate: any;
-        minError: any;
-        maxIterations: any;
-        costFunction: any;
-    }): Promise<{}>;
+    train(dataset: TrainEntry[], {learningRate, minError, maxIterations, costFunction}: TrainOptions): Promise<TrainResult>;
 }

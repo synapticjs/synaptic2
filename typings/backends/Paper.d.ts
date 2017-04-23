@@ -1,5 +1,6 @@
 import Engine from '../Engine';
 import { CostTypes } from '../Trainer';
+import { TrainEntry } from '.';
 export default class Paper {
     engine: Engine;
     constructor(engine?: Engine);
@@ -12,10 +13,7 @@ export default class Paper {
     costFunction(target: number[], predicted: number[], costType: CostTypes): number;
     activate(inputs: number[]): number[];
     propagate(targets: number[]): void;
-    train(dataset: Array<{
-        input: number[];
-        output: number[];
-    }>, {learningRate, minError, maxIterations, costFunction}: {
+    train(dataset: TrainEntry[], {learningRate, minError, maxIterations, costFunction}: {
         learningRate: any;
         minError: any;
         maxIterations: any;

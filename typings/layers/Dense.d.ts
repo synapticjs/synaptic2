@@ -1,7 +1,7 @@
-import Network, { IBoundary, INetworkLayer } from '../Network';
-export default class Dense implements INetworkLayer {
+import Network, { Boundary, Layer } from '../Network';
+export default class Dense implements Layer {
     size: number;
     layer: number[];
     constructor(size: number);
-    init(network: Network, boundary: IBoundary): IBoundary;
+    init(network: Network, boundary: Boundary): Boundary;
 }

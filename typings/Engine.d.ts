@@ -1,3 +1,15 @@
+export interface Dictionary<T> {
+    [key: string]: T;
+}
+export interface Connection {
+    to: number;
+    from: number;
+}
+export interface Gate {
+    to: number;
+    from: number;
+    gater: number;
+}
 export declare enum ActivationTypes {
     LOGISTIC_SIGMOID = 0,
     TANH = 1,
@@ -15,44 +27,45 @@ export declare enum StatusTypes {
     TRAINING = 5,
 }
 export default class Engine {
-    state: {};
-    weight: {};
-    gain: {};
-    activation: {};
-    elegibilityTrace: {};
-    extendedElegibilityTrace: {};
-    errorResponsibility: {};
-    projectedErrorResponsibility: {};
-    gatedErrorResponsibility: {};
-    activationFunction: {};
-    inputsOf: {};
-    projectedBy: {};
-    gatersOf: {};
-    gatedBy: {};
-    inputsOfGatedBy: {};
-    projectionSet: {};
-    gateSet: {};
-    inputSet: {};
-    derivativeTerm: {};
-    connections: any[];
-    gates: any[];
+    state: Dictionary<number>;
+    weight: Dictionary<Dictionary<number>>;
+    gain: Dictionary<Dictionary<number>>;
+    activation: Dictionary<number>;
+    derivative: Dictionary<number>;
+    elegibilityTrace: Dictionary<Dictionary<number>>;
+    extendedElegibilityTrace: Dictionary<Dictionary<Dictionary<number>>>;
+    errorResponsibility: Dictionary<number>;
+    projectedErrorResponsibility: Dictionary<number>;
+    gatedErrorResponsibility: Dictionary<number>;
+    activationFunction: Dictionary<number>;
+    inputsOf: Dictionary<number[]>;
+    projectedBy: Dictionary<number[]>;
+    gatersOf: Dictionary<number[]>;
+    gatedBy: Dictionary<number[]>;
+    inputsOfGatedBy: Dictionary<Dictionary<number[]>>;
+    projectionSet: Dictionary<number[]>;
+    gateSet: Dictionary<number[]>;
+    inputSet: Dictionary<number[]>;
+    derivativeTerm: Dictionary<Dictionary<number>>;
+    connections: Connection[];
+    gates: Gate[];
     learningRate: number;
     layers: number[][];
     size: number;
-    random: any;
-    biasUnit: any;
+    random: Function;
+    biasUnit: number;
     status: StatusTypes;
     constructor({bias, generator}?: {
-        bias: boolean;
-        generator: () => number;
+        bias?: boolean;
+        generator?: () => number;
     });
     addUnit(activationFunction?: ActivationTypes): number;
     addConnection(from: number, to: number, weight?: number): void;
     addGate(from: number, to: number, gater: number): void;
-    addLayer(size?: number, activationFunction?: any): number[];
+    addLayer(size?: number, activationFunction?: ActivationTypes): number[];
     track(unit: any): void;
     toJSON(): string;
     clone(): Engine;
-    static fromJSON(json: any): Engine;
+    static fromJSON(json: string | object): Engine;
     clear(): void;
 }

@@ -1,4 +1,4 @@
-const synaptic = require('../../dist/synaptic')
+const synaptic = process.env.NODE_ENV == 'node' ? require('../../dist') : require('../../dist/synaptic')
 const testBackend = require('../../utils/backendSharedTests')
 
 describe('Backends', () => {
