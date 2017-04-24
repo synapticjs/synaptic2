@@ -1,5 +1,6 @@
 var webpack = require('webpack')
 var path = require('path')
+var BabiliPlugin = require("babili-webpack-plugin")
 module.exports = {
   context: __dirname,
   entry: './src/index.ts',
@@ -13,11 +14,7 @@ module.exports = {
   plugins: [
     new webpack.NoErrorsPlugin()
   ].concat(process.env.NODE_ENV === 'production' ? [
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    })
+    new BabiliPlugin({})
   ] : []),
   resolve: {
     extensions: ['', '.js', '.ts', '.json'],
