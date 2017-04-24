@@ -3,9 +3,9 @@
 
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
-import { TrainEntry } from '.'
+import { Backend, TrainEntry } from '.'
 
-export default class Paper {
+export default class Paper implements Backend {
   constructor(public engine = new Engine()) {
     this.activateUnit = this.activateUnit.bind(this)
     this.propagateUnit = this.propagateUnit.bind(this)
