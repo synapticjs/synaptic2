@@ -457,6 +457,9 @@ export default class ASM implements Backend {
     const foreign = { random: this.engine.random }
     const module = ctor({ Math, Float64Array }, foreign, this.heap)
 
+    // fix targets order
+    this.targets = this.targets.reverse()
+
     return {
       module,
       activate: (inputs: number[]) => {

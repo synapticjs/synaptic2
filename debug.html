@@ -2,7 +2,15 @@
 <script>
   // Feed Forward
 
-  var lstm = synaptic.Network.fromJSON('{"state":[-0.34168159213278226,-0.5699629678728453,0.975468096920725,0.6899218462285464,-0.28783138214221315,-0.28125468596366954,0.5727167982467871],"weight":[[0],[0.9304061758414366,0],[-0.6350412782105548,0.032235297899562365,0,null,-0.5806302037181537],[0.2575307117458232,0.14195907780416261,null,0,0.37525761620755826],[-0.3656389526124926,-0.1997473800707481,null,null,1],[0.02346600163536161,-0.5881328386943165,null,null,-0.4168056637930273,0],[0.12017919853890335,-0.9510247452663441,null,null,-0.047796161445412544,null,0]],"gain":[[1],[1,1],[1,1,1,null,1],[1,1,null,1,1],[1,1,null,null,1],[1,1,null,null,1,1],[1,1,null,null,1,null,1]],"activation":[1,0,0,0,0,0,0],"derivative":[0,0,0,0,0,0,0],"elegibilityTrace":[[0],[0,0],[0,0,0,null,0],[0,0,null,0,0],[0,0,null,null,0],[0,0,null,null,0,0],[0,0,null,null,0,null,0]],"extendedElegibilityTrace":[[[]],[[],[]],[[null,null,null,null,0],[null,null,null,null,0],[],null,[null,null,null,null,0]],[[null,null,null,null,0],[null,null,null,null,0],null,[],[null,null,null,null,0]],[[],[],null,null,[]],[[null,null,null,null,null,null,0],[null,null,null,null,null,null,0],null,null,[null,null,null,null,null,null,0],[]],[[],[],null,null,[],null,[]]],"errorResponsibility":[0,0,0,0,0,0,0],"projectedErrorResponsibility":[0,0,0,0,0,0,0],"gatedErrorResponsibility":[0,0,0,0,0,0,0],"activationFunction":[0,0,0,0,0,0,0],"inputsOf":[[],[0],[0,1,4],[0,1,4],[0,1,4],[0,1,4],[0,1,4]],"projectedBy":[[1,2,3,4,5,6],[2,3,4,5,6],[],[],[2,3,4,5,6],[],[]],"gatersOf":[[],[],[],[],[2,3],[],[5]],"gatedBy":[[],[],[4],[4],[],[6],[]],"inputsOfGatedBy":[[],[],[],[],[null,null,[1],[4]],[],[null,null,null,null,null,[4]]],"projectionSet":[[1,2,3,4,5,6],[2,3,4,5,6],[],[],[5,6],[],[]],"gateSet":[[],[],[4],[4],[],[6],[]],"inputSet":[[],[0],[0,1,4],[0,1,4],[0,1],[0,1,4],[0,1,4]],"derivativeTerm":[[],[],[],[],[null,null,0,1],[],[null,null,null,null,null,0]],"connections":[{"from":0,"to":1},{"from":0,"to":2},{"from":0,"to":3},{"from":0,"to":4},{"from":0,"to":5},{"from":1,"to":4},{"from":4,"to":4},{"from":1,"to":2},{"from":1,"to":3},{"from":1,"to":5},{"from":0,"to":6},{"from":4,"to":6},{"from":1,"to":6},{"from":4,"to":2},{"from":4,"to":3},{"from":4,"to":5}],"gates":[{"from":1,"to":4,"gater":2},{"from":4,"to":4,"gater":3},{"from":4,"to":6,"gater":5}],"learningRate":0.1,"layers":[[1],[2],[3],[4],[5],[6]],"size":7,"biasUnit":0}')
+  /*var lstm = synaptic.Network.fromJSON('{"state":[-0.4151677555863147,0.9982729942712267,-0.7706730290170154,-0.9108730420558251,0.7401938369825238,-0.644692341834189,-0.7415333976066432,0.817525029627491],"weight":[[0],[-0.8273406916613593,0],[0.18698041128657472,-0.13080394842672405,0,null,-0.7646480500746939],[0.749693768458779,0.3105734705293881,null,0,-0.9903803083938585],[0.7778515519761915,-0.30894417434071997,null,null,1],[-0.5339866433260276,-0.4259130511015252,null,null,-0.3572188509766261,0],[0.1004169087957325,0.40739637805960793,null,null,0.29266496689891586,null,0],[-0.09508154413033854,-0.6134911480216823,null,null,-0.7565855538055608,null,null,0]],"gain":[[1],[1,1],[1,1,1,null,1],[1,1,null,1,1],[1,1,null,null,1],[1,1,null,null,1,1],[1,1,null,null,1,null,1],[1,1,null,null,1,null,null,1]],"activation":[1,0,0,0,0,0,0,0],"derivative":[0,0,0,0,0,0,0,0],"elegibilityTrace":[[0],[0,0],[0,0,0,null,0],[0,0,null,0,0],[0,0,null,null,0],[0,0,null,null,0,0],[0,0,null,null,0,null,0],[0,0,null,null,0,null,null,0]],"extendedElegibilityTrace":[[[]],[[],[]],[[null,null,null,null,0],[null,null,null,null,0],[],null,[null,null,null,null,0]],[[null,null,null,null,0],[null,null,null,null,0],null,[],[null,null,null,null,0]],[[],[],null,null,[]],[[null,null,null,null,null,null,0,0],[null,null,null,null,null,null,0,0],null,null,[null,null,null,null,null,null,0,0],[]],[[],[],null,null,[],null,[]],[[],[],null,null,[],null,null,[]]],"errorResponsibility":[0,0,0,0,0,0,0,0],"projectedErrorResponsibility":[0,0,0,0,0,0,0,0],"gatedErrorResponsibility":[0,0,0,0,0,0,0,0],"activationFunction":[0,0,0,0,0,0,0,0],"inputsOf":[[],[0],[0,1,4],[0,1,4],[0,1,4],[0,1,4],[0,1,4],[0,1,4]],"projectedBy":[[1,2,3,4,5,6,7],[2,3,4,5,6,7],[],[],[2,3,4,5,6,7],[],[],[]],"gatersOf":[[],[],[],[],[2,3],[],[5],[5]],"gatedBy":[[],[],[4],[4],[],[6,7],[],[]],"inputsOfGatedBy":[[],[],[],[],[null,null,[1],[4]],[],[null,null,null,null,null,[4]],[null,null,null,null,null,[4]]],"projectionSet":[[1,2,3,4,5,6,7],[2,3,4,5,6,7],[],[],[5,6,7],[],[],[]],"gateSet":[[],[],[4],[4],[],[6,7],[],[]],"inputSet":[[],[0],[0,1,4],[0,1,4],[0,1],[0,1,4],[0,1,4],[0,1,4]],"derivativeTerm":[[],[],[],[],[null,null,0,1],[],[null,null,null,null,null,0],[null,null,null,null,null,0]],"connections":[{"from":0,"to":1},{"from":0,"to":2},{"from":0,"to":3},{"from":0,"to":4},{"from":0,"to":5},{"from":1,"to":4},{"from":4,"to":4},{"from":1,"to":2},{"from":1,"to":3},{"from":1,"to":5},{"from":0,"to":6},{"from":0,"to":7},{"from":4,"to":6},{"from":4,"to":7},{"from":1,"to":6},{"from":1,"to":7},{"from":4,"to":2},{"from":4,"to":3},{"from":4,"to":5}],"gates":[{"from":1,"to":4,"gater":2},{"from":4,"to":4,"gater":3},{"from":4,"to":6,"gater":5},{"from":4,"to":7,"gater":5}],"learningRate":0.1,"layers":[[1],[2],[3],[4],[5],[6,7]],"size":8,"biasUnit":0}')*/
+
+  var lstm = new synaptic.Network(
+    new synaptic.layers.Input(3),
+    new synaptic.layers.LSTM(3),
+    new synaptic.layers.Dense(3)
+  )
+
+
 
   var lstm2 = lstm.clone()
 
@@ -42,47 +50,41 @@
   ]
 
   function h() {
-    console.log(lstm.activate([1]))
-    console.log(lstm2.activate([1]))
+    console.log(lstm.activate([1,0,1]))
+    console.log(lstm2.activate([1,0,1]))
 
-    var json1 = lstm.toJSON()
-    var json2 = lstm2.toJSON()
+    console.log(lstm.propagate([1,0,1]))
+    console.log(lstm2.propagate([1,0,1]))
 
-    //console.log(json1, '\n\n==============\n\n', json2)
+    console.log(lstm.activate([0,1,0]))
+    console.log(lstm2.activate([0,1,0]))
 
-    // debugger
-    console.log(lstm.propagate([1]))
-    console.log(lstm2.propagate([1]))
+    console.log(lstm.propagate([0,1,0]))
+    console.log(lstm2.propagate([0,1,0]))
 
-    json1 = lstm.toJSON()
-    json2 = lstm2.toJSON()
-    //console.log(json1, '\n\n==============\n\n', json2)
+    console.log(lstm.activate([1,0,1]))
+    console.log(lstm2.activate([1,0,1]))
 
-    //debugger
-    console.log(lstm.activate([0]))
-    console.log(lstm2.activate([0]))
+    console.log(lstm.propagate([1,0,1]))
+    console.log(lstm2.propagate([1,0,1]))
 
-    json1 = lstm.toJSON()
-    json2 = lstm2.toJSON()
-    //console.log(json1, '\n\n==============\n\n', json2)
+    console.log(lstm.activate([0,1,0]))
+    console.log(lstm2.activate([0,1,0]))
 
-    console.log(lstm.propagate([0]))
-    console.log(lstm2.propagate([0]))
+    console.log(lstm.propagate([0,1,0]))
+    console.log(lstm2.propagate([0,1,0]))
 
-    json1 = lstm.toJSON()
-    json2 = lstm2.toJSON()
-    //console.log(json1, '\n\n==============\n\n', json2)
+    console.log(lstm.activate([1,0,1]))
+    console.log(lstm2.activate([1,0,1]))
 
-    console.log(lstm.activate([1]))
-    console.log(lstm2.activate([1]))
+    console.log(lstm.propagate([1,0,1]))
+    console.log(lstm2.propagate([1,0,1]))
 
-    json1 = lstm.toJSON()
-    json2 = lstm2.toJSON()
-    //console.log(json1, '\n\n==============\n\n', json2)
+    console.log(lstm.activate([0,1,0]))
+    console.log(lstm2.activate([0,1,0]))
 
-    // debugger
-    console.log(lstm.propagate([1]))
-    console.log(lstm2.propagate([1]))
+    console.log(lstm.propagate([0,1,0]))
+    console.log(lstm2.propagate([0,1,0]))
   }
 
 
@@ -206,7 +208,7 @@
       var n = Math.round(Math.random() * 20);
       set[t].input[0] = 1;
       for (var j = t; j <= t + n; j++){
-        set[j].input[1] = n / 20;
+        set[j].input[1,0] = n / 20;
         set[j].output[0] = 0.5;
       }
       t += n;
