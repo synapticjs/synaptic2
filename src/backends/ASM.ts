@@ -1,4 +1,3 @@
-declare var console
 
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
@@ -450,8 +449,6 @@ export default class ASM implements Backend {
   }`
 
     const ctor = new Function('stdlib', 'foreign', 'heap', source)
-
-    console.log(ctor, ctor.toString())
     const foreign = { random: this.engine.random }
     const module = ctor({ Math, Float64Array }, foreign, this.heap)
 

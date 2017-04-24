@@ -43,6 +43,9 @@ export enum StatusTypes {
 
 
 export default class Engine {
+
+  static ActivationTypes = ActivationTypes
+  static StatusTypes = StatusTypes
   static RandomGenerator = () => Math.random() * 2 - 1
 
   state: number[] = []

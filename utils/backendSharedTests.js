@@ -120,6 +120,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       lstm.engine.seal()
       lstm.learningRate = 0.1;
 
+      lstm.engine.status = synaptic.Engine.StatusTypes.TRAINING
+
       var targets = [2, 4];
       var distractors = [3, 5];
       var prompts = [0, 1];
@@ -222,6 +224,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         error /= length;
       }
 
+      lstm.engine.status = synaptic.Engine.StatusTypes.IDLE
+
       var results = {
         iterations: trial,
         success: success,
@@ -238,9 +242,9 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 
 function testBackend(description, Backend, options) {
   describe(description, () => {
-    testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
-    testTimingTask(Backend)
-    //testDiscreteSequenceRecallTask(Backend);
+    //testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
+    //testTimingTask(Backend)
+    testDiscreteSequenceRecallTask(Backend);
   })
 }
 
