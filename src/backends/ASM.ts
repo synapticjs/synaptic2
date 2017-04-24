@@ -1,4 +1,4 @@
-declare var global
+declare var console
 
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
@@ -20,6 +20,31 @@ export type AsmModule = {
   activate: (inputs: number[]) => number[],
   propagate: (targets: number[]) => void,
 }
+
+function asm(literals, ...placeholders: (Variable | string)[]) {
+  let result = ""
+
+  // interleave the literals with the placeholders
+  for (let i = 0; i < placeholders.length; i++) {
+    result += literals[i]
+    let ph = placeholders[i]
+    if (typeof ph == 'string' || i == 0) {
+      if (typeof ph != 'string' && !result) {
+        result += `H[${ph.id}]`
+      } else {
+        result += ph
+      }
+    } else {
+      result += `(+H[${ph.id}])`
+    }
+  }
+
+  // add the last literal
+  result += literals[literals.length - 1];
+  return result
+}
+
+
 
 export default class ASM implements Backend {
 
@@ -78,12 +103,12 @@ export default class ASM implements Backend {
         const gainJI = this.alloc(`gain[${j}][${i}]`, this.engine.gain[j][i])
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
-        this.buildActivationStatement(stateJ, '+=', gainJI, '*', weightJI, '*', activationI)
+        this.buildActivationStatement(asm`${stateJ} = ${stateJ} + ${gainJI} * ${weightJI} * ${activationI}`)
       } else {
         const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
-        this.buildActivationStatement(stateJ, '+=', weightJI, '*', activationI)
+        this.buildActivationStatement(asm`${stateJ} = ${stateJ} + ${weightJI} * ${activationI}`)
       }
     }
 
@@ -91,21 +116,21 @@ export default class ASM implements Backend {
     const type = this.engine.activationFunction[j]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
-        this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', '(+exp(-', stateJ, ')))')
-        this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-(+', activationJ, '))')
+        this.buildActivationStatement(asm`${activationJ} = 1.0 / (1.0 + (+exp(-${stateJ})))`)
+        this.buildActivationStatement(asm`${derivativeJ} = ${activationJ} * (1.0 - ${activationJ})`)
         break
       case ActivationTypes.TANH:
         const eP = this.alloc('eP', null)
         const eN = this.alloc('eN', null)
-        this.buildActivationStatement(eP, '=', '(+exp(', stateJ, '))')
-        this.buildActivationStatement(activationJ, '=', '(', '(+', eP, ')', '-', '(+', eN, ')', ')', '/', '(', '(+', eP, ')', '+', '(+', eN, ')', ')')
-        this.buildActivationStatement(derivativeJ, '=', '1.0', '-', '(+pow(', activationJ, ',', '2.0', '))')
+        this.buildActivationStatement(asm`${eP} = (+exp(${stateJ}))`)
+        this.buildActivationStatement(asm`${activationJ} = (${eP} - ${eN}) / (${eP} + ${eN})`)
+        this.buildActivationStatement(asm`${derivativeJ} = 1.0 - (+pow(${activationJ}, 2.0))`)
         break
       case ActivationTypes.RELU:
-        this.buildActivationStatement(activationJ, '=', stateJ, '>', '0.0', '?', stateJ, ':', '0.0')
+        this.buildActivationStatement(asm`${activationJ} = ${stateJ} > 0.0 ? ${stateJ} : 0.0`)
         break
       case ActivationTypes.IDENTITY:
-        this.buildActivationStatement(activationJ, '=', stateJ)
+        this.buildActivationStatement(asm`${activationJ} = ${stateJ}`)
         break
       /*case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0]
@@ -128,12 +153,12 @@ export default class ASM implements Backend {
       if (isSelfConnected && isSelfConnectionGated) {
         const gainJJ = this.alloc(`gain[${j}][${j}]`, this.engine.gain[j][j])
         const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-        this.buildActivationStatement(elegibilityTraceJI, '=', gainJJ, '*', weightJJ, '*', elegibilityTraceJI, '+', gainJI, '*', activationI)
+        this.buildActivationStatement(asm`${elegibilityTraceJI} = ${gainJJ} * ${weightJJ} * ${elegibilityTraceJI} + ${gainJI} * ${activationI}`)
       } else if (isSelfConnected) {
         const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-        this.buildActivationStatement(elegibilityTraceJI, '=', weightJJ, '*', elegibilityTraceJI, '+', gainJI, '*', activationI)
+        this.buildActivationStatement(asm`${elegibilityTraceJI} = ${weightJJ} * ${elegibilityTraceJI} + ${gainJI} * ${activationI}`)
       } else {
-        this.buildActivationStatement(elegibilityTraceJI, '=', gainJI, '*', activationI)
+        this.buildActivationStatement(asm`${elegibilityTraceJI} = ${gainJI} * ${activationI}`)
       }
 
       for (g = 0; g < this.engine.gatedBy[j].length; g++) {
@@ -147,7 +172,7 @@ export default class ASM implements Backend {
         let initializeBigParenthesisTerm = false
         if (isSelfConnectedK && this.engine.derivativeTerm[k][j]) {
           const stateK = this.alloc(`state[${k}]`, this.engine.state[k])
-          this.buildActivationStatement(bigParenthesisTermResult, '=', stateK)
+          this.buildActivationStatement(asm`${bigParenthesisTermResult} = ${stateK}`)
           keepBigParenthesisTerm = true
         } else {
           initializeBigParenthesisTerm = true
@@ -158,12 +183,12 @@ export default class ASM implements Backend {
           a = this.engine.inputsOfGatedBy[k][j][l]
           if (a !== k) {
             if (initializeBigParenthesisTerm) {
-              this.buildActivationStatement(bigParenthesisTermResult, '=', '0.0')
+              this.buildActivationStatement(asm`${bigParenthesisTermResult} = 0.0`)
               initializeBigParenthesisTerm = false
             }
             const weightKA = this.alloc(`weight[${k}][${a}]`, this.engine.weight[k][a])
             const activationA = this.alloc(`activation[${a}]`, this.engine.activation[a])
-            this.buildActivationStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
+            this.buildActivationStatement(asm`${bigParenthesisTermResult} = ${bigParenthesisTermResult} + ${weightKA} * ${activationA}`)
             keepBigParenthesisTerm = true
           }
         }
@@ -174,20 +199,20 @@ export default class ASM implements Backend {
           const gainKK = this.alloc(`gain[${k}][${k}]`, this.engine.gain[k][k])
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
-            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', gainKK, '*', weightKK, '*', extendedElegibilityTraceJIK, '+', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
+            this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${gainKK} * ${weightKK} * ${extendedElegibilityTraceJIK} + ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
           } else {
-            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', gainKK, '*', weightKK, '*', extendedElegibilityTraceJIK)
+            this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${gainKK} * ${weightKK} * ${extendedElegibilityTraceJIK}`)
           }
         } else if (isSelfConnected) {
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
-            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', weightKK, '*', extendedElegibilityTraceJIK, '+', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
+            this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${weightKK} * ${extendedElegibilityTraceJIK} + ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
           } else {
-            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', weightKK, '*', extendedElegibilityTraceJIK)
+            this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${weightKK} * ${extendedElegibilityTraceJIK}`)
           }
         } else {
           if (keepBigParenthesisTerm) {
-            this.buildActivationStatement(extendedElegibilityTraceJIK, '=', derivativeJ, '*', elegibilityTraceJI, '*', bigParenthesisTermResult)
+            this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
           }
         }
       }
@@ -198,7 +223,7 @@ export default class ASM implements Backend {
       for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
         from = this.engine.inputsOfGatedBy[to][j][g]
         const gainToFrom = this.alloc(`gain[${to}][${from}]`, this.engine.gain[to][from])
-        this.buildActivationStatement(gainToFrom, '=', activationJ)
+        this.buildActivationStatement(asm`${gainToFrom} = ${activationJ}`)
       }
     }
 
@@ -214,11 +239,12 @@ export default class ASM implements Backend {
       const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
       const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
       const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
-      this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '=', '(+', target, ')', '-', '(+', activationJ, ')')
+      this.buildPropagationStatement(asm`${errorResponsibilityJ} = ${target} - ${activationJ}`)
+      this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${errorResponsibilityJ}`)
     } else {
       const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
       if (hasProjectedError) {
-        this.buildPropagationStatement(projectedErrorResponsibilityJ, '=', '0.0')
+        this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = 0.0`)
       }
       for (h = 0; h < this.engine.projectionSet[j].length; h++) {
         k = this.engine.projectionSet[j][h]
@@ -227,19 +253,19 @@ export default class ASM implements Backend {
         if (isGated) {
           const gainKJ = this.alloc(`gain[${k}][${j}]`, this.engine.gain[k][j])
           const weightKJ = this.alloc(`weight[${k}][${j}]`, this.engine.weight[k][j])
-          this.buildPropagationStatement(projectedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', gainKJ, '*', weightKJ)
+          this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${projectedErrorResponsibilityJ} + ${errorResponsibilityK} * ${gainKJ} *${weightKJ}`)
         } else {
           const weightKJ = this.alloc(`weight[${k}][${j}]`, this.engine.weight[k][j])
-          this.buildPropagationStatement(projectedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', weightKJ)
+          this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${projectedErrorResponsibilityJ} + ${errorResponsibilityK} * ${weightKJ}`)
         }
       }
       const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
       if (hasProjectedError) {
-        this.buildPropagationStatement(projectedErrorResponsibilityJ, '*=', derivativeJ)
+        this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${projectedErrorResponsibilityJ} * ${derivativeJ}`)
       }
       const gatedErrorResponsibilityJ = this.alloc(`gatedErrorResponsibility[${j}]`, this.engine.gatedErrorResponsibility[j])
       if (hasGatedError) {
-        this.buildPropagationStatement(gatedErrorResponsibilityJ, '=', '0.0')
+        this.buildPropagationStatement(asm`${gatedErrorResponsibilityJ} = 0.0`)
       }
       for (h = 0; h < this.engine.gateSet[j].length; h++) {
         k = this.engine.gateSet[j][h]
@@ -251,7 +277,7 @@ export default class ASM implements Backend {
 
         if (isSelfConnectedK && this.engine.derivativeTerm[k][j]) {
           const stateK = this.alloc(`state[${k}]`, this.engine.state[k])
-          this.buildPropagationStatement(bigParenthesisTermResult, '=', stateK)
+          this.buildPropagationStatement(asm`${bigParenthesisTermResult} = ${stateK}`)
           keepBigParenthesisTerm = true
         } else {
           initializeBigParenthesisTerm = true
@@ -260,30 +286,30 @@ export default class ASM implements Backend {
           a = this.engine.inputsOfGatedBy[k][j][l]
           if (a !== k) {
             if (initializeBigParenthesisTerm) {
-              this.buildPropagationStatement(bigParenthesisTermResult, '=', '0.0')
+              this.buildPropagationStatement(asm`${bigParenthesisTermResult} = 0.0`)
               initializeBigParenthesisTerm = false
             }
             const weightKA = this.alloc(`weight[${k}][${a}]`, this.engine.weight[k][a])
             const activationA = this.alloc(`activation[${a}]`, this.engine.activation[a])
-            this.buildPropagationStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
+            this.buildPropagationStatement(asm`${bigParenthesisTermResult} = ${bigParenthesisTermResult} + ${weightKA} * ${activationA}`)
             keepBigParenthesisTerm = true
           }
         }
         if (keepBigParenthesisTerm) {
           const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
-          this.buildPropagationStatement(gatedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', bigParenthesisTermResult)
+          this.buildPropagationStatement(asm`${gatedErrorResponsibilityJ} = ${gatedErrorResponsibilityJ} + ${errorResponsibilityK} * ${bigParenthesisTermResult}`)
         }
       }
       if (hasGatedError) {
-        this.buildPropagationStatement(gatedErrorResponsibilityJ, '*=', derivativeJ)
+        this.buildPropagationStatement(asm`${gatedErrorResponsibilityJ} = ${gatedErrorResponsibilityJ} * ${derivativeJ}`)
       }
       const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
       if (hasProjectedError && hasGatedError) {
-        this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '+', gatedErrorResponsibilityJ)
+        this.buildPropagationStatement(asm`${errorResponsibilityJ} = ${projectedErrorResponsibilityJ} + ${gatedErrorResponsibilityJ}`)
       } else if (hasProjectedError) {
-        this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ)
+        this.buildPropagationStatement(asm`${errorResponsibilityJ} = ${projectedErrorResponsibilityJ}`)
       } else if (hasGatedError) {
-        this.buildPropagationStatement(errorResponsibilityJ, '=', gatedErrorResponsibilityJ)
+        this.buildPropagationStatement(asm`${errorResponsibilityJ} = ${gatedErrorResponsibilityJ}`)
       }
     }
     for (h = 0; h < this.engine.inputSet[j].length; h++) {
@@ -292,38 +318,38 @@ export default class ASM implements Backend {
         const Δw = this.alloc(`Δw`, null)
         const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
         const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
-        this.buildPropagationStatement(Δw, '=', projectedErrorResponsibilityJ, '*', elegibilityTraceJI)
+        this.buildPropagationStatement(asm`${Δw} = ${projectedErrorResponsibilityJ} * ${elegibilityTraceJI}`)
         for (g = 0; g < this.engine.gateSet[j].length; g++) {
           k = this.engine.gateSet[j][g]
           const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
           const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${j}][${i}][${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
-          this.buildPropagationStatement(Δw, '+=', errorResponsibilityK, '*', extendedElegibilityTraceJIK)
+          this.buildPropagationStatement(asm`${Δw} = ${Δw} + ${errorResponsibilityK} * ${extendedElegibilityTraceJIK}`)
         }
         const learningRate = this.alloc('learningRate', this.engine.learningRate)
-        this.buildPropagationStatement(Δw, '*=', learningRate)
+        this.buildPropagationStatement(asm`${Δw} = ${Δw} * ${learningRate}`)
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
-        this.buildPropagationStatement(weightJI, '+=', Δw)
+        this.buildPropagationStatement(asm`${weightJI} = ${weightJI} + ${Δw}`)
       } else if (hasProjectedError) {
         i = this.engine.inputSet[j][h]
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
         const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
         const learningRate = this.alloc('learningRate', this.engine.learningRate)
-        this.buildPropagationStatement(weightJI, '+=', projectedErrorResponsibilityJ, '*', elegibilityTraceJI, '*', learningRate)
+        this.buildPropagationStatement(asm`${weightJI} = ${weightJI} + ${projectedErrorResponsibilityJ} * ${elegibilityTraceJI} * ${learningRate}`)
       } else if (hasGatedError) {
         i = this.engine.inputSet[j][h]
         const Δw = this.alloc(`Δw`, null)
-        this.buildPropagationStatement(Δw, '=', '0.0')
+        this.buildPropagationStatement(asm`${Δw} = 0.0`)
         for (g = 0; g < this.engine.gateSet[j].length; g++) {
           k = this.engine.gateSet[j][g]
           const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
           const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${j}][${i}][${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
-          this.buildPropagationStatement(Δw, '+=', errorResponsibilityK, '*', extendedElegibilityTraceJIK)
+          this.buildPropagationStatement(asm`${Δw} = ${Δw} + ${errorResponsibilityK} * ${extendedElegibilityTraceJIK}`)
         }
         const learningRate = this.alloc('learningRate', this.engine.learningRate)
-        this.buildPropagationStatement(Δw, '*=', learningRate)
+        this.buildPropagationStatement(asm`${Δw} = ${Δw} * ${learningRate}`)
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
-        this.buildPropagationStatement(weightJI, '+=', Δw)
+        this.buildPropagationStatement(asm`${weightJI} = ${weightJI} + ${Δw}`)
       }
     }
   }
@@ -396,7 +422,7 @@ export default class ASM implements Backend {
       }
     }
 
-    this.heap = new ArrayBuffer(this.id * 8)
+    this.heap = new ArrayBuffer(Math.max(this.id * 8, 0x10000))
     this.view = new Float64Array(this.heap)
     Object.keys(this.variables).forEach(key => {
       const variable = this.variables[key]
@@ -406,9 +432,8 @@ export default class ASM implements Backend {
     })
     const activationBody = this.buildBody(this.activationStatements)
     const propagationBody = this.buildBody(this.propagationStatements)
-    const source = `
-function module(stdlib, foreign, heap) {
-  "use asm";
+    const source = `"use asm";
+
   var H = new stdlib.Float64Array(heap);
   var exp = stdlib.Math.exp;
   var pow = stdlib.Math.pow;
@@ -422,19 +447,20 @@ function module(stdlib, foreign, heap) {
   return {
     activate: activate,
     propagate: propagate
-  }
-}
-return { module: module }`
-    const constructor = new Function(source)
-    const module = constructor().module
+  }`
+
+    const ctor = new Function('stdlib', 'foreign', 'heap', source)
+
+    console.log(ctor, ctor.toString())
     const foreign = { random: this.engine.random }
-    const asm = module(global, foreign, this.heap)
+    const module = ctor({ Math, Float64Array }, foreign, this.heap)
+
     return {
       activate: (inputs: number[]) => {
         for (let i = 0; i < this.inputs.length; i++) {
           this.view[this.inputs[i]] = inputs[i]
         }
-        asm.activate()
+        module.activate()
         let activation = new Array(this.outputs.length)
         for (let i = 0; i < this.outputs.length; i++) {
           activation[i] = this.view[this.outputs[i]]
@@ -446,7 +472,7 @@ return { module: module }`
           this.view[this.targets[i]] = targets[i]
         }
         this.view[this.learningRateId] = this.engine.learningRate
-        asm.propagate()
+        module.propagate()
       }
     }
   }
