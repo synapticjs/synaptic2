@@ -25,7 +25,7 @@ export default class ASM implements Backend {
 
   id: number = 0
   heap: ArrayBuffer = null
-  view: Float32Array = null
+  view: Float64Array = null
   inputs: number[] = []
   outputs: number[] = []
   targets: number[] = []
@@ -54,8 +54,8 @@ export default class ASM implements Backend {
   buildActivateUnit(j: number): Variable {
     const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
     let i, k, h, g, l, a, to, from
-    const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
 
+    const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
     const isSelfConnected = this.engine.connections.some(connection => connection.to === j && connection.from === j)
     const isSelfConnectionGated = this.engine.gates.some(gate => gate.to === j && gate.from === j)
 
@@ -66,33 +66,40 @@ export default class ASM implements Backend {
     } else if (isSelfConnected) {
       const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
       this.buildActivationStatement(stateJ, '*=', weightJJ)
+    } else {
+      this.buildActivationStatement(stateJ, '=', '0.0')
     }
 
     for (h = 0; h < this.engine.inputSet[j].length; h++) {
       i = this.engine.inputSet[j][h]
       const isGated = this.engine.gates.some(gate => gate.from === i && gate.to === j)
       if (isGated) {
+        const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
         const gainJI = this.alloc(`gain[${j}][${i}]`, this.engine.gain[j][i])
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
         this.buildActivationStatement(stateJ, '+=', gainJI, '*', weightJI, '*', activationI)
       } else {
+        const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
         this.buildActivationStatement(stateJ, '+=', weightJI, '*', activationI)
       }
     }
 
+    const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
     const type = this.engine.activationFunction[j]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
         this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', 'exp(-', stateJ, '))')
+        this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
         break
       case ActivationTypes.TANH:
         const eP = this.alloc('eP', null)
         const eN = this.alloc('eN', null)
         this.buildActivationStatement(eP, '=', 'exp(', stateJ, ')')
         this.buildActivationStatement(activationJ, '=', '(', eP, '-', eN, ')', '/', '(', eP, '+', eN, ')')
+        this.buildActivationStatement(derivativeJ, '=', '1', '-', 'pow(', activationJ, ',', '2', ')')
         break
       case ActivationTypes.RELU:
         this.buildActivationStatement(activationJ, '=', stateJ, '>', '0.0', '?', stateJ, ':', '0.0')
@@ -217,16 +224,17 @@ export default class ASM implements Backend {
 
   buildPropagateUnit(j: number, target?: Variable) {
     let i, k, h, g, l, a
-    const hasProjections = this.engine.projectionSet[j].length > 0
-    const hasGates = this.engine.gateSet[j].length > 0
+    let hasProjectedError = this.engine.projectionSet[j].length > 0
+    const hasGatedError = this.engine.gateSet[j].length > 0
     if (typeof target !== 'undefined') {
+      hasProjectedError = true
       const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
       const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
       const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
       this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '=', target, '-', activationJ)
     } else {
       const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
-      if (hasProjections) {
+      if (hasProjectedError) {
         this.buildPropagationStatement(projectedErrorResponsibilityJ, '=', '0.0')
       }
       for (h = 0; h < this.engine.projectionSet[j].length; h++) {
@@ -243,11 +251,11 @@ export default class ASM implements Backend {
         }
       }
       const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
-      if (hasProjections) {
+      if (hasProjectedError) {
         this.buildPropagationStatement(projectedErrorResponsibilityJ, '*=', derivativeJ)
       }
       const gatedErrorResponsibilityJ = this.alloc(`gatedErrorResponsibility[${j}]`, this.engine.gatedErrorResponsibility[j])
-      if (hasGates) {
+      if (hasGatedError) {
         this.buildPropagationStatement(gatedErrorResponsibilityJ, '=', '0.0')
       }
       for (h = 0; h < this.engine.gateSet[j].length; h++) {
@@ -281,20 +289,20 @@ export default class ASM implements Backend {
           this.buildPropagationStatement(gatedErrorResponsibilityJ, '+=', errorResponsibilityK, '*', bigParenthesisTermResult)
         }
       }
-      if (hasGates) {
+      if (hasGatedError) {
         this.buildPropagationStatement(gatedErrorResponsibilityJ, '*=', derivativeJ)
       }
       const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
-      if (hasProjections && hasGates) {
+      if (hasProjectedError && hasGatedError) {
         this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '+', gatedErrorResponsibilityJ)
-      } else if (hasProjections) {
+      } else if (hasProjectedError) {
         this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ)
-      } else if (hasGates) {
+      } else if (hasGatedError) {
         this.buildPropagationStatement(errorResponsibilityJ, '=', gatedErrorResponsibilityJ)
       }
     }
     for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      if (hasProjections && hasGates) {
+      if (hasProjectedError && hasGatedError) {
         i = this.engine.inputSet[j][h]
         const Δw = this.alloc(`Δw`, null)
         const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
@@ -310,14 +318,14 @@ export default class ASM implements Backend {
         this.buildPropagationStatement(Δw, '*=', learningRate)
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         this.buildPropagationStatement(weightJI, '+=', Δw)
-      } else if (hasProjections) {
+      } else if (hasProjectedError) {
         i = this.engine.inputSet[j][h]
         const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
         const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
         const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
         const learningRate = this.alloc('learningRate', this.engine.learningRate)
         this.buildPropagationStatement(weightJI, '+=', projectedErrorResponsibilityJ, '*', elegibilityTraceJI, '*', learningRate)
-      } else if (hasGates) {
+      } else if (hasGatedError) {
         i = this.engine.inputSet[j][h]
         const Δw = this.alloc(`Δw`, null)
         this.buildPropagationStatement(Δw, '=', '0.0')
@@ -372,12 +380,15 @@ export default class ASM implements Backend {
     this.activationStatements = []
     this.propagationStatements = []
     let outputLayerIndex = this.engine.layers.length - 1
+    if (this.engine.biasUnit !== null) {
+      let activationBias = this.alloc(`activation[${this.engine.biasUnit}]`, this.engine.activation[this.engine.biasUnit])
+    }
     for (let i = 0; i < this.engine.layers.length; i++) {
       for (let j = 0; j < this.engine.layers[i].length; j++) {
         let activationJ
         switch (i) {
           case 0:
-            activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
+            activationJ = this.alloc(`activation[${this.engine.layers[i][j]}]`, this.engine.activation[this.engine.layers[i][j]])
             this.inputs.push(activationJ.id)
             break
           case outputLayerIndex:
@@ -400,8 +411,8 @@ export default class ASM implements Backend {
       }
     }
 
-    this.heap = new ArrayBuffer(this.id * 4)
-    this.view = new Float32Array(this.heap)
+    this.heap = new ArrayBuffer(this.id * 8)
+    this.view = new Float64Array(this.heap)
     Object.keys(this.variables).forEach(key => {
       const variable = this.variables[key]
       if (typeof variable.value === 'number') {
@@ -413,8 +424,9 @@ export default class ASM implements Backend {
     const constructor = new Function(`
 function module(stdlib, foreign, heap) {
   "use asm";
-  var H = new stdlib.Float32Array(heap);
+  var H = new stdlib.Float64Array(heap);
   var exp = stdlib.Math.exp;
+  var pow = stdlib.Math.pow;
   var random = foreign.random;
   function activate() {
     ${activationBody}
@@ -454,20 +466,56 @@ return { module: module }
     }
   }
 
+  syncProp(id: string, dimensions: number, parent: any = this.engine, key: string = id) {
+    if (dimensions > 0) {
+      for (let propKey in parent[key]) {
+        this.syncProp(`${id}[${propKey}]`, dimensions - 1, parent[key], propKey)
+      }
+    } else {
+      const variable = this.variables[id]
+      if (variable) { // not all the properties in the engine are in the heap (ie. the state of the input units)
+        parent[key] = this.view[variable.id]
+      }
+    }
+  }
+
+  sync() {
+    if (this.asm) {
+      this.syncProp('state', 1)
+      this.syncProp('weight', 2)
+      this.syncProp('gain', 2)
+      this.syncProp('activation', 1)
+      this.syncProp('derivative', 1)
+      this.syncProp('elegibilityTrace', 2)
+      this.syncProp('extendedElegibilityTrace', 3)
+      this.syncProp('errorResponsibility', 1)
+      this.syncProp('projectedErrorResponsibility', 1)
+      this.syncProp('gatedErrorResponsibility', 1)
+    }
+  }
+
   activate(inputs: number[]): number[] {
+    const oldStatus = this.engine.status
     this.engine.status = StatusTypes.ACTIVATING
     if (this.asm == null) {
       this.asm = this.buildAsm()
     }
     const activation = this.asm.activate(inputs)
-    this.engine.status = StatusTypes.IDLE
+    this.engine.status = oldStatus
+    if (this.engine.status !== StatusTypes.TRAINING) {
+      this.sync()
+    }
     return activation
   }
 
   propagate(targets: number[]) {
+    const oldStatus = this.engine.status
     this.engine.status = StatusTypes.PROPAGATING
     this.asm.propagate(targets)
-    this.engine.status = StatusTypes.IDLE
+    this.engine.status = oldStatus
+    if (this.engine.status !== StatusTypes.TRAINING) {
+      this.sync()
+    }
   }
 
   async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
@@ -491,6 +539,9 @@ return { module: module }
       error /= dataset.length
       iterations++
     }
+
+    // sync heap with engine
+    this.sync()
 
     // end training
     this.engine.status = StatusTypes.IDLE
