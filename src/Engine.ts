@@ -309,7 +309,7 @@ export default class Engine {
       layers: this.layers,
       size: this.size,
       biasUnit: this.biasUnit
-    })
+    }, null, 2)
   }
 
   clone() {

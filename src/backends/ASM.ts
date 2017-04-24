@@ -1,4 +1,4 @@
-declare var global, console
+declare var global
 
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
@@ -140,23 +140,6 @@ export default class ASM implements Backend {
         k = this.engine.gatedBy[j][g]
 
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
-        // const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
-
-        /*const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
-        const type = this.engine.activationFunction[j]
-        switch (type) {
-          case ActivationTypes.LOGISTIC_SIGMOID:
-            this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
-            break
-          case ActivationTypes.TANH:
-            this.buildActivationStatement(derivativeJ, '=', '1.0', '-', '(+pow', '(', activationJ, ',', '2.0', '))')
-            break
-          case ActivationTypes.RELU:
-          case ActivationTypes.IDENTITY:
-          case ActivationTypes.MAX_POOLING:
-          case ActivationTypes.DROPOUT:
-            break
-        }*/
 
         const bigParenthesisTermResult = this.alloc('bigParenthesisTermResult', null)
 
@@ -262,11 +245,13 @@ export default class ASM implements Backend {
         k = this.engine.gateSet[j][h]
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
         const bigParenthesisTermResult = this.alloc('bigParenthesisTermResult', null)
+
         let keepBigParenthesisTerm = false
         let initializeBigParenthesisTerm = false
+
         if (isSelfConnectedK && this.engine.derivativeTerm[k][j]) {
           const stateK = this.alloc(`state[${k}]`, this.engine.state[k])
-          this.buildActivationStatement(bigParenthesisTermResult, '=', stateK)
+          this.buildPropagationStatement(bigParenthesisTermResult, '=', stateK)
           keepBigParenthesisTerm = true
         } else {
           initializeBigParenthesisTerm = true
@@ -275,12 +260,12 @@ export default class ASM implements Backend {
           a = this.engine.inputsOfGatedBy[k][j][l]
           if (a !== k) {
             if (initializeBigParenthesisTerm) {
-              this.buildActivationStatement(bigParenthesisTermResult, '=', '0.0')
+              this.buildPropagationStatement(bigParenthesisTermResult, '=', '0.0')
               initializeBigParenthesisTerm = false
             }
             const weightKA = this.alloc(`weight[${k}][${a}]`, this.engine.weight[k][a])
             const activationA = this.alloc(`activation[${a}]`, this.engine.activation[a])
-            this.buildActivationStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
+            this.buildPropagationStatement(bigParenthesisTermResult, '+=', weightKA, '*', activationA)
             keepBigParenthesisTerm = true
           }
         }
@@ -311,7 +296,7 @@ export default class ASM implements Backend {
         for (g = 0; g < this.engine.gateSet[j].length; g++) {
           k = this.engine.gateSet[j][g]
           const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
-          const extendedElegibilityTraceJIK = this.alloc(`errorResponsibility[${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
+          const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${j}][${i}][${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
           this.buildPropagationStatement(Δw, '+=', errorResponsibilityK, '*', extendedElegibilityTraceJIK)
         }
         const learningRate = this.alloc('learningRate', this.engine.learningRate)
@@ -332,7 +317,7 @@ export default class ASM implements Backend {
         for (g = 0; g < this.engine.gateSet[j].length; g++) {
           k = this.engine.gateSet[j][g]
           const errorResponsibilityK = this.alloc(`errorResponsibility[${k}]`, this.engine.errorResponsibility[k])
-          const extendedElegibilityTraceJIK = this.alloc(`errorResponsibility[${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
+          const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${j}][${i}][${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
           this.buildPropagationStatement(Δw, '+=', errorResponsibilityK, '*', extendedElegibilityTraceJIK)
         }
         const learningRate = this.alloc('learningRate', this.engine.learningRate)
@@ -441,7 +426,6 @@ function module(stdlib, foreign, heap) {
 }
 return { module: module }`
     const constructor = new Function(source)
-    console.log(source)
     const module = constructor().module
     const foreign = { random: this.engine.random }
     const asm = module(global, foreign, this.heap)
