@@ -44,6 +44,42 @@
   function h() {
     console.log(lstm.activate([1]))
     console.log(lstm2.activate([1]))
+
+    var json1 = lstm.toJSON()
+    var json2 = lstm2.toJSON()
+
+    //console.log(json1, '\n\n==============\n\n', json2)
+
+    // debugger
+    console.log(lstm.propagate([1]))
+    console.log(lstm2.propagate([1]))
+
+    json1 = lstm.toJSON()
+    json2 = lstm2.toJSON()
+    //console.log(json1, '\n\n==============\n\n', json2)
+
+    //debugger
+    console.log(lstm.activate([0]))
+    console.log(lstm2.activate([0]))
+
+    json1 = lstm.toJSON()
+    json2 = lstm2.toJSON()
+    //console.log(json1, '\n\n==============\n\n', json2)
+
+    console.log(lstm.propagate([0]))
+    console.log(lstm2.propagate([0]))
+
+    json1 = lstm.toJSON()
+    json2 = lstm2.toJSON()
+    //console.log(json1, '\n\n==============\n\n', json2)
+
+    console.log(lstm.activate([1]))
+    console.log(lstm2.activate([1]))
+
+    json1 = lstm.toJSON()
+    json2 = lstm2.toJSON()
+    //console.log(json1, '\n\n==============\n\n', json2)
+
     // debugger
     console.log(lstm.propagate([1]))
     console.log(lstm2.propagate([1]))

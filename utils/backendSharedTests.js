@@ -233,6 +233,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         time: Date.now() - start
       }
 
+      console.log(results)
+
       expect(results.success).toBeGreaterThanOrEqual(0.8)
       expect(results.iterations).toBeLessThan(100 * 1000)
       done()

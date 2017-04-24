@@ -166,6 +166,7 @@ export default class ASM implements Backend {
         k = this.engine.gatedBy[j][g]
 
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
+        const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
 
         const bigParenthesisTermResult = this.alloc('bigParenthesisTermResult', null)
 
@@ -196,7 +197,7 @@ export default class ASM implements Backend {
 
         const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${j}][${i}][${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
 
-        if (isSelfConnected && isSelfConnectionGated) {
+        if (isSelfConnectedK && isSelfConnectionGatedK) {
           const gainKK = this.alloc(`gain[${k}][${k}]`, this.engine.gain[k][k])
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
@@ -204,7 +205,7 @@ export default class ASM implements Backend {
           } else {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${gainKK} * ${weightKK} * ${extendedElegibilityTraceJIK}`)
           }
-        } else if (isSelfConnected) {
+        } else if (isSelfConnectedK) {
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${weightKK} * ${extendedElegibilityTraceJIK} + ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
