@@ -14,6 +14,9 @@
     "stripInternal": true,
     "pretty": true,
     "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "removeComments": true,
+    "noUnusedLocals": true,
     "types": [],
     "lib": [
       "es5",

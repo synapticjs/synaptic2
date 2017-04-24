@@ -140,7 +140,7 @@ export default class ASM implements Backend {
         k = this.engine.gatedBy[j][g]
 
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
-        const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
+        // const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
 
         const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
         const type = this.engine.activationFunction[j]
@@ -381,7 +381,7 @@ export default class ASM implements Backend {
     this.propagationStatements = []
     let outputLayerIndex = this.engine.layers.length - 1
     if (this.engine.biasUnit !== null) {
-      let activationBias = this.alloc(`activation[${this.engine.biasUnit}]`, this.engine.activation[this.engine.biasUnit])
+      this.alloc(`activation[${this.engine.biasUnit}]`, this.engine.activation[this.engine.biasUnit])
     }
     for (let i = 0; i < this.engine.layers.length; i++) {
       for (let j = 0; j < this.engine.layers[i].length; j++) {

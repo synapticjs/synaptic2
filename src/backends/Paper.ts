@@ -77,7 +77,7 @@ export default class Paper {
   propagateUnit(unit: number, target?: number) {
     // glosary
     const j = unit
-    const s = this.engine.state
+    // const s = this.engine.state
     const w = this.engine.weight
     const g = this.engine.gain
     const y = this.engine.activation

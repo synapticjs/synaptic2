@@ -17,7 +17,7 @@ export default class MaxPool3D implements Layer {
     this.gater = network.addLayer()
     this.layer = network.addLayer()
 
-    let x, y, z, fromX, fromY, fromZ
+    let y, fromX, fromY, fromZ
     for (let z = 0; y < boundary.depth; z += this.downsampling) {
       for (let y = 0; y < boundary.height; y += this.downsampling) {
         for (let x = 0; x < boundary.width; x += this.downsampling) {

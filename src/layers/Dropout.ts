@@ -2,7 +2,7 @@ import Network, { Boundary, Layer } from '../Network'
 import { ActivationTypes } from '../Engine'
 
 export default class Dropout implements Layer {
-  
+
   gater: number[] = null
   layer: number[] = null
 
@@ -17,7 +17,7 @@ export default class Dropout implements Layer {
     this.gater = network.addLayer()
     this.layer = network.addLayer()
 
-    let unit: number, from: number, to: number, gate: number
+    let unit: number, from: number, to: number // , gate: number
     for (let i = 0; i < boundary.layer.length; i++) {
       unit = network.addUnit(ActivationTypes.IDENTITY)
       this.layer.push(unit)
