@@ -25,14 +25,25 @@ export default class CPU implements Backend {
     inputSetLength = engine.inputSet[j].length
     for (h = 0; h < inputSetLength; h++) {
       i = engine.inputSet[j][h]
-      state = state + engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
+      if (engine.gain[j][i] !== 0)
+        state = state + engine.gain[j][i] * engine.weight[j][i] * engine.activation[i]
     }
     engine.state[j] = state
 
     activation = this.activationFunction(j)
     engine.activation[j] = activation
 
-    derivative = this.activationFunctionDerivative(j)
+    switch (this.engine.activationFunction[j]) {
+      case ActivationTypes.LOGISTIC_SIGMOID:
+        derivative = activation * (1 - activation)
+        break
+      case ActivationTypes.TANH:
+        derivative = 1 - Math.pow(activation, 2)
+        break
+      default:
+        derivative = 0
+    }
+
     engine.derivative[j] = derivative
 
     for (h = 0; h < inputSetLength; h++) {
