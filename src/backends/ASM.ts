@@ -1,4 +1,4 @@
-declare var global
+declare var global, console
 
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
@@ -91,15 +91,15 @@ export default class ASM implements Backend {
     const type = this.engine.activationFunction[j]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
-        this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', 'exp(-', stateJ, '))')
-        this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
+        this.buildActivationStatement(activationJ, '=', '1.0', '/', '(1.0', '+', '(+exp(-', stateJ, ')))')
+        this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-(+', activationJ, '))')
         break
       case ActivationTypes.TANH:
         const eP = this.alloc('eP', null)
         const eN = this.alloc('eN', null)
-        this.buildActivationStatement(eP, '=', 'exp(', stateJ, ')')
-        this.buildActivationStatement(activationJ, '=', '(', eP, '-', eN, ')', '/', '(', eP, '+', eN, ')')
-        this.buildActivationStatement(derivativeJ, '=', '1', '-', 'pow(', activationJ, ',', '2', ')')
+        this.buildActivationStatement(eP, '=', '(+exp(', stateJ, '))')
+        this.buildActivationStatement(activationJ, '=', '(', '(+', eP, ')', '-', '(+', eN, ')', ')', '/', '(', '(+', eP, ')', '+', '(+', eN, ')', ')')
+        this.buildActivationStatement(derivativeJ, '=', '1.0', '-', '(+pow(', activationJ, ',', '2.0', '))')
         break
       case ActivationTypes.RELU:
         this.buildActivationStatement(activationJ, '=', stateJ, '>', '0.0', '?', stateJ, ':', '0.0')
@@ -142,21 +142,21 @@ export default class ASM implements Backend {
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
         // const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
 
-        const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
+        /*const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
         const type = this.engine.activationFunction[j]
         switch (type) {
           case ActivationTypes.LOGISTIC_SIGMOID:
             this.buildActivationStatement(derivativeJ, '=', activationJ, '*', '(', '1.0', '-', activationJ, ')')
             break
           case ActivationTypes.TANH:
-            this.buildActivationStatement(derivativeJ, '=', '1.0', '-', 'Math.pow', '(', activationJ, ',', '2.0', ')')
+            this.buildActivationStatement(derivativeJ, '=', '1.0', '-', '(+pow', '(', activationJ, ',', '2.0', '))')
             break
           case ActivationTypes.RELU:
           case ActivationTypes.IDENTITY:
           case ActivationTypes.MAX_POOLING:
           case ActivationTypes.DROPOUT:
             break
-        }
+        }*/
 
         const bigParenthesisTermResult = this.alloc('bigParenthesisTermResult', null)
 
@@ -231,7 +231,7 @@ export default class ASM implements Backend {
       const errorResponsibilityJ = this.alloc(`errorResponsibility[${j}]`, this.engine.errorResponsibility[j])
       const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
       const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
-      this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '=', target, '-', activationJ)
+      this.buildPropagationStatement(errorResponsibilityJ, '=', projectedErrorResponsibilityJ, '=', '(+', target, ')', '-', '(+', activationJ, ')')
     } else {
       const projectedErrorResponsibilityJ = this.alloc(`projectedErrorResponsibility[${j}]`, this.engine.projectedErrorResponsibility[j])
       if (hasProjectedError) {
@@ -421,7 +421,7 @@ export default class ASM implements Backend {
     })
     const activationBody = this.buildBody(this.activationStatements)
     const propagationBody = this.buildBody(this.propagationStatements)
-    const constructor = new Function(`
+    const source = `
 function module(stdlib, foreign, heap) {
   "use asm";
   var H = new stdlib.Float64Array(heap);
@@ -439,8 +439,9 @@ function module(stdlib, foreign, heap) {
     propagate: propagate
   }
 }
-return { module: module }
-    `)
+return { module: module }`
+    const constructor = new Function(source)
+    console.log(source)
     const module = constructor().module
     const foreign = { random: this.engine.random }
     const asm = module(global, foreign, this.heap)

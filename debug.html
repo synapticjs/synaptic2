@@ -3,6 +3,12 @@
 
 // Feed Forward
 
+var lstm = synaptic.Network.fromJSON('{"state":[-0.34168159213278226,-0.5699629678728453,0.975468096920725,0.6899218462285464,-0.28783138214221315,-0.28125468596366954,0.5727167982467871],"weight":[[0],[0.9304061758414366,0],[-0.6350412782105548,0.032235297899562365,0,null,-0.5806302037181537],[0.2575307117458232,0.14195907780416261,null,0,0.37525761620755826],[-0.3656389526124926,-0.1997473800707481,null,null,1],[0.02346600163536161,-0.5881328386943165,null,null,-0.4168056637930273,0],[0.12017919853890335,-0.9510247452663441,null,null,-0.047796161445412544,null,0]],"gain":[[1],[1,1],[1,1,1,null,1],[1,1,null,1,1],[1,1,null,null,1],[1,1,null,null,1,1],[1,1,null,null,1,null,1]],"activation":[1,0,0,0,0,0,0],"derivative":[0,0,0,0,0,0,0],"elegibilityTrace":[[0],[0,0],[0,0,0,null,0],[0,0,null,0,0],[0,0,null,null,0],[0,0,null,null,0,0],[0,0,null,null,0,null,0]],"extendedElegibilityTrace":[[[]],[[],[]],[[null,null,null,null,0],[null,null,null,null,0],[],null,[null,null,null,null,0]],[[null,null,null,null,0],[null,null,null,null,0],null,[],[null,null,null,null,0]],[[],[],null,null,[]],[[null,null,null,null,null,null,0],[null,null,null,null,null,null,0],null,null,[null,null,null,null,null,null,0],[]],[[],[],null,null,[],null,[]]],"errorResponsibility":[0,0,0,0,0,0,0],"projectedErrorResponsibility":[0,0,0,0,0,0,0],"gatedErrorResponsibility":[0,0,0,0,0,0,0],"activationFunction":[0,0,0,0,0,0,0],"inputsOf":[[],[0],[0,1,4],[0,1,4],[0,1,4],[0,1,4],[0,1,4]],"projectedBy":[[1,2,3,4,5,6],[2,3,4,5,6],[],[],[2,3,4,5,6],[],[]],"gatersOf":[[],[],[],[],[2,3],[],[5]],"gatedBy":[[],[],[4],[4],[],[6],[]],"inputsOfGatedBy":[[],[],[],[],[null,null,[1],[4]],[],[null,null,null,null,null,[4]]],"projectionSet":[[1,2,3,4,5,6],[2,3,4,5,6],[],[],[5,6],[],[]],"gateSet":[[],[],[4],[4],[],[6],[]],"inputSet":[[],[0],[0,1,4],[0,1,4],[0,1],[0,1,4],[0,1,4]],"derivativeTerm":[[],[],[],[],[null,null,0,1],[],[null,null,null,null,null,0]],"connections":[{"from":0,"to":1},{"from":0,"to":2},{"from":0,"to":3},{"from":0,"to":4},{"from":0,"to":5},{"from":1,"to":4},{"from":4,"to":4},{"from":1,"to":2},{"from":1,"to":3},{"from":1,"to":5},{"from":0,"to":6},{"from":4,"to":6},{"from":1,"to":6},{"from":4,"to":2},{"from":4,"to":3},{"from":4,"to":5}],"gates":[{"from":1,"to":4,"gater":2},{"from":4,"to":4,"gater":3},{"from":4,"to":6,"gater":5}],"learningRate":0.1,"layers":[[1],[2],[3],[4],[5],[6]],"size":7,"biasUnit":0}')
+
+var lstm2 = lstm.clone()
+
+lstm.backend = new synaptic.backends.ASM(lstm.engine)
+lstm2.backend = new synaptic.backends.CPU(lstm2.engine)
 
 var ff = new synaptic.Network(
   new synaptic.layers.Input(2),
@@ -33,14 +39,13 @@ var XOR = [
   {
     input: [1,1],
     output: [0]
-  },
+  }
 ]
 
 function h () {
   debugger
-  console.log(ff.activate([1,0]))
-  console.log(ff2.activate([1,0]))
-  
+  console.log(lstm.activate([1]))
+  console.log(lstm2.activate([1]))
 }
 
 
