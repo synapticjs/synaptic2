@@ -1,3 +1,4 @@
+// declare var console
 
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
@@ -16,6 +17,7 @@ export class Variable {
   ) { }
 }
 export type AsmModule = {
+  module: any,
   activate: (inputs: number[]) => number[],
   propagate: (targets: number[]) => void,
 }
@@ -86,12 +88,12 @@ export default class ASM implements Backend {
     if (isSelfConnected && isSelfConnectionGated) {
       const gainJJ = this.alloc(`gain[${j}][${j}]`, this.engine.gain[j][j])
       const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-      this.buildActivationStatement(stateJ, '*=', gainJJ, '*', weightJJ)
+      this.buildActivationStatement(asm`${stateJ} = ${stateJ} * ${gainJJ} * ${weightJJ}`)
     } else if (isSelfConnected) {
       const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-      this.buildActivationStatement(stateJ, '*=', weightJJ)
+      this.buildActivationStatement(asm`${stateJ} = ${stateJ} * ${weightJJ}`)
     } else {
-      this.buildActivationStatement(stateJ, '=', '0.0')
+      this.buildActivationStatement(asm`${stateJ} = 0.0`)
     }
 
     for (h = 0; h < this.engine.inputSet[j].length; h++) {
@@ -449,10 +451,13 @@ export default class ASM implements Backend {
   }`
 
     const ctor = new Function('stdlib', 'foreign', 'heap', source)
+
+    // console.log(ctor, ctor.toString())
     const foreign = { random: this.engine.random }
     const module = ctor({ Math, Float64Array }, foreign, this.heap)
 
     return {
+      module,
       activate: (inputs: number[]) => {
         for (let i = 0; i < this.inputs.length; i++) {
           this.view[this.inputs[i]] = inputs[i]

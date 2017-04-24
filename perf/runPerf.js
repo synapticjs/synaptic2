@@ -1,6 +1,6 @@
 var synaptic = process.env.NODE_ENV == 'node' ? require('../dist') : require('../dist/synaptic');
 
-process.env.BACKEND = process.env.BACKEND || 'CPU'
+process.env.BACKEND = process.env.BACKEND || 'ASM'
 
 var MersenneTwister = require('mersenne-twister')
 
@@ -20,13 +20,18 @@ lstm.backend = new synaptic.backends[process.env.BACKEND](lstm.engine)
 lstm.engine.random = random;
 lstm.learningRate = 0.1;
 
+lstm.backend.asm = lstm.backend.buildAsm()
+console.log(lstm.backend.asm.module.activate.toString())
+
+
 lstm.engine.seal()
+lstm.engine.status = synaptic.Engine.StatusTypes.TRAINING
 
 var targets = [2, 4];
 var distractors = [3, 5];
 var prompts = [0, 1];
 var length = 10;
-var criterion = 0.9;
+var criterion = 0.5;
 var iterations = 100000;
 var rate = .1;
 var schedule = {};
@@ -123,6 +128,9 @@ while (trial < iterations && success < criterion) {
   success = correct / divideError;
   error /= length;
 }
+
+lstm.engine.status = synaptic.Engine.StatusTypes.IDLE
+
 console.timeEnd('LSTM')
 console.log({
   iterations: trial,
