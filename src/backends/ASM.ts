@@ -52,15 +52,15 @@ export default class ASM implements Backend {
   id: number = 0
   heap: ArrayBuffer = null
   view: Float64Array = null
-  inputs: number[] = []
-  outputs: number[] = []
-  targets: number[] = []
+  learningRate: Variable = null
+  seed: Variable = null
+  inputs: Variable[] = []
+  outputs: Variable[] = []
+  targets: Variable[] = []
   variables: Variables = {}
   activationStatements: Statement[][] = []
   propagationStatements: Statement[][] = []
   asm: AsmModule = null
-  learningRate: Variable = null
-  seed: Variable = null
   constructor(public engine = new Engine()) { }
 
   alloc(key: string, value: number): Variable {
@@ -357,7 +357,7 @@ export default class ASM implements Backend {
     }
   }
 
-  costFunction(target: number[], predicted: number[], costType: CostTypes) {
+  costFunction(target: number[], predicted: number[], costType: CostTypes = CostTypes.MEAN_SQUARE_ERROR) {
     let i: number, x = 0
     switch (costType) {
       case CostTypes.MEAN_SQUARE_ERROR:
@@ -390,25 +390,27 @@ export default class ASM implements Backend {
     this.outputs = []
     this.targets = []
     this.variables = {}
-    this.learningRate = this.alloc(`learningRate`, this.engine.learningRate)
-    this.seed = this.alloc(`seed`, Math.random())
     this.activationStatements = []
     this.propagationStatements = []
     let outputLayerIndex = this.engine.layers.length - 1
+
+    this.learningRate = this.alloc(`learningRate`, this.engine.learningRate)
+    this.seed = this.alloc(`seed`, Math.random())
     if (this.engine.biasUnit !== null) {
       this.alloc(`activation[${this.engine.biasUnit}]`, this.engine.activation[this.engine.biasUnit])
     }
+
     for (let i = 0; i < this.engine.layers.length; i++) {
       for (let j = 0; j < this.engine.layers[i].length; j++) {
-        let activationJ
+        let activationJ: Variable
         switch (i) {
           case 0:
             activationJ = this.alloc(`activation[${this.engine.layers[i][j]}]`, this.engine.activation[this.engine.layers[i][j]])
-            this.inputs.push(activationJ.id)
+            this.inputs.push(activationJ)
             break
           case outputLayerIndex:
             activationJ = this.buildActivateUnit(this.engine.layers[i][j])
-            this.outputs.push(activationJ.id)
+            this.outputs.push(activationJ)
             break
           default:
             this.buildActivateUnit(this.engine.layers[i][j])
@@ -417,7 +419,7 @@ export default class ASM implements Backend {
     }
     for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
       let targetJ = this.alloc(`target[${j}]`, null)
-      this.targets.push(targetJ.id)
+      this.targets.push(targetJ)
       this.buildPropagateUnit(this.engine.layers[outputLayerIndex][j], targetJ)
     }
     for (let i = this.engine.layers.length - 2; i > 0; i--) {
@@ -464,18 +466,18 @@ return {
       module,
       activate: (inputs: number[]) => {
         for (let i = 0; i < this.inputs.length; i++) {
-          this.view[this.inputs[i]] = inputs[i]
+          this.view[this.inputs[i].id] = inputs[i]
         }
         module.activate()
         let activation = new Array(this.outputs.length)
         for (let i = 0; i < this.outputs.length; i++) {
-          activation[i] = this.view[this.outputs[i]]
+          activation[i] = this.view[this.outputs[i].id]
         }
         return activation
       },
       propagate: (targets: number[]) => {
         for (let i = 0; i < this.targets.length; i++) {
-          this.view[this.targets[i]] = targets[i]
+          this.view[this.targets[i].id] = targets[i]
         }
         this.view[this.learningRate.id] = this.engine.learningRate
         module.propagate()
