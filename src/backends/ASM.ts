@@ -6,15 +6,44 @@
 import Engine, { ActivationTypes, StatusTypes } from '../Engine'
 import { CostTypes } from '../Trainer'
 import { TrainEntry, Dictionary, Backend, TrainOptions, TrainResult } from '.'
+import { DocumentNode, HeapReferenceNode } from './AST/nodes'
+import {
+  document,
+  heap,
+  assign,
+  assignSum,
+  assignMul,
+  number,
+  sum,
+  sub,
+  mul,
+  neg,
+  div,
+  exp,
+  pow,
+  rand,
+  conditional,
+  gt
+} from './AST/operations'
+declare var console
+
+let ast = document(
+  assign(heap(0), div(sum(mul(heap(1), number(1)), exp(heap(3))), pow(heap(5), rand(number(3))))),
+  assign(heap(1), number(3)),
+  assign(heap(2), exp(mul(heap(1), heap(0))))
+)
+console.log('generated\n' + ast.toString())
+console.log('tree', ast.inspect())
 
 export type Statement = Variable | string
-export type Variables = Dictionary<Variable>
-export class Variable {
+export class Variable extends HeapReferenceNode {
   constructor(
     public id: number,
     public key: string,
-    public value: number
-  ) { }
+    public initialValue: number
+  ) {
+    super(id)
+  }
 }
 export type AsmModule = {
   module: any,
@@ -57,7 +86,9 @@ export default class ASM implements Backend {
   inputs: Variable[] = []
   outputs: Variable[] = []
   targets: Variable[] = []
-  variables: Variables = {}
+  variables: Dictionary<Variable> = {}
+  activation: Dictionary<Dictionary<DocumentNode>> = {}
+  propagation: Dictionary<Dictionary<DocumentNode>> = {}
   activationStatements: Statement[][] = []
   propagationStatements: Statement[][] = []
   asm: AsmModule = null
@@ -78,48 +109,65 @@ export default class ASM implements Backend {
     this.propagationStatements.push(parts)
   }
 
-  buildActivateUnit(j: number): Variable {
-    const activationJ = this.alloc(`activation[${j}]`, this.engine.activation[j])
-    let i, k, h, g, l, a, to, from
+  buildActivateUnit(unit: number, layer: number): Variable {
 
-    const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
-    const isSelfConnected = this.engine.connections.some(connection => connection.to === j && connection.from === j)
-    const isSelfConnectionGated = this.engine.gates.some(gate => gate.to === j && gate.from === j)
-
-    if (isSelfConnected && isSelfConnectionGated) {
-      const gainJJ = this.alloc(`gain[${j}][${j}]`, this.engine.gain[j][j])
-      const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-      this.buildActivationStatement(asm`${stateJ} = ${stateJ} * ${gainJJ} * ${weightJJ}`)
-    } else if (isSelfConnected) {
-      const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
-      this.buildActivationStatement(asm`${stateJ} = ${stateJ} * ${weightJJ}`)
-    } else {
-      this.buildActivationStatement(asm`${stateJ} = 0.0`)
+    if (!this.activation[layer]) {
+      this.activation[layer] = {}
+    }
+    if (!this.activation[layer][unit]) {
+      this.activation[layer][unit] = new DocumentNode()
     }
 
-    for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      i = this.engine.inputSet[j][h]
-      const isGated = this.engine.gates.some(gate => gate.from === i && gate.to === j)
+    const statement = this.activation[layer][unit].add.bind(this.activation[layer][unit])
+
+    const activationJ = this.alloc(`activation[${unit}]`, this.engine.activation[unit])
+    let i, k, h, g, l, a, to, from
+
+    const stateJ = this.alloc(`state[${unit}]`, this.engine.state[unit])
+    const isSelfConnected = this.engine.connections.some(connection => connection.to === unit && connection.from === unit)
+    const isSelfConnectionGated = this.engine.gates.some(gate => gate.to === unit && gate.from === unit)
+
+    if (isSelfConnected && isSelfConnectionGated) {
+      const gainJJ = this.alloc(`gain[${unit}][${unit}]`, this.engine.gain[unit][unit])
+      const weightJJ = this.alloc(`weight[${unit}][${unit}]`, this.engine.weight[unit][unit])
+      this.buildActivationStatement(asm`${stateJ} = ${stateJ} * ${gainJJ} * ${weightJJ}`)
+      statement(assignMul(stateJ, mul(gainJJ, weightJJ)))
+    } else if (isSelfConnected) {
+      const weightJJ = this.alloc(`weight[${unit}][${unit}]`, this.engine.weight[unit][unit])
+      this.buildActivationStatement(asm`${stateJ} = ${stateJ} * ${weightJJ}`)
+      statement(assignMul(stateJ, weightJJ))
+    } else {
+      this.buildActivationStatement(asm`${stateJ} = 0.0`)
+      statement(assign(stateJ, number(0)))
+    }
+
+    for (h = 0; h < this.engine.inputSet[unit].length; h++) {
+      i = this.engine.inputSet[unit][h]
+      const isGated = this.engine.gates.some(gate => gate.from === i && gate.to === unit)
       if (isGated) {
-        const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
-        const gainJI = this.alloc(`gain[${j}][${i}]`, this.engine.gain[j][i])
-        const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
+        const stateJ = this.alloc(`state[${unit}]`, this.engine.state[unit])
+        const gainJI = this.alloc(`gain[${unit}][${i}]`, this.engine.gain[unit][i])
+        const weightJI = this.alloc(`weight[${unit}][${i}]`, this.engine.weight[unit][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
         this.buildActivationStatement(asm`${stateJ} = ${stateJ} + ${gainJI} * ${weightJI} * ${activationI}`)
+        statement(assignSum(stateJ, mul(mul(gainJI, weightJI), activationI)))
       } else {
-        const stateJ = this.alloc(`state[${j}]`, this.engine.state[j])
-        const weightJI = this.alloc(`weight[${j}][${i}]`, this.engine.weight[j][i])
+        const stateJ = this.alloc(`state[${unit}]`, this.engine.state[unit])
+        const weightJI = this.alloc(`weight[${unit}][${i}]`, this.engine.weight[unit][i])
         const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
         this.buildActivationStatement(asm`${stateJ} = ${stateJ} + ${weightJI} * ${activationI}`)
+        statement(assignSum(stateJ, mul(weightJI, activationI)))
       }
     }
 
-    const derivativeJ = this.alloc(`derivative[${j}]`, this.engine.derivative[j])
-    const type = this.engine.activationFunction[j]
+    const derivativeJ = this.alloc(`derivative[${unit}]`, this.engine.derivative[unit])
+    const type = this.engine.activationFunction[unit]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
         this.buildActivationStatement(asm`${activationJ} = 1.0 / (1.0 + exp(-${stateJ}))`)
         this.buildActivationStatement(asm`${derivativeJ} = ${activationJ} * (1.0 - ${activationJ})`)
+        statement(assign(activationJ, div(number(1), sum(number(1), exp(neg(stateJ))))))
+        statement(assign(derivativeJ, mul(activationJ, sub(number(1), activationJ))))
         break
       case ActivationTypes.TANH:
         const eP = this.alloc('eP', null)
@@ -127,12 +175,18 @@ export default class ASM implements Backend {
         this.buildActivationStatement(asm`${eP} = (+exp(${stateJ}))`)
         this.buildActivationStatement(asm`${activationJ} = (${eP} - ${eN}) / (${eP} + ${eN})`)
         this.buildActivationStatement(asm`${derivativeJ} = 1.0 - (+pow(${activationJ}, 2.0))`)
+        statement(assign(eP, exp(stateJ)))
+        statement(assign(eN, div(number(1), eP)))
+        statement(assign(activationJ, div(sub(eP, eN), sum(eP, eN))))
+        statement(assign(derivativeJ, sub(number(1), pow(activationJ, number(2)))))
         break
       case ActivationTypes.RELU:
         this.buildActivationStatement(asm`${activationJ} = ${stateJ} > 0.0 ? ${stateJ} : 0.0`)
+        statement(assign(activationJ, conditional(gt(stateJ, number(0)), stateJ, number(0))))
         break
       case ActivationTypes.IDENTITY:
         this.buildActivationStatement(asm`${activationJ} = ${stateJ}`)
+        statement(assign(activationJ, stateJ))
         break
       /*case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0]
@@ -146,25 +200,28 @@ export default class ASM implements Backend {
         return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1*/
     }
 
-    for (h = 0; h < this.engine.inputSet[j].length; h++) {
-      i = this.engine.inputSet[j][h]
-      const gainJI = this.alloc(`gain[${j}][${i}]`, this.engine.gain[j][i])
+    for (h = 0; h < this.engine.inputSet[unit].length; h++) {
+      i = this.engine.inputSet[unit][h]
+      const gainJI = this.alloc(`gain[${unit}][${i}]`, this.engine.gain[unit][i])
       const activationI = this.alloc(`activation[${i}]`, this.engine.activation[i])
-      const elegibilityTraceJI = this.alloc(`elegibilityTrace[${j}][${i}]`, this.engine.elegibilityTrace[j][i])
+      const elegibilityTraceJI = this.alloc(`elegibilityTrace[${unit}][${i}]`, this.engine.elegibilityTrace[unit][i])
 
       if (isSelfConnected && isSelfConnectionGated) {
-        const gainJJ = this.alloc(`gain[${j}][${j}]`, this.engine.gain[j][j])
-        const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
+        const gainJJ = this.alloc(`gain[${unit}][${unit}]`, this.engine.gain[unit][unit])
+        const weightJJ = this.alloc(`weight[${unit}][${unit}]`, this.engine.weight[unit][unit])
         this.buildActivationStatement(asm`${elegibilityTraceJI} = ${gainJJ} * ${weightJJ} * ${elegibilityTraceJI} + ${gainJI} * ${activationI}`)
+        statement(assign(elegibilityTraceJI, sum(mul(mul(gainJJ, weightJJ), elegibilityTraceJI), mul(gainJI, activationI))))
       } else if (isSelfConnected) {
-        const weightJJ = this.alloc(`weight[${j}][${j}]`, this.engine.weight[j][j])
+        const weightJJ = this.alloc(`weight[${unit}][${unit}]`, this.engine.weight[unit][unit])
         this.buildActivationStatement(asm`${elegibilityTraceJI} = ${weightJJ} * ${elegibilityTraceJI} + ${gainJI} * ${activationI}`)
+        statement(assign(elegibilityTraceJI, sum(mul(weightJJ, elegibilityTraceJI), mul(gainJI, activationI))))
       } else {
         this.buildActivationStatement(asm`${elegibilityTraceJI} = ${gainJI} * ${activationI}`)
+        statement(assign(elegibilityTraceJI, mul(gainJI, activationI)))
       }
 
-      for (g = 0; g < this.engine.gatedBy[j].length; g++) {
-        k = this.engine.gatedBy[j][g]
+      for (g = 0; g < this.engine.gatedBy[unit].length; g++) {
+        k = this.engine.gatedBy[unit][g]
 
         const isSelfConnectedK = this.engine.connections.some(connection => connection.to === k && connection.from === k)
         const isSelfConnectionGatedK = this.engine.gates.some(gate => gate.to === k && gate.from === k)
@@ -173,60 +230,69 @@ export default class ASM implements Backend {
 
         let keepBigParenthesisTerm = false
         let initializeBigParenthesisTerm = false
-        if (isSelfConnectedK && this.engine.derivativeTerm[k][j]) {
+        if (isSelfConnectedK && this.engine.derivativeTerm[k][unit]) {
           const stateK = this.alloc(`state[${k}]`, this.engine.state[k])
           this.buildActivationStatement(asm`${bigParenthesisTermResult} = ${stateK}`)
+          statement(assign(bigParenthesisTermResult, stateK))
           keepBigParenthesisTerm = true
         } else {
           initializeBigParenthesisTerm = true
         }
 
 
-        for (l = 0; l < this.engine.inputsOfGatedBy[k][j].length; l++) {
-          a = this.engine.inputsOfGatedBy[k][j][l]
+        for (l = 0; l < this.engine.inputsOfGatedBy[k][unit].length; l++) {
+          a = this.engine.inputsOfGatedBy[k][unit][l]
           if (a !== k) {
             if (initializeBigParenthesisTerm) {
               this.buildActivationStatement(asm`${bigParenthesisTermResult} = 0.0`)
+              statement(assign(bigParenthesisTermResult, number(0)))
               initializeBigParenthesisTerm = false
             }
             const weightKA = this.alloc(`weight[${k}][${a}]`, this.engine.weight[k][a])
             const activationA = this.alloc(`activation[${a}]`, this.engine.activation[a])
             this.buildActivationStatement(asm`${bigParenthesisTermResult} = ${bigParenthesisTermResult} + ${weightKA} * ${activationA}`)
+            statement(assignSum(bigParenthesisTermResult, mul(weightKA, activationA)))
             keepBigParenthesisTerm = true
           }
         }
 
-        const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${j}][${i}][${k}]`, this.engine.extendedElegibilityTrace[j][i][k])
+        const extendedElegibilityTraceJIK = this.alloc(`extendedElegibilityTrace[${unit}][${i}][${k}]`, this.engine.extendedElegibilityTrace[unit][i][k])
 
         if (isSelfConnectedK && isSelfConnectionGatedK) {
           const gainKK = this.alloc(`gain[${k}][${k}]`, this.engine.gain[k][k])
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${gainKK} * ${weightKK} * ${extendedElegibilityTraceJIK} + ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
+            statement(assign(extendedElegibilityTraceJIK, sum(mul(mul(gainKK, weightKK), extendedElegibilityTraceJIK), mul(mul(derivativeJ, elegibilityTraceJI), bigParenthesisTermResult))))
           } else {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${gainKK} * ${weightKK} * ${extendedElegibilityTraceJIK}`)
+            statement(assign(extendedElegibilityTraceJIK, mul(mul(gainKK, weightKK), extendedElegibilityTraceJIK)))
           }
         } else if (isSelfConnectedK) {
           const weightKK = this.alloc(`weight[${k}][${k}]`, this.engine.weight[k][k])
           if (keepBigParenthesisTerm) {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${weightKK} * ${extendedElegibilityTraceJIK} + ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
+            statement(assign(extendedElegibilityTraceJIK, sum(mul(weightKK, extendedElegibilityTraceJIK), mul(mul(derivativeJ, elegibilityTraceJI), bigParenthesisTermResult))))
           } else {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${weightKK} * ${extendedElegibilityTraceJIK}`)
+            statement(assign(extendedElegibilityTraceJIK, mul(weightKK, extendedElegibilityTraceJIK)))
           }
         } else {
           if (keepBigParenthesisTerm) {
             this.buildActivationStatement(asm`${extendedElegibilityTraceJIK} = ${derivativeJ} * ${elegibilityTraceJI} * ${bigParenthesisTermResult}`)
+            statement(assign(extendedElegibilityTraceJIK, mul(mul(derivativeJ, elegibilityTraceJI), bigParenthesisTermResult)))
           }
         }
       }
     }
 
-    for (h = 0; h < this.engine.gatedBy[j].length; h++) {
-      to = this.engine.gatedBy[j][h]
-      for (g = 0; g < this.engine.inputsOfGatedBy[to][j].length; g++) {
-        from = this.engine.inputsOfGatedBy[to][j][g]
+    for (h = 0; h < this.engine.gatedBy[unit].length; h++) {
+      to = this.engine.gatedBy[unit][h]
+      for (g = 0; g < this.engine.inputsOfGatedBy[to][unit].length; g++) {
+        from = this.engine.inputsOfGatedBy[to][unit][g]
         const gainToFrom = this.alloc(`gain[${to}][${from}]`, this.engine.gain[to][from])
         this.buildActivationStatement(asm`${gainToFrom} = ${activationJ}`)
+        statement(assign(gainToFrom, activationJ))
       }
     }
 
@@ -381,7 +447,7 @@ export default class ASM implements Backend {
   }
 
   buildBody(statements: Statement[][]): string {
-    return statements.map(statement => statement.map(x => x instanceof Variable ? `H[${x.id}]` : x).join('')).join(';\n\t')
+    return statements.map(statement => statement.map(x => x instanceof Variable ? `H[${x.id}]` : x).join('')).join(';\n')
   }
 
   buildAsm(): AsmModule {
@@ -400,20 +466,20 @@ export default class ASM implements Backend {
       this.alloc(`activation[${this.engine.biasUnit}]`, this.engine.activation[this.engine.biasUnit])
     }
 
-    for (let i = 0; i < this.engine.layers.length; i++) {
-      for (let j = 0; j < this.engine.layers[i].length; j++) {
+    for (let layer = 0; layer < this.engine.layers.length; layer++) {
+      for (let unit = 0; unit < this.engine.layers[layer].length; unit++) {
         let activationJ: Variable
-        switch (i) {
+        switch (layer) {
           case 0:
-            activationJ = this.alloc(`activation[${this.engine.layers[i][j]}]`, this.engine.activation[this.engine.layers[i][j]])
+            activationJ = this.alloc(`activation[${this.engine.layers[layer][unit]}]`, this.engine.activation[this.engine.layers[layer][unit]])
             this.inputs.push(activationJ)
             break
           case outputLayerIndex:
-            activationJ = this.buildActivateUnit(this.engine.layers[i][j])
+            activationJ = this.buildActivateUnit(this.engine.layers[layer][unit], layer)
             this.outputs.push(activationJ)
             break
           default:
-            this.buildActivateUnit(this.engine.layers[i][j])
+            this.buildActivateUnit(this.engine.layers[layer][unit], layer)
         }
       }
     }
@@ -433,11 +499,19 @@ export default class ASM implements Backend {
     this.view = new Float64Array(this.heap)
     Object.keys(this.variables).forEach(key => {
       const variable = this.variables[key]
-      if (typeof variable.value === 'number') {
-        this.view[variable.id] = variable.value
+      if (typeof variable.initialValue === 'number') {
+        this.view[variable.id] = variable.initialValue
       }
     })
-    const activationBody = this.buildBody(this.activationStatements)
+    //const activationBody = this.buildBody(this.activationStatements)
+    //console.log('regular', activationBody)
+    let activationBody = ''
+    Object.keys(this.activation).forEach(layer => {
+      Object.keys(this.activation[layer]).forEach(unit => {
+        activationBody += this.activation[layer][unit].toString() + '\n'
+      })
+    })
+    console.log('from ast', activationBody)
     const propagationBody = this.buildBody(this.propagationStatements)
     const source = `"use asm";
 var H = new stdlib.Float64Array(heap);
