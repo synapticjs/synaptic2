@@ -41,7 +41,7 @@ function asm(literals, ...placeholders: (Variable | string)[]) {
   }
 
   // add the last literal
-  result += literals[literals.length - 1];
+  result += literals[literals.length - 1]
   return result
 }
 
@@ -59,7 +59,8 @@ export default class ASM implements Backend {
   activationStatements: Statement[][] = []
   propagationStatements: Statement[][] = []
   asm: AsmModule = null
-  learningRateId: number = null
+  learningRate: Variable = null
+  seed: Variable = null
   constructor(public engine = new Engine()) { }
 
   alloc(key: string, value: number): Variable {
@@ -117,7 +118,7 @@ export default class ASM implements Backend {
     const type = this.engine.activationFunction[j]
     switch (type) {
       case ActivationTypes.LOGISTIC_SIGMOID:
-        this.buildActivationStatement(asm`${activationJ} = 1.0 / (1.0 + (+exp(-${stateJ})))`)
+        this.buildActivationStatement(asm`${activationJ} = 1.0 / (1.0 + exp(-${stateJ}))`)
         this.buildActivationStatement(asm`${derivativeJ} = ${activationJ} * (1.0 - ${activationJ})`)
         break
       case ActivationTypes.TANH:
@@ -255,7 +256,7 @@ export default class ASM implements Backend {
         if (isGated) {
           const gainKJ = this.alloc(`gain[${k}][${j}]`, this.engine.gain[k][j])
           const weightKJ = this.alloc(`weight[${k}][${j}]`, this.engine.weight[k][j])
-          this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${projectedErrorResponsibilityJ} + ${errorResponsibilityK} * ${gainKJ} *${weightKJ}`)
+          this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${projectedErrorResponsibilityJ} + ${errorResponsibilityK} * ${gainKJ} * ${weightKJ}`)
         } else {
           const weightKJ = this.alloc(`weight[${k}][${j}]`, this.engine.weight[k][j])
           this.buildPropagationStatement(asm`${projectedErrorResponsibilityJ} = ${projectedErrorResponsibilityJ} + ${errorResponsibilityK} * ${weightKJ}`)
@@ -388,8 +389,9 @@ export default class ASM implements Backend {
     this.inputs = []
     this.outputs = []
     this.targets = []
-    this.learningRateId = this.alloc(`learningRate`, this.engine.learningRate).id
     this.variables = {}
+    this.learningRate = this.alloc(`learningRate`, this.engine.learningRate)
+    this.seed = this.alloc(`seed`, Math.random())
     this.activationStatements = []
     this.propagationStatements = []
     let outputLayerIndex = this.engine.layers.length - 1
@@ -423,6 +425,7 @@ export default class ASM implements Backend {
         this.buildPropagateUnit(this.engine.layers[i][j])
       }
     }
+    this.targets = this.targets.reverse()
 
     this.heap = new ArrayBuffer(Math.max(this.id * 8, 0x10000))
     this.view = new Float64Array(this.heap)
@@ -435,22 +438,20 @@ export default class ASM implements Backend {
     const activationBody = this.buildBody(this.activationStatements)
     const propagationBody = this.buildBody(this.propagationStatements)
     const source = `"use asm";
-
-  var H = new stdlib.Float64Array(heap);
-  var exp = stdlib.Math.exp;
-  var pow = stdlib.Math.pow;
-  var random = foreign.random;
-  function activate() {
-    ${activationBody}
-  }
-  function propagate() {
-    ${propagationBody}
-  }
-  return {
-    activate: activate,
-    propagate: propagate
-  }`
-
+var H = new stdlib.Float64Array(heap);
+var exp = stdlib.Math.exp;
+var pow = stdlib.Math.pow;
+var random = foreign.random;
+function activate() {
+  ${activationBody}
+}
+function propagate() {
+  ${propagationBody}
+}
+return {
+  activate: activate,
+  propagate: propagate
+}`
     const ctor = new Function('stdlib', 'foreign', 'heap', source)
 
     // console.log(ctor, ctor.toString())
@@ -458,7 +459,6 @@ export default class ASM implements Backend {
     const module = ctor({ Math, Float64Array }, foreign, this.heap)
 
     // fix targets order
-    this.targets = this.targets.reverse()
 
     return {
       module,
@@ -477,7 +477,7 @@ export default class ASM implements Backend {
         for (let i = 0; i < this.targets.length; i++) {
           this.view[this.targets[i]] = targets[i]
         }
-        this.view[this.learningRateId] = this.engine.learningRate
+        this.view[this.learningRate.id] = this.engine.learningRate
         module.propagate()
       }
     }
