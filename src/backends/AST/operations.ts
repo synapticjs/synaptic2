@@ -1,6 +1,9 @@
 import {
   DocumentNode,
+  LayerNode,
+  UnitNode,
   ExpressionNode,
+  FunctionNode,
   HeapReferenceNode,
   FloatNumberNode,
   TernaryExpressionNode,
@@ -115,15 +118,35 @@ export function conditional(condition, truePart, falsePart) {
 }
 
 export function binaryOp(lhs: ExpressionNode, op: BinaryOperator, rhs: ExpressionNode) {
-  let node = new BinaryExpressionNode(op)
+  let node = new BinaryExpressionNode()
+  node.operator = op
   node.lhs = lhs
   node.rhs = rhs
   return node
 }
 
 export function unaryOp(op: UnaryOperator, rhs: ExpressionNode) {
-  let node = new UnaryExpressionNode(op)
+  let node = new UnaryExpressionNode()
+  node.operator = op
   node.rhs = rhs
+  return node
+}
+
+export function func(name: string) {
+  let node = new FunctionNode()
+  node.name = name
+  return node
+}
+
+export function unit(id: number) {
+  let node = new UnitNode()
+  node.id = id
+  return node
+}
+
+export function layer(id: number) {
+  let node = new LayerNode()
+  node.id = id
   return node
 }
 

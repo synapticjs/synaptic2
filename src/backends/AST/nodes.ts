@@ -1,4 +1,4 @@
-import { Node, childrenRef } from '.'
+import { Node, childrenRef, indent } from '.'
 
 export type BinaryOperator = '+' | '-' | '/' | '*' | '=' | '*=' | '/=' | '+=' | '-=' | '^' | '>' | '<' | '>=' | '<=' | '=='
 export type UnaryOperator = '-' | 'exp' | 'rand'
@@ -13,14 +13,54 @@ export class ParametersNode extends Node {
   }
 }
 
-
 export class DocumentNode extends Node {
   children: ExpressionNode[]
-  add(expression: ExpressionNode) {
-    return this.children.push(expression)
-  }
   toString() {
     return this.children.join(';\n')
+  }
+}
+
+// export class HeapDeclarationNode extends ExpressionNode {
+//   length: number
+//   toString() {
+//     return `var H = new Float64Array(${this.length})`
+//   }
+// }
+
+export class FunctionNode extends ExpressionNode {
+  name: string
+
+  @childrenRef(0)
+  parameters: ParametersNode
+
+  @childrenRef(1)
+  body: LayerNode
+
+  toString() {
+    return `function ${this.name}() {`
+      + '\n'
+      + indent(this.children.map(x => x + ';').join('\n'))
+      + '\n}'
+  }
+}
+
+export class LayerNode extends Node {
+  id: number
+  children: UnitNode[]
+  toString() {
+    return `// Layer ${this.id}\n`
+      + indent(this.children.map(x => x + ';').join('\n'))
+      + '\n'
+  }
+}
+
+export class UnitNode extends Node {
+  id: number
+  children: ExpressionNode[]
+  toString() {
+    return `// Unit ${this.id}\n`
+      + indent(this.children.map(x => x + ';').join('\n'))
+      + '\n'
   }
 }
 
@@ -34,27 +74,27 @@ export class HeapReferenceNode extends ExpressionNode {
   }
 }
 
-export class VariableReferenceNode extends ExpressionNode {
-  constructor(public variableName: string) {
-    super()
-  }
+// export class VariableReferenceNode extends ExpressionNode {
+//   constructor(public variableName: string) {
+//     super()
+//   }
 
-  toString() {
-    return this.variableName
-  }
-}
+//   toString() {
+//     return this.variableName
+//   }
+// }
 
-export class FunctionCallNode extends ExpressionNode {
-  @childrenRef(0)
-  fn: ExpressionNode
+// export class FunctionCallNode extends ExpressionNode {
+//   @childrenRef(0)
+//   fn: ExpressionNode
 
-  @childrenRef(1)
-  fnParameters: ParametersNode
+//   @childrenRef(1)
+//   fnParameters: ParametersNode
 
-  toString() {
-    return this.fn.toString() + this.fnParameters.toString()
-  }
-}
+//   toString() {
+//     return this.fn.toString() + this.fnParameters.toString()
+//   }
+// }
 
 export class TernaryExpressionNode extends ExpressionNode {
   @childrenRef(0)
@@ -82,9 +122,7 @@ export class BinaryExpressionNode extends ExpressionNode {
   @childrenRef(1)
   rhs: ExpressionNode
 
-  constructor(public operator: BinaryOperator) {
-    super()
-  }
+  operator: BinaryOperator
 
   toString() {
     switch (this.operator) {
@@ -98,10 +136,7 @@ export class BinaryExpressionNode extends ExpressionNode {
 export class UnaryExpressionNode extends ExpressionNode {
   @childrenRef(0)
   rhs: ExpressionNode
-
-  constructor(public operator: UnaryOperator) {
-    super()
-  }
+  operator: UnaryOperator
 
   toString() {
     return this.operator + '(' + this.rhs.toString() + ')'
