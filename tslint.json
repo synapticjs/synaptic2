@@ -23,11 +23,11 @@
     ],
     "quotemark": [
       false,
-      "single"
+      "double"
     ],
     "semicolon": [
       true,
-      "never"
+      "always"
     ],
     "triple-equals": [
       false,

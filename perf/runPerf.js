@@ -21,8 +21,6 @@ lstm.engine.random = random;
 lstm.learningRate = 0.1;
 
 lstm.backend.asm = lstm.backend.buildAsm()
-console.log(lstm.backend.asm.module.activate.toString())
-
 
 lstm.engine.seal()
 lstm.engine.status = synaptic.Engine.StatusTypes.TRAINING

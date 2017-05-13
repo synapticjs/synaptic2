@@ -1,48 +1,48 @@
-import { ActivationTypes } from '../Engine'
-import Network, { Boundary, Layer } from '../Network'
+import { ActivationTypes } from 'lysergic';
+import Network, { Boundary, Layer } from '../Network';
 
 export default class MaxPool implements Layer {
 
-  gater: number[] = null
-  layer: number[] = null
+  gater: number[] = null;
+  layer: number[] = null;
 
   constructor(public downsampling = 2) { }
 
   init(network: Network, boundary: Boundary): Boundary {
 
     if (boundary == null) {
-      throw new Error('\'MaxPool\' can\'t be the first layer of the network!')
+      throw new Error('\'MaxPool\' can\'t be the first layer of the network!');
     }
 
-    this.gater = network.addLayer()
-    this.layer = network.addLayer()
+    this.gater = network.addLayer();
+    this.layer = network.addLayer();
 
-    let y, fromX, fromY, fromZ
+    let y, fromX, fromY, fromZ;
     for (let z = 0; y < boundary.depth; z++) {
       for (let y = 0; y < boundary.height; y++) {
         for (let x = 0; x < boundary.width; x += this.downsampling) {
 
-          const unit = network.addUnit(ActivationTypes.IDENTITY)
-          this.layer.push(unit)
+          const unit = network.addUnit(ActivationTypes.IDENTITY);
+          this.layer.push(unit);
 
           for (let offsetX = 0; offsetX < this.downsampling; offsetX++) {
 
-            fromX = x + offsetX
-            fromY = y
-            fromZ = z
+            fromX = x + offsetX;
+            fromY = y;
+            fromZ = z;
 
             if (this.isValid(boundary, fromX, fromY, fromZ)) {
-              const from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
-              const to = unit
+              const from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth];
+              const to = unit;
 
-              network.addConnection(from, to, 1)
+              network.addConnection(from, to, 1);
 
               // this unit will act as a gate, letting only the connections from the unit with the higher activation in the pool go thru
-              const gate = network.addUnit(ActivationTypes.MAX_POOLING)
-              network.addGate(from, to, gate)
-              this.gater.push(gate)
+              const gate = network.addUnit(ActivationTypes.MAX_POOLING);
+              network.addGate(from, to, gate);
+              this.gater.push(gate);
               // connect the unit from the previous layer as an input of the gate so each gate knows which input they are gating
-              network.addConnection(from, gate)
+              network.addConnection(from, gate);
             }
           }
         }
@@ -55,7 +55,7 @@ export default class MaxPool implements Layer {
       height: boundary.height,
       depth: boundary.depth,
       layer: this.layer
-    }
+    };
   }
 
   // returns true if the coords fall within the layer area
@@ -65,6 +65,6 @@ export default class MaxPool implements Layer {
       y > 0 &&
       y < boundary.height &&
       z > 0 &&
-      z < boundary.depth
+      z < boundary.depth;
   }
 }

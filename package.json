@@ -27,10 +27,13 @@
     "ts-loader": "^2.0.3",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
-    "typescript": "^2.2.2",
+    "typescript": "^2.3.2",
     "webpack": "^1.13.2",
     "webpack-dashboard": "^0.2.0",
     "webpack-dev-server": "^1.16.2"
+  },
+  "dependencies": {
+    "lysergic": "latest"
   },
   "jest": {
     "testEnvironment": "node"

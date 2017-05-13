@@ -1,50 +1,50 @@
-import Network, { Boundary, Layer } from '../Network'
+import Network, { Boundary, Layer } from '../Network';
 
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
 export default class Convolution2D implements Layer {
-  filter: number
-  depth: number
-  stride: number
-  padding: number
-  layer: number[]
+  filter: number;
+  depth: number;
+  stride: number;
+  padding: number;
+  layer: number[];
 
   constructor({ filter = 1, depth = 1, stride = 1, padding = 0 }) {
-    this.filter = filter
-    this.depth = depth
-    this.stride = stride
-    this.padding = padding
-    this.layer = null
+    this.filter = filter;
+    this.depth = depth;
+    this.stride = stride;
+    this.padding = padding;
+    this.layer = null;
   }
 
   init(network: Network, boundary: Boundary): Boundary {
 
     if (boundary == null) {
-      throw new Error('\'Convolution2D\' can\'t be the first layer of the network!')
+      throw new Error('\'Convolution2D\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.addLayer()
+    this.layer = network.addLayer();
 
-    let x, y, z, fromX, fromY, fromZ, from, to
+    let x, y, z, fromX, fromY, fromZ, from, to;
     for (z = 0; z < this.depth; z++) {
       for (y = this.padding; y < boundary.height - this.padding; y += this.stride) {
         for (x = this.padding; x < boundary.width - this.padding; x += this.stride) {
 
           // create convolution layer units
-          const unit = network.addUnit()
-          this.layer.push(unit)
+          const unit = network.addUnit();
+          this.layer.push(unit);
 
           // connect units to prev layer
-          const filterRadious = this.filter / 2
+          const filterRadious = this.filter / 2;
           for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
             for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-              fromX = Math.round(x + offsetX)
-              fromY = Math.round(y + offsetY)
+              fromX = Math.round(x + offsetX);
+              fromY = Math.round(y + offsetY);
               for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
                 if (this.isValid(boundary, fromX, fromY, fromZ)) {
-                  to = unit
-                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
-                  network.addConnection(from, to)
+                  to = unit;
+                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth];
+                  network.addConnection(from, to);
                 }
               }
             }
@@ -58,7 +58,7 @@ export default class Convolution2D implements Layer {
       height: (boundary.height - this.padding) / this.stride | 0,
       depth: this.depth,
       layer: this.layer
-    }
+    };
   }
 
   // returns true if the coords fall within the layer area
@@ -68,6 +68,6 @@ export default class Convolution2D implements Layer {
       y > 0 &&
       y < boundary.height &&
       z > 0 &&
-      z < boundary.depth
+      z < boundary.depth;
   }
 }

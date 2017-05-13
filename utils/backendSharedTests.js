@@ -1,4 +1,5 @@
 var lstmJSON = require('../__tests__/mocks/lstm.json');
+
 var samplesTimingTask = require('../__tests__/mocks/samples-timing-task');
 var LSTMTimingTaskActivationMock = require('../__tests__/mocks/lstm-timing-task-activation');
 var LSTMTimingTaskPropagationMock = require('../__tests__/mocks/lstm-timing-task-propagation');
@@ -10,7 +11,7 @@ var generator = new MersenneTwister(100010);
 
 var random = generator.random.bind(generator);
 
-synaptic.Engine.RandomGenerator = () => random() * 2 - 1;
+synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 
 
 const COMPUTED_KEYS = [
@@ -117,10 +118,9 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 
       lstm.backend = new Backend(lstm.engine)
       lstm.engine.random = random;
-      lstm.engine.seal()
       lstm.learningRate = 0.1;
 
-      lstm.engine.status = synaptic.Engine.StatusTypes.TRAINING
+      lstm.engine.status = synaptic.Lysergic.StatusTypes.TRAINING
 
       var targets = [2, 4];
       var distractors = [3, 5];
@@ -130,7 +130,8 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       var iterations = 100000;
       var rate = .1;
       var schedule = {};
-      var cost = synaptic.Trainer.CostTypes.CROSS_ENTROPY;
+      console.log(synaptic.Lysergic)
+      var cost = synaptic.Lysergic.CostTypes.CROSS_ENTROPY;
 
       var trial, correct, i, j, success;
       trial = correct = i = j = success = 0;
@@ -208,7 +209,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
             lstm.propagate(output);
           }
 
-          error += lstm.backend.costFunction(output, prediction, synaptic.Trainer.CostTypes.CROSS_ENTROPY);
+          error += lstm.backend.costFunction(output, prediction, synaptic.Lysergic.CostTypes.CROSS_ENTROPY);
 
           if (distractorsCorrect + targetsCorrect == length)
             correct++;
@@ -224,7 +225,7 @@ function testDiscreteSequenceRecallTask(Backend, options) {
         error /= length;
       }
 
-      lstm.engine.status = synaptic.Engine.StatusTypes.IDLE
+      lstm.engine.status = synaptic.Lysergic.StatusTypes.IDLE
 
       var results = {
         iterations: trial,

@@ -18,5 +18,8 @@
     "**/*.map": {
       "when": "$(basename)"
     }
+  },
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#000000"
   }
 }
