@@ -23,15 +23,7 @@ module.exports = {
   devtool: process.env.NODE_ENV === 'production' ? undefined : 'source-map',
   module: {
     loaders: [
-      { test: /\.tsx?$/, loader: 'ts-loader' },
-      {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        loader: 'babel',
-        query: {
-          presets: ['es2015']
-        }
-      }
+      { test: /\.tsx?$/, loader: 'ts-loader' }
     ]
   }
 }

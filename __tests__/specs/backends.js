@@ -3,6 +3,6 @@ const testBackend = require('../../utils/backendSharedTests')
 
 describe('Backends', () => {
   //testBackend('Paper', synaptic.backends.Paper)
-  testBackend('CPU', synaptic.backends.CPU)
+  //testBackend('CPU', synaptic.backends.CPU)
   testBackend('ASM', synaptic.backends.ASM, { logLevel: 2 })
 })

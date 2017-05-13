@@ -1,20 +1,20 @@
-import Network, { Boundary, Layer } from '../Network'
-import { ActivationTypes } from '../Engine'
+import Network, { Boundary, Layer } from '../Network';
+import { ActivationTypes } from 'lysergic';
 
 export class ReLU implements Layer {
 
-  layer: number[] = null
+  layer: number[] = null;
 
   init(network: Network, boundary: Boundary): Boundary {
     if (boundary == null) {
-      throw new Error('\'Activation.ReLU\' can\'t be the first layer of the network!')
+      throw new Error('\'Activation.ReLU\' can\'t be the first layer of the network!');
     }
 
-    const prevLayer = boundary.layer
-    this.layer = network.addLayer(prevLayer.length, ActivationTypes.RELU)
+    const prevLayer = boundary.layer;
+    this.layer = network.addLayer(prevLayer.length, ActivationTypes.RELU);
 
     for (let i = 0; i < prevLayer.length; i++) {
-      network.addConnection(prevLayer[i], this.layer[i], 1)
+      network.addConnection(prevLayer[i], this.layer[i], 1);
     }
 
     // this layer doesn't change the boundary's dimensions
@@ -23,6 +23,6 @@ export class ReLU implements Layer {
       height: boundary.height,
       depth: boundary.depth,
       layer: this.layer
-    }
+    };
   }
 }

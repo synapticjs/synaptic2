@@ -1,33 +1,33 @@
-import { ActivationTypes } from '../Engine'
-import Network, { Boundary, Layer } from '../Network'
+import { ActivationTypes } from 'lysergic';
+import Network, { Boundary, Layer } from '../Network';
 
 export default class ZeroPadding3D implements Layer {
 
-  layer: number[] = null
+  layer: number[] = null;
 
   constructor(public padding: number) { }
 
   init(network: Network, boundary: Boundary): Boundary {
 
     if (boundary == null) {
-      throw new Error('\'ZeroPadding3D\' can\'t be the first layer of the network!')
+      throw new Error('\'ZeroPadding3D\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.addLayer()
+    this.layer = network.addLayer();
 
-    let x, y, z, from, to
+    let x, y, z, from, to;
     for (z = -this.padding; z < boundary.depth + this.padding; z++) {
       for (y = -this.padding; y < boundary.height + this.padding; y++) {
         for (x = -this.padding; x < boundary.width + this.padding; x++) {
 
-          const unit = network.addUnit(ActivationTypes.IDENTITY)
-          this.layer.push(unit)
+          const unit = network.addUnit(ActivationTypes.IDENTITY);
+          this.layer.push(unit);
 
           // only connect the non-padding units
           if (!this.isPadding(boundary, x, y, z)) {
-            to = unit
-            from = boundary.layer[x + y * boundary.height + z * boundary.height * boundary.depth]
-            network.addConnection(from, to)
+            to = unit;
+            from = boundary.layer[x + y * boundary.height + z * boundary.height * boundary.depth];
+            network.addConnection(from, to);
           }
         }
       }
@@ -38,7 +38,7 @@ export default class ZeroPadding3D implements Layer {
       height: boundary.height + this.padding * 2,
       depth: boundary.height + this.padding * 2,
       layer: this.layer
-    }
+    };
   }
 
   // returns true if the coords fall within the zero-padding area
@@ -48,6 +48,6 @@ export default class ZeroPadding3D implements Layer {
       y < 0 ||
       y > boundary.height ||
       z < 0 ||
-      z > boundary.depth
+      z > boundary.depth;
   }
 }

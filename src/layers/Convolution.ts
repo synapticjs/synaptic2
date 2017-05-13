@@ -1,53 +1,53 @@
-import Network, { Boundary, Layer } from '../Network'
+import Network, { Boundary, Layer } from '../Network';
 
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
 export default class Convolution implements Layer {
 
-  filter: number
-  height: number
-  depth: number
-  stride: number
-  padding: number
-  layer: number[]
+  filter: number;
+  height: number;
+  depth: number;
+  stride: number;
+  padding: number;
+  layer: number[];
 
 
   constructor({ filter = 1, height = 1, depth = 1, stride = 1, padding = 0 }) {
-    this.filter = filter
-    this.height = height
-    this.depth = depth
-    this.stride = stride
-    this.padding = padding
-    this.layer = null
+    this.filter = filter;
+    this.height = height;
+    this.depth = depth;
+    this.stride = stride;
+    this.padding = padding;
+    this.layer = null;
   }
 
   init(network: Network, boundary: Boundary) {
 
     if (boundary == null) {
-      throw new Error('\'Convolution\' can\'t be the first layer of the network!')
+      throw new Error('\'Convolution\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.addLayer()
+    this.layer = network.addLayer();
 
-    let x: number, y: number, z: number, fromX: number, fromY: number, fromZ: number, from: number, to: number
+    let x: number, y: number, z: number, fromX: number, fromY: number, fromZ: number, from: number, to: number;
     for (z = 0; z < this.depth; z++) {
       for (y = 0; y < this.height; y++) {
         for (x = this.padding; x < boundary.width - this.padding; x += this.stride) {
 
           // create convolution layer units
-          const unit = network.addUnit()
-          this.layer.push(unit)
+          const unit = network.addUnit();
+          this.layer.push(unit);
 
           // connect units to prev layer
-          const filterRadious = this.filter / 2
+          const filterRadious = this.filter / 2;
           for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-            fromX = Math.round(x + offsetX)
+            fromX = Math.round(x + offsetX);
             for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
               for (fromY = 0; fromY < boundary.height; fromY++) {
                 if (this.isValid(boundary, fromX, fromY, fromZ)) {
-                  to = unit
-                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth]
-                  network.addConnection(from, to)
+                  to = unit;
+                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth];
+                  network.addConnection(from, to);
                 }
               }
             }
@@ -61,7 +61,7 @@ export default class Convolution implements Layer {
       height: this.height,
       depth: this.depth,
       layer: this.layer
-    }
+    };
   }
 
   // returns true if the coords fall within the layer area
@@ -71,6 +71,6 @@ export default class Convolution implements Layer {
       y > 0 &&
       y < boundary.height &&
       z > 0 &&
-      z < boundary.depth
+      z < boundary.depth;
   }
 }

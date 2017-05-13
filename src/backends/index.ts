@@ -1,12 +1,12 @@
 // backends
-import ASM from './ASM'
-import BLAS from './BLAS'
-import CPU from './CPU'
-import GPU from './GPU'
-import Paper from './Paper'
-import WebWorker from './WebWorker'
+import ASM from './ASM';
+import BLAS from './BLAS';
+import CPU from './CPU';
+import GPU from './GPU';
+import Paper from './Paper';
+import WebWorker from './WebWorker';
 
-import { CostTypes } from '../Trainer'
+import { CostTypes } from 'lysergic';
 
 export default {
   ASM,
@@ -15,10 +15,10 @@ export default {
   GPU,
   Paper,
   WebWorker
-}
+};
 
 export interface Dictionary<T> {
-  [key: string]: T
+  [key: string]: T;
 }
 
 export interface TrainEntry {
@@ -26,21 +26,21 @@ export interface TrainEntry {
   output: number[];
 }
 
-export interface TrainOptions { 
-  learningRate?: number,
-  minError?: number, 
-  maxIterations?: number, 
-  costFunction?: CostTypes
+export interface TrainOptions {
+  learningRate?: number;
+  minError?: number;
+  maxIterations?: number;
+  costFunction?: CostTypes;
 }
 
 export interface TrainResult {
-  error: number,
-  iterations: number,
-  time: number
+  error: number;
+  iterations: number;
+  time: number;
 }
 
 export interface Backend {
-  activate: (inputs: number[]) => number[],
-  propagate: (targets: number[]) => void,
-  train: (dataset: TrainEntry[], options?: TrainOptions) => Promise<TrainResult>
+  activate: (inputs: number[]) => number[];
+  propagate: (targets: number[]) => void;
+  train: (dataset: TrainEntry[], options?: TrainOptions) => Promise<TrainResult>;
 }
