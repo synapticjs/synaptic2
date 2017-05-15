@@ -171,6 +171,12 @@ export default class Paper implements Backend {
       case ActivationTypes.DROPOUT:
         const chances = this.engine.state[unit];
         return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1;
+
+      case ActivationTypes.EXP:
+        return Math.exp(this.engine.state[unit]);
+
+      case ActivationTypes.INVERSE_IDENTITY:
+        return 1 / this.engine.state[unit];
     }
   }
 
@@ -185,17 +191,7 @@ export default class Paper implements Backend {
       case ActivationTypes.TANH:
         x = this.activationFunction(unit);
         return 1 - Math.pow(x, 2);
-
-      case ActivationTypes.RELU:
-        return 0;
-
-      case ActivationTypes.IDENTITY:
-        return 0;
-
-      case ActivationTypes.MAX_POOLING:
-        return 0;
-
-      case ActivationTypes.DROPOUT:
+      default:
         return 0;
     }
   }

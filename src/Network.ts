@@ -67,15 +67,15 @@ export default class Network {
     this.engine.status = StatusTypes.IDLE;
   }
 
-  addUnit(activationFunction?: ActivationTypes) {
-    return this.engine.addUnit(activationFunction);
+  addUnit(activationFunction?: ActivationTypes, biased = true) {
+    return this.engine.addUnit(activationFunction, biased);
   }
 
   addConnection(from: number, to: number, weight: number = null) {
     return this.engine.addConnection(from, to, weight);
   }
 
-  addGate(from, to, gater) {
+  addGate(from: number, to: number, gater: number) {
     return this.engine.addGate(from, to, gater);
   }
 
@@ -95,11 +95,11 @@ export default class Network {
     return Network.fromJSON(this.toJSON());
   }
 
-  activate(input) {
+  activate(input: number[]) {
     return this.backend.activate(input);
   }
 
-  propagate(target) {
+  propagate(target: number[]) {
     this.backend.propagate(target);
   }
 

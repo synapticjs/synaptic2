@@ -1,3 +1,5 @@
+declare var console;
+
 import Lysergic, { ActivationTypes, CostTypes, StatusTypes } from 'lysergic';
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
 
@@ -6,7 +8,7 @@ export default class CPU implements Backend {
 
   }
 
-  activateUnit(j: number): number {
+  private activateUnit(j: number): number {
     let i = 0, k = 0, h = 0, g = 0, to = 0, from = 0, engine = this.engine;
     let state = 0;
     let activation = 0;
@@ -29,16 +31,7 @@ export default class CPU implements Backend {
     activation = this.activationFunction(j);
     engine.activation[j] = activation;
 
-    switch (this.engine.activationFunction[j]) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        derivative = activation * (1 - activation);
-        break;
-      case ActivationTypes.TANH:
-        derivative = 1 - Math.pow(activation, 2);
-        break;
-      default:
-        derivative = 0;
-    }
+    derivative = this.activationFunctionDerivative(j);
 
     engine.derivative[j] = derivative;
 
@@ -65,41 +58,26 @@ export default class CPU implements Backend {
     return activation;
   }
 
-  propagateUnit(j: number, target?: number) {
-    let i = 0, k = 0, h = 0, g = 0, engine = this.engine;
+  private propagateUnit(unit: number) {
+    let k = 0, h = 0, engine = this.engine;
     let gatedErrorResponsibility = 0;
     let projectedErrorResponsibility = 0;
-    let Δw = 0;
 
-    if (typeof target !== 'undefined') {
-
-      engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] = target - engine.activation[j];
-
-    } else {
-      for (h = 0; h < engine.projectionSet[j].length; h++) {
-        k = engine.projectionSet[j][h];
-        projectedErrorResponsibility = projectedErrorResponsibility + engine.errorResponsibility[k] * engine.gain[k][j] * engine.weight[k][j];
-      }
-      engine.projectedErrorResponsibility[j] = projectedErrorResponsibility * engine.derivative[j];
-
-      for (h = 0; h < engine.gateSet[j].length; h++) {
-        k = engine.gateSet[j][h];
-        gatedErrorResponsibility = gatedErrorResponsibility + engine.errorResponsibility[k] * this.bigParenthesisTerm(k, j);
-      }
-      engine.gatedErrorResponsibility[j] = gatedErrorResponsibility * engine.derivative[j];
-
-      engine.errorResponsibility[j] = engine.projectedErrorResponsibility[j] + engine.gatedErrorResponsibility[j];
+    for (h = 0; h < engine.projectionSet[unit].length; h++) {
+      k = engine.projectionSet[unit][h];
+      projectedErrorResponsibility = projectedErrorResponsibility + engine.errorResponsibility[k] * engine.gain[k][unit] * engine.weight[k][unit];
     }
-    for (h = 0; h < engine.inputSet[j].length; h++) {
-      i = engine.inputSet[j][h];
-      Δw = engine.projectedErrorResponsibility[j] * engine.elegibilityTrace[j][i];
-      for (g = 0; g < engine.gateSet[j].length; g++) {
-        k = engine.gateSet[j][g];
-        Δw += engine.errorResponsibility[k] * engine.extendedElegibilityTrace[j][i][k];
-      }
-      Δw *= engine.learningRate;
-      engine.weight[j][i] += Δw;
+    engine.projectedErrorResponsibility[unit] = projectedErrorResponsibility * engine.derivative[unit];
+
+    for (h = 0; h < engine.gateSet[unit].length; h++) {
+      k = engine.gateSet[unit][h];
+      gatedErrorResponsibility = gatedErrorResponsibility + engine.errorResponsibility[k] * this.bigParenthesisTerm(k, unit);
     }
+    engine.gatedErrorResponsibility[unit] = gatedErrorResponsibility * engine.derivative[unit];
+
+    engine.errorResponsibility[unit] = engine.projectedErrorResponsibility[unit] + engine.gatedErrorResponsibility[unit];
+
+    this.propagateUnitWeights(unit);
   }
 
   /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
@@ -147,7 +125,14 @@ export default class CPU implements Backend {
       case ActivationTypes.DROPOUT:
         const chances = this.engine.state[unit];
         return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1;
+
+      case ActivationTypes.EXP:
+        return Math.exp(this.engine.state[unit]);
+
+      case ActivationTypes.INVERSE_IDENTITY:
+        return 1 / this.engine.state[unit];
     }
+    return this.engine.state[unit];
   }
 
   activationFunctionDerivative(unit: number) {
@@ -160,8 +145,17 @@ export default class CPU implements Backend {
 
       case ActivationTypes.TANH:
         x = this.engine.activation[unit];
-        return 1 - Math.pow(x, 2);
+        return 1 - (x * x);
+      case ActivationTypes.IDENTITY:
+        return 1;
+      /*
+      case ActivationTypes.EXP:
+        return this.engine.activation[unit];
 
+      case ActivationTypes.INVERSE_IDENTITY:
+        x = this.engine.activation[unit];
+        return -1 / (x * x);
+      
       /*case ActivationTypes.RELU:
         return 0
 
@@ -224,12 +218,42 @@ export default class CPU implements Backend {
     return activation;
   }
 
+  private propagateUnitWeights(unit: number) {
+    let i = 0, Δw = 0, k = 0, g = 0, h = 0;
+    let engine = this.engine;
+
+    const unitExtendedElegibilityTraces = engine.extendedElegibilityTrace[unit];
+    const unitElegibilityTraces = engine.elegibilityTrace[unit];
+    const unitGateSet = engine.gateSet[unit];
+    const unitInputSet = engine.inputSet[unit];
+    const unitInputSetLength = unitInputSet.length;
+    const unitProjectedErrorResponsibility = engine.projectedErrorResponsibility[unit];
+
+    for (h = 0; h < unitInputSetLength; h++) {
+      i = unitInputSet[h];
+      Δw = unitProjectedErrorResponsibility * unitElegibilityTraces[i];
+      for (g = 0; g < unitGateSet.length; g++) {
+        k = unitGateSet[g];
+        Δw += engine.errorResponsibility[k] * unitExtendedElegibilityTraces[i][k];
+      }
+      Δw *= engine.learningRate;
+      engine.weight[unit][i] += Δw;
+    }
+  }
+
   propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING;
     let outputLayerIndex = this.engine.layers.length - 1;
-    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
-      this.propagateUnit(this.engine.layers[outputLayerIndex][j], targets[j]);
+    if (this.engine.layers[outputLayerIndex].length != targets.length) {
+      throw new Error(`Invalid number of projected targets, expecting ${this.engine.layers[outputLayerIndex].length} got ${targets.length}`);
     }
+
+    for (let j = this.engine.layers[outputLayerIndex].length - 1; j >= 0; j--) {
+      let unit = this.engine.layers[outputLayerIndex][j];
+      this.engine.errorResponsibility[unit] = this.engine.projectedErrorResponsibility[unit] = targets[j] - this.engine.activation[unit];
+      this.propagateUnitWeights(unit);
+    }
+
     for (let i = this.engine.layers.length - 2; i > 0; i--) {
       for (let j = this.engine.layers[i].length - 1; j >= 0; j--) {
         this.propagateUnit(this.engine.layers[i][j]);
@@ -259,6 +283,7 @@ export default class CPU implements Backend {
       }
       error /= dataset.length;
       iterations++;
+      console.log({ error, iterations });
     }
 
     // end training

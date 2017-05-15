@@ -11,6 +11,8 @@ var generator = new MersenneTwister(100010);
 
 var random = generator.random.bind(generator);
 
+var mnist = require('mnist')
+
 synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 
 
@@ -103,6 +105,75 @@ function testTimingTask(Backend) {
           expect(result.iterations).toBeLessThan(200);
           done()
         })
+    })
+  })
+}
+
+var mnistSet = mnist.set(1000);
+
+function testMnist(Backend, softmax = true) {
+  describe('Tasks mnist softmax=' + softmax, () => {
+
+    var network;
+
+    if (softmax) {
+      network = new synaptic.Network(
+        new synaptic.layers.Input2D(24, 24),
+        new synaptic.layers.Dense(20), //new synaptic.layers.Convolution2D({ filter: 8, depth: 1, stride: 1, padding: 0 }),
+        new synaptic.layers.Dense(10),
+        new synaptic.layers.SoftMax()
+      )
+    } else {
+      network = new synaptic.Network(
+        new synaptic.layers.Input2D(24, 24),
+        new synaptic.layers.Dense(20), //new synaptic.layers.Convolution2D({ filter: 8, depth: 1, stride: 1, padding: 0 }),
+        new synaptic.layers.Dense(10)
+      )
+    }
+
+    network.backend = new Backend(network.engine)
+
+    var trainer = new synaptic.Trainer(network)
+
+    test('should pass Timing Task with an error lower than 0.05 in less than 200 iterations', done => {
+      try {
+        trainer.train(mnistSet.training, {
+          learningRate: 0.1,
+          minError: 0.0001,
+          maxIterations: 10
+        })
+          .then(result => {
+            expect(result.error).toBeLessThan(0.05);
+            expect(result.iterations).toBeLessThan(200);
+            done()
+          }, e => {
+            console.error(e);
+            console.error(e.stack);
+            done(e);
+          })
+      } catch (e) {
+        console.error(e);
+        console.error(e.stack);
+        done(e);
+      }
+    })
+  })
+}
+
+
+function testSoftMax(Backend) {
+  describe('Tasks', () => {
+    var network = new synaptic.Network(
+      new synaptic.layers.Input(3),
+      new synaptic.layers.SoftMax(3)
+    )
+
+    network.backend = new Backend(network.engine)
+
+    test('Softmax result must sum 1', done => {
+      let result = network.activate([0, 1, 0.5])
+      expect(result.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10)
+      done()
     })
   })
 }
@@ -246,6 +317,9 @@ function testDiscreteSequenceRecallTask(Backend, options) {
 function testBackend(description, Backend, options) {
   describe(description, () => {
     testActivationAndPropagation(Backend, (options && options.precision) || 15, (options && options.logLevel) || 0)
+    testSoftMax(Backend)
+    testMnist(Backend, false)
+    // testMnist(Backend, true)
     testTimingTask(Backend)
     testDiscreteSequenceRecallTask(Backend);
   })

@@ -24,6 +24,7 @@
     "babili-webpack-plugin": "0.0.11",
     "jest-cli": "^16.0.2",
     "mersenne-twister": "^1.1.0",
+    "mnist": "^1.0.5",
     "ts-loader": "^2.0.3",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",

@@ -8,12 +8,13 @@ var generator = new MersenneTwister(100010);
 
 var random = generator.random.bind(generator);
 
-synaptic.Engine.RandomGenerator = () => random() * 2 - 1;
+synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 
 var lstm = new synaptic.Network(
   new synaptic.layers.Input(6),
   new synaptic.layers.LSTM(7),
-  new synaptic.layers.Dense(2)
+  new synaptic.layers.Dense(2),
+  new synaptic.layers.SoftMax(2)
 )
 
 lstm.backend = new synaptic.backends[process.env.BACKEND](lstm.engine)
@@ -22,8 +23,7 @@ lstm.learningRate = 0.1;
 
 lstm.backend.asm = lstm.backend.buildAsm()
 
-lstm.engine.seal()
-lstm.engine.status = synaptic.Engine.StatusTypes.TRAINING
+lstm.engine.status = synaptic.Lysergic.StatusTypes.TRAINING
 
 var targets = [2, 4];
 var distractors = [3, 5];
@@ -33,7 +33,7 @@ var criterion = 0.5;
 var iterations = 100000;
 var rate = .1;
 var schedule = {};
-var cost = synaptic.Trainer.CostTypes.CROSS_ENTROPY;
+var cost = synaptic.Lysergic.CostTypes.CROSS_ENTROPY;
 
 var trial, correct, i, j, success;
 trial = correct = i = j = success = 0;
@@ -111,7 +111,7 @@ while (trial < iterations && success < criterion) {
       lstm.propagate(output);
     }
 
-    error += lstm.backend.costFunction(output, prediction, synaptic.Trainer.CostTypes.CROSS_ENTROPY);
+    error += lstm.backend.costFunction(output, prediction, synaptic.Lysergic.CostTypes.CROSS_ENTROPY);
 
     if (distractorsCorrect + targetsCorrect == length)
       correct++;
@@ -127,7 +127,7 @@ while (trial < iterations && success < criterion) {
   error /= length;
 }
 
-lstm.engine.status = synaptic.Engine.StatusTypes.IDLE
+lstm.engine.status = synaptic.Lysergic.StatusTypes.IDLE
 
 console.timeEnd('LSTM')
 console.log({
