@@ -110,10 +110,6 @@ export default class CPU implements Backend {
         x = this.engine.state[unit];
         return x > 0 ? x : 0;
 
-      case ActivationTypes.IDENTITY:
-        x = this.engine.state[unit];
-        return x;
-
       case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0];
         const gatedUnit = this.engine.gatedBy[unit][0];
@@ -131,8 +127,10 @@ export default class CPU implements Backend {
 
       // case ActivationTypes.INVERSE_IDENTITY:
       //   return 1 / this.engine.state[unit];
+
+      default:
+        return this.engine.state[unit];
     }
-    return this.engine.state[unit];
   }
 
   activationFunctionDerivative(unit: number) {
@@ -145,7 +143,8 @@ export default class CPU implements Backend {
 
       case ActivationTypes.TANH:
         x = this.engine.activation[unit];
-        return 1 - (x * x);
+        return 1 - Math.pow(x, 2);
+
       case ActivationTypes.IDENTITY:
         return 1;
       /*
@@ -155,7 +154,7 @@ export default class CPU implements Backend {
       case ActivationTypes.INVERSE_IDENTITY:
         x = this.engine.activation[unit];
         return -1 / (x * x);
-      
+
       /*case ActivationTypes.RELU:
         return 0
 
