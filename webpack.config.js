@@ -11,6 +11,9 @@ module.exports = {
     library: 'synaptic',
     publicPath: '/',
   },
+  externals: {
+    "binaryen": "binaryen"
+  },
   plugins: [
     new webpack.NoErrorsPlugin()
   ].concat(process.env.NODE_ENV === 'production' ? [

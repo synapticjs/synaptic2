@@ -4,6 +4,7 @@ import BLAS from './BLAS';
 import CPU from './CPU';
 import GPU from './GPU';
 import Paper from './Paper';
+import WASM from './WASM';
 import WebWorker from './WebWorker';
 
 import { CostTypes } from 'lysergic';
@@ -14,6 +15,7 @@ export default {
   CPU,
   GPU,
   Paper,
+  WASM,
   WebWorker
 };
 

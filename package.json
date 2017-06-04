@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "(rm -rf dist || true)",
     "build": "npm run clean && NODE_ENV=production `npm bin`/tsc && NODE_ENV=production webpack --config webpack.config.js && cp ./static/* dist",
-    "build:test": "npm run clean && NODE_ENV=production `npm bin`/tsc && NODE_ENV=production webpack --config webpack.config.js && cp static/* dist",
+    "build:test": "npm run clean && NODE_ENV=production `npm bin`/tsc && cp static/* dist",
     "test": "npm run build:test && jest --logHeapUsage --runInBand",
     "test:node": "npm run build:test && NODE_ENV=node jest --logHeapUsage --runInBand",
     "profile": "npm run build:test && (rm *.log || true) && node --prof perf/runPerf.js && (for f in *.log; do node --prof-process $f; done)",

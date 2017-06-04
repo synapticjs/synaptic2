@@ -1,7 +1,7 @@
 declare var console;
 import Lysergic, { StatusTypes } from 'lysergic';
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
-//import emit from '../emiters/ASM';
+import emit from '../emiters/asm';
 
 export type AsmModule = {
   module: any,
@@ -17,16 +17,8 @@ export default class ASM implements Backend {
 
   build(): AsmModule {
     const AST = this.engine.getAST();
-    const source = `"use asm";
-var H = new stdlib.Float64Array(heap);
-var exp = stdlib.Math.exp;
-var pow = stdlib.Math.pow;
-var random = foreign.random;
-${AST}
-return {
-  activate: activate,
-  propagate: propagate
-}`;
+    const source = emit(AST);
+
     console.log(source);
     const getModule = new Function('stdlib', 'foreign', 'heap', source);
     const foreign = { random: this.engine.random };
