@@ -5,4 +5,6 @@ describe('Backends', () => {
   //testBackend('Paper', synaptic.backends.Paper)
   //testBackend('CPU', synaptic.backends.CPU)
   testBackend('ASM', synaptic.backends.ASM)
+  //testBackend('CPU', synaptic.backends.CPU)
+  //testBackend('ASM', synaptic.backends.ASM, { logLevel: 2 })
 })
