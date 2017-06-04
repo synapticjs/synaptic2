@@ -172,12 +172,13 @@ export default class Paper implements Backend {
         const chances = this.engine.state[unit];
         return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1;
 
-      case ActivationTypes.EXP:
-        return Math.exp(this.engine.state[unit]);
+      // case ActivationTypes.EXP:
+      //   return Math.exp(this.engine.state[unit]);
 
-      case ActivationTypes.INVERSE_IDENTITY:
-        return 1 / this.engine.state[unit];
+      // case ActivationTypes.INVERSE_IDENTITY:
+      //   return 1 / this.engine.state[unit];
     }
+    return 0;
   }
 
   activationFunctionDerivative(unit: number) {

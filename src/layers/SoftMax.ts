@@ -12,22 +12,22 @@ export default class SoftMax implements Layer {
 
     const prevLayer = boundary.layer;
 
-    let expY = network.engine.addLayer(prevLayer.length, ActivationTypes.EXP, false);
-    let sum = network.engine.addLayer(1, ActivationTypes.INVERSE_IDENTITY, false);
+    //let expY = network.engine.addLayer(prevLayer.length, ActivationTypes.EXP, false);
+    //let sum = network.engine.addLayer(1, ActivationTypes.INVERSE_IDENTITY, false);
     this.layer = network.engine.addLayer(prevLayer.length, ActivationTypes.IDENTITY, false);
 
-    for (let i = 0; i < prevLayer.length; i++) {
-      network.addConnection(prevLayer[i], expY[i], 1);
-    }
-    for (let i = 0; i < prevLayer.length; i++) {
-      network.addConnection(expY[i], sum[0], 1);
-    }
-    for (let i = 0; i < prevLayer.length; i++) {
-      network.addConnection(expY[i], this.layer[i], 1);
-    }
-    for (let i = 0; i < prevLayer.length; i++) {
-      network.addGate(expY[i], this.layer[i], sum[0]);
-    }
+    // for (let i = 0; i < prevLayer.length; i++) {
+    //   network.addConnection(prevLayer[i], expY[i], 1);
+    // }
+    // for (let i = 0; i < prevLayer.length; i++) {
+    //   network.addConnection(expY[i], sum[0], 1);
+    // }
+    // for (let i = 0; i < prevLayer.length; i++) {
+    //   network.addConnection(expY[i], this.layer[i], 1);
+    // }
+    // for (let i = 0; i < prevLayer.length; i++) {
+    //   network.addGate(expY[i], this.layer[i], sum[0]);
+    // }
 
 
     /*
