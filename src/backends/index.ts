@@ -7,7 +7,8 @@ import Paper from './Paper';
 import WASM from './WASM';
 import WebWorker from './WebWorker';
 
-import { CostTypes } from 'lysergic';
+import Lysergic, { CostTypes } from 'lysergic';
+
 
 export default {
   ASM,
@@ -42,7 +43,9 @@ export interface TrainResult {
 }
 
 export interface Backend {
+  engine: Lysergic;
   activate: (inputs: number[]) => number[];
   propagate: (targets: number[]) => void;
   train: (dataset: TrainEntry[], options?: TrainOptions) => Promise<TrainResult>;
+  build?: () => Promise<any>;
 }

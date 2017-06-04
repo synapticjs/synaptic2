@@ -15,7 +15,7 @@ export default class ASM implements Backend {
 
   constructor(public engine = new Lysergic()) { }
 
-  build(): AsmModule {
+  async build(): Promise<AsmModule> {
     const AST = this.engine.getAST();
     const source = emit(AST);
 
@@ -23,7 +23,8 @@ export default class ASM implements Backend {
     const getModule = new Function('stdlib', 'foreign', 'heap', source);
     const foreign = { random: this.engine.random };
     const module = getModule({ Math, Float64Array }, foreign, this.engine.heap);
-    return {
+
+    this.asm = {
       module,
       activate: (inputs: number[]) => {
         this.engine.setInputs(inputs);
@@ -35,13 +36,16 @@ export default class ASM implements Backend {
         module.propagate();
       }
     };
+
+    return this.asm;
   }
 
   activate(inputs: number[]): number[] {
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.ACTIVATING;
     if (this.asm == null) {
-      this.asm = this.build();
+      throw new Error('The network wasn\'t built');
+      // this.asm = this.build();
     }
     const activation = this.asm.activate(inputs);
     this.engine.status = oldStatus;
@@ -52,7 +56,8 @@ export default class ASM implements Backend {
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.PROPAGATING;
     if (this.asm == null) {
-      this.asm = this.build();
+      throw new Error('The network wasn\'t built');
+      // this.asm = this.build();
     }
     this.asm.propagate(targets);
     this.engine.status = oldStatus;
@@ -60,7 +65,7 @@ export default class ASM implements Backend {
 
   async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
     if (this.asm == null) {
-      this.asm = this.build();
+      this.asm = await this.build();
     }
 
     // start training

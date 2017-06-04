@@ -1,45 +1,44 @@
-import { indent } from 'lysergic/dist/ast/helpers';
 import * as nodes from 'lysergic/dist/ast/nodes';
 
+declare var require, console;
+const Binaryen = require('../../vendor/binaryen');
+
 export const comparisonMap = {
-  '>': 'f64.gt',
-  '>=': 'f64.ge',
-  '<': 'f64.lt',
-  '<=': 'f64.le',
-  '==': 'f64.eq',
-  '!=': 'f64.ne'
+  '>': 'gt',
+  '>=': 'ge',
+  '<': 'lt',
+  '<=': 'le',
+  '==': 'eq',
+  '!=': 'ne'
 };
 
 export const mathOperatorsMap = {
-  '*': 'f64.mul',
-  '/': 'f64.div',
-  '+': 'f64.add',
-  '-': 'f64.sub',
+  '*': 'mul',
+  '/': 'div',
+  '+': 'add',
+  '-': 'sub',
 };
 
-export function emit(node: nodes.Node) {
+export function emit(node: nodes.Node, module) {
+  if (!(node instanceof nodes.DocumentNode) && !module) {
+    throw new Error('A module is required');
+  }
+
   if (node instanceof nodes.DocumentNode) {
-    return `
-(module
-  (type $FUNCSIG$dd (func (param f64) (result f64)))
-  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
-  (import "stdlib.Math" "exp" (func $exp (param f64) (result f64)))
-  (import "stdlib.Math" "pow" (func $pow (param f64 f64) (result f64)))
-  (import "stdlib.Math" "log" (func $log (param f64) (result f64)))
-  (import "env" "rand" (func $rand (param f64) (result f64)))
-  (import "env" "memory" (memory $0 256 256))
-  (import "env" "table" (table 0 0 anyfunc))
-  (import "env" "memoryBase" (global $memoryBase i32))
-  (import "env" "tableBase" (global $tableBase i32))
-${
-      indent(
-        node.children.filter(x => x instanceof nodes.FunctionNode)
-          .map((x: nodes.FunctionNode) => `(export "${x.name}" (func $${x.name}))`)
-          .join('\n')
-      )}\n${
-      indent(node.children.map(x => emit(x)).join('\n'))
-      }
-)`;
+    if (!module) module = new Binaryen.Module();
+
+    let fiF = module.addFunctionType("fiF", Binaryen.f64, [Binaryen.f64]);
+    let fiFF = module.addFunctionType("fiFF", Binaryen.f64, [Binaryen.f64, Binaryen.f64]);
+
+    module.addImport("exp", "imports", "exp", fiF);
+    module.addImport("log", "imports", "log", fiF);
+    module.addImport("pow", "imports", "pow", fiFF);
+
+    let functions = node.children.filter($ => $ instanceof nodes.FunctionNode).map(x => emit(x, module));
+
+    module.setFunctionTable(functions);
+
+    return module;
   } else if (node instanceof nodes.BinaryExpressionNode) {
     const isAssignment =
       ['=', '+=', '-=', '*=', '/='].indexOf(node.operator) != -1;
@@ -50,57 +49,69 @@ ${
 
     if (isAssignment) {
       if (node.lhs instanceof nodes.HeapReferenceNode) {
-        return `(f64.store (i32.const ${node.lhs.position})\n${indent(emit(node.rhs))}\n)`;
+        return module.f64.store(0, 8, module.i32.const(node.lhs.position), emit(node.rhs, module));
       } else {
-        return `<<<<< I DONT KNOW HOW TO ASSIGN TO NON HeapReferenceNode`;
+        console.error(`<<<<< I DONT KNOW HOW TO ASSIGN TO NON HeapReferenceNode`);
+        return module.nop();
       }
     } else if (isPow) {
-      return `(call $pow\n${indent(emit(node.lhs))}\n${indent(emit(node.rhs))})`;
+      return module.callImport("pow", [emit(node.lhs, module), emit(node.rhs, module)], Binaryen.f64);
     } else if (isComparison) {
-      return `(${comparisonMap[node.operator]}\n${indent(emit(node.lhs))}\n${indent(emit(node.rhs))}\n)`;
+      return module.f64[comparisonMap[node.operator]](emit(node.lhs, module), emit(node.rhs, module));
     } else if (isMath) {
-      return `(${mathOperatorsMap[node.operator]}\n${indent(emit(node.lhs))}\n${indent(emit(node.rhs))}\n)`;
+      return module.f64[mathOperatorsMap[node.operator]](emit(node.lhs, module), emit(node.rhs, module));
     } else {
-      return `<<<<< UNKNOWN OPERATOR: ${node.operator}`;
+      console.error(`<<<<< UNKNOWN OPERATOR: ${node.operator}`);
+      return module.nop();
     }
+
+
   } else if (node instanceof nodes.HeapReferenceNode) {
-    return `(f64.load (i32.const ${node.position}))`;
+    return module.f64.load(0 /*offset */, 8, module.i32.const(node.position));
   } else if (node instanceof nodes.FloatNumberNode) {
-    return `(f64.const ${node.numericValue.toFixed(1)})`;
+    return module.f64.const(node.numericValue);
   } else if (node instanceof nodes.LayerNode) {
-    return `(block ;;; Layer ${node.id} ;;;\n`
-      + indent(node.children.map(x => emit(x)).join('\n'))
-      + `\n) ;;; END Layer ${node.id} ;;;\n`;
+    return module.block(`Layer${node.id}`, node.children.map(x => emit(x, module)));
   } else if (node instanceof nodes.UnitNode) {
-    return `(block ;;; Unit ${node.id} ;;;\n`
-      + indent(node.children.map(x => emit(x)).join('\n'))
-      + `\n) ;;; END Unit ${node.id} ;;;\n`;
+    return module.block(`Unit${node.id}`, node.children.map(x => emit(x, module)));
   } else if (node instanceof nodes.TernaryExpressionNode) {
-    return `(if \n${indent(
-      emit(node.condition) + '\n' +
-      emit(node.truePart) + '\n' +
-      emit(node.falsePart)) + '\n'
-      })`;
+    return module.if(
+      emit(node.condition, module),
+      emit(node.truePart, module),
+      emit(node.falsePart, module)
+    );
   } else if (node instanceof nodes.UnaryExpressionNode) {
     switch (node.operator) {
       case '-':
-        return `(f64.neg ${emit(node.rhs)})`;
+        return module.f64.neg(emit(node.rhs, module));
       case 'exp':
-        return `(call $exp ${emit(node.rhs)})`;
+        return module.callImport("exp", [emit(node.rhs, module)], Binaryen.f64);
       case 'rand':
-        return `(call $rand ${emit(node.rhs)})`;
+        return module.callImport("rand", [emit(node.rhs, module)], Binaryen.f64);
       // case 'sqrt':
       //  return `(f64.sqrt ${emit(node.rhs)})`;
     }
+    console.error(`<<<<< UNKNOWN OPERATOR: ${node.operator}`);
+    return module.nop();
   } else if (node instanceof nodes.FunctionNode) {
-    return (
-      `(func $${node.name}\n${
-      indent(
-        `(block ;;; Function "${node.name}" body ;;;\n${indent(emit(node.body))}\n) ;;; END Function "${node.name}" body ;;;`
-      )}\n)`
-    );
+    let functionSignature = module.addFunctionType(`${node.name}$$signature`, Binaryen.None/*ret*/, [/*params*/]);
+
+
+    let block = module.block(`BodyOf${node.name}`, node.children.map(x => emit(x, module)));
+    // emit(node.children, module)
+
+    // Create the function
+    let theFunction = module.addFunction(node.name, functionSignature, [/*params*/], block);
+    module.addExport(node.name, node.name);
+
+    // if (node.name == 'propagate') {
+    //   console.log(node.inspect())
+    //   console.log(Binaryen.emitText(block));
+    // }
+
+    return theFunction;
   }
-  return '<<<<< CANNOT PRINT NODE: ' + node.constructor.toString();
+  throw new Error('Cannot emit node ' + (node.constructor as any).name);
 };
 
 export default emit;

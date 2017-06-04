@@ -85,11 +85,15 @@ function getLSTM(Backend) {
 }
 
 function testActivationAndPropagation(Backend, precision, logLevel) {
-  var lstm = getLSTM(Backend)
-  lstm.activate(samplesTimingTask.train[0].input)
-  isAlmostEqual('Activation', copy(lstm.engine), LSTMTimingTaskActivationMock, precision, logLevel)
-  lstm.propagate(samplesTimingTask.train[0].output)
-  isAlmostEqual('Propagation', copy(lstm.engine), LSTMTimingTaskPropagationMock, precision, logLevel)
+  test('testActivationAndPropagation', () => {
+    var lstm = getLSTM(Backend)
+    return lstm.build().then(() => {
+      lstm.activate(samplesTimingTask.train[0].input)
+      isAlmostEqual('Activation', copy(lstm.engine), LSTMTimingTaskActivationMock, precision, logLevel)
+      lstm.propagate(samplesTimingTask.train[0].output)
+      isAlmostEqual('Propagation', copy(lstm.engine), LSTMTimingTaskPropagationMock, precision, logLevel)
+    })
+  })
 }
 
 function testTimingTask(Backend) {
@@ -98,16 +102,16 @@ function testTimingTask(Backend) {
     var lstm = getLSTM(Backend)
     var trainer = new synaptic.Trainer(lstm)
 
-    test('should pass Timing Task with an error lower than 0.05 in less than 200 iterations', done => {
-      trainer.train(samplesTimingTask.train, {
-        learningRate: 0.03,
-        minError: 0.05,
-        maxIterations: 200
-      })
+    test('should pass Timing Task with an error lower than 0.05 in less than 200 iterations', () => {
+      return trainer
+        .train(samplesTimingTask.train, {
+          learningRate: 0.03,
+          minError: 0.05,
+          maxIterations: 200
+        })
         .then(result => {
           expect(result.error).toBeLessThan(0.05);
           expect(result.iterations).toBeLessThan(200);
-          done()
         })
     })
   })
@@ -174,17 +178,21 @@ function testSoftMax(Backend) {
 
     network.backend = new Backend(network.engine)
 
-    test('Softmax result must sum 1', done => {
-      let result = network.activate([0, 1, 0.5])
-      expect(result.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10)
-      done()
+    test('Softmax result must sum 1', () => {
+      return network.build().then(() => {
+        let result = network.activate([0, 1, 0.5])
+        expect(result.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10)
+        done()
+      }, e => {
+        done(e);
+      })
     })
   })
 }
 
 function testDiscreteSequenceRecallTask(Backend, options) {
   describe('Tasks', () => {
-    test('should pass Descrete Sequence Recall Task with at least 80% success rate in less than 100k iterations', done => {
+    test('should pass Descrete Sequence Recall Task with at least 80% success rate in less than 100k iterations', () => {
       var lstm = new synaptic.Network(
         new synaptic.layers.Input(6),
         new synaptic.layers.LSTM(7),
@@ -192,128 +200,133 @@ function testDiscreteSequenceRecallTask(Backend, options) {
       )
 
       lstm.backend = new Backend(lstm.engine)
-      lstm.engine.random = random;
-      lstm.learningRate = 0.1;
 
-      lstm.engine.status = synaptic.Lysergic.StatusTypes.TRAINING
+      return lstm.build().then(() => {
+        lstm.engine.random = random;
+        lstm.learningRate = 0.1;
 
-      var targets = [2, 4];
-      var distractors = [3, 5];
-      var prompts = [0, 1];
-      var length = 10;
-      var criterion = 0.80;
-      var iterations = 100000;
-      var rate = .1;
-      var schedule = {};
-      console.log(synaptic.Lysergic)
-      var cost = synaptic.Lysergic.CostTypes.CROSS_ENTROPY;
+        lstm.engine.status = synaptic.Lysergic.StatusTypes.TRAINING
 
-      var trial, correct, i, j, success;
-      trial = correct = i = j = success = 0;
-      var error = 1,
-        symbols = targets.length + distractors.length + prompts.length;
+        var targets = [2, 4];
+        var distractors = [3, 5];
+        var prompts = [0, 1];
+        var length = 10;
+        var criterion = 0.80;
+        var iterations = 100000;
+        var rate = .1;
+        var schedule = {};
+        console.log(synaptic.Lysergic)
+        var cost = synaptic.Lysergic.CostTypes.CROSS_ENTROPY;
 
-      var noRepeat = function (range, avoid) {
-        var number = random() * range | 0;
-        var used = false;
-        for (var i in avoid)
-          if (number == avoid[i])
-            used = true;
-        return used ? noRepeat(range, avoid) : number;
-      };
+        var trial, correct, i, j, success;
+        trial = correct = i = j = success = 0;
+        var error = 1,
+          symbols = targets.length + distractors.length + prompts.length;
 
-      var equal = function (prediction, output) {
-        for (var i in prediction)
-          if (Math.round(prediction[i]) != output[i])
-            return false;
-        return true;
-      };
+        var noRepeat = function (range, avoid) {
+          var number = random() * range | 0;
+          var used = false;
+          for (var i in avoid)
+            if (number == avoid[i])
+              used = true;
+          return used ? noRepeat(range, avoid) : number;
+        };
 
-      var start = Date.now();
+        var equal = function (prediction, output) {
+          for (var i in prediction)
+            if (Math.round(prediction[i]) != output[i])
+              return false;
+          return true;
+        };
 
-      while (trial < iterations && success < criterion) {
-        // generate sequence
-        var sequence = [],
-          sequenceLength = length - prompts.length;
-        for (i = 0; i < sequenceLength; i++) {
-          var any = random() * distractors.length | 0;
-          sequence.push(distractors[any]);
-        }
-        var indexes = [],
-          positions = [];
-        for (i = 0; i < prompts.length; i++) {
-          indexes.push(random() * targets.length | 0);
-          positions.push(noRepeat(sequenceLength, positions));
-        }
-        positions = positions.sort();
-        for (i = 0; i < prompts.length; i++) {
-          sequence[positions[i]] = targets[indexes[i]];
-          sequence.push(prompts[i]);
-        }
+        var start = Date.now();
 
-        //train sequence
-        var distractorsCorrect;
-        var targetsCorrect = distractorsCorrect = 0;
-        error = 0;
-        for (i = 0; i < length; i++) {
-          // generate input from sequence
-          var input = [];
-          for (j = 0; j < symbols; j++)
-            input[j] = 0;
-          input[sequence[i]] = 1;
-
-          // generate target output
-          var output = [];
-          for (j = 0; j < targets.length; j++)
-            output[j] = 0;
-
-          if (i >= sequenceLength) {
-            var index = i - sequenceLength;
-            output[indexes[index]] = 1;
+        while (trial < iterations && success < criterion) {
+          // generate sequence
+          var sequence = [],
+            sequenceLength = length - prompts.length;
+          for (i = 0; i < sequenceLength; i++) {
+            var any = random() * distractors.length | 0;
+            sequence.push(distractors[any]);
+          }
+          var indexes = [],
+            positions = [];
+          for (i = 0; i < prompts.length; i++) {
+            indexes.push(random() * targets.length | 0);
+            positions.push(noRepeat(sequenceLength, positions));
+          }
+          positions = positions.sort();
+          for (i = 0; i < prompts.length; i++) {
+            sequence[positions[i]] = targets[indexes[i]];
+            sequence.push(prompts[i]);
           }
 
-          // check result
-          var prediction = lstm.activate(input);
+          //train sequence
+          var distractorsCorrect;
+          var targetsCorrect = distractorsCorrect = 0;
+          error = 0;
+          for (i = 0; i < length; i++) {
+            // generate input from sequence
+            var input = [];
+            for (j = 0; j < symbols; j++)
+              input[j] = 0;
+            input[sequence[i]] = 1;
 
-          if (equal(prediction, output))
-            if (i < sequenceLength)
-              distractorsCorrect++;
-            else
-              targetsCorrect++;
-          else {
-            lstm.propagate(output);
+            // generate target output
+            var output = [];
+            for (j = 0; j < targets.length; j++)
+              output[j] = 0;
+
+            if (i >= sequenceLength) {
+              var index = i - sequenceLength;
+              output[indexes[index]] = 1;
+            }
+
+            // check result
+            var prediction = lstm.activate(input);
+
+            if (equal(prediction, output))
+              if (i < sequenceLength)
+                distractorsCorrect++;
+              else
+                targetsCorrect++;
+            else {
+              lstm.propagate(output);
+            }
+
+            error += synaptic.Lysergic.costFunction(output, prediction, synaptic.Lysergic.CostTypes.CROSS_ENTROPY);
+
+            if (distractorsCorrect + targetsCorrect == length)
+              correct++;
           }
 
-          error += synaptic.Lysergic.costFunction(output, prediction, synaptic.Lysergic.CostTypes.CROSS_ENTROPY);
-
-          if (distractorsCorrect + targetsCorrect == length)
-            correct++;
+          // calculate error
+          if (trial % 1000 == 0)
+            correct = 0;
+          trial++;
+          var divideError = trial % 1000;
+          divideError = divideError == 0 ? 1000 : divideError;
+          success = correct / divideError;
+          error /= length;
         }
 
-        // calculate error
-        if (trial % 1000 == 0)
-          correct = 0;
-        trial++;
-        var divideError = trial % 1000;
-        divideError = divideError == 0 ? 1000 : divideError;
-        success = correct / divideError;
-        error /= length;
-      }
+        lstm.engine.status = synaptic.Lysergic.StatusTypes.IDLE
 
-      lstm.engine.status = synaptic.Lysergic.StatusTypes.IDLE
+        var results = {
+          iterations: trial,
+          success: success,
+          error: error,
+          time: Date.now() - start
+        }
 
-      var results = {
-        iterations: trial,
-        success: success,
-        error: error,
-        time: Date.now() - start
-      }
+        console.log(results)
 
-      console.log(results)
-
-      expect(results.success).toBeGreaterThanOrEqual(0.8)
-      expect(results.iterations).toBeLessThan(100 * 1000)
-      done()
+        expect(results.success).toBeGreaterThanOrEqual(0.8)
+        expect(results.iterations).toBeLessThan(100 * 1000)
+        done()
+      }, e => {
+        done(e)
+      })
     })
   })
 }

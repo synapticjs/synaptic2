@@ -49,7 +49,7 @@ return {
     return `${node.operator}(${emit(node.rhs)})`;
   } else if (node instanceof nodes.FunctionNode) {
     return `function ${node.name}() {
-  ${emit(node.body)}
+  ${indent(node.children.map($ => emit($)).join('\n'))}
 }`;
   }
   return 'CANNOT PRINT NODE: ' + node.constructor.toString();

@@ -1,9 +1,10 @@
-declare var console;
+/// <reference path="../../node_modules/@types/webassembly-js-api/index.d.ts" />
+
+declare var console, global;
 import Lysergic, { StatusTypes } from 'lysergic';
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
 import emit from '../emiters/wasm';
-declare var require;
-const binaryen = require('../../vendor/binaryen');
+
 
 export type AsmModule = {
   module: any,
@@ -11,42 +12,82 @@ export type AsmModule = {
   propagate: (targets: number[]) => void,
 }
 
-export default class ASM implements Backend {
+export default class WASM implements Backend {
 
   asm: AsmModule = null;
 
   constructor(public engine = new Lysergic()) { }
 
-  build(): AsmModule {
+  WASMModule: any = null;
+
+  binary: ArrayBuffer | Uint8Array = null;
+
+  async build(): Promise<AsmModule> {
+    if (!global.WebAssembly) {
+      throw new Error('Your platform doesnt support WebAssembly. (requires compilant browser or Node 8)');
+    }
+
     const AST = this.engine.getAST();
-    const source = emit(AST);
 
-    console.dir(binaryen);
+    this.WASMModule = emit(AST, null);
 
-    console.log(source);
+    console.log(this.engine.heap.byteLength);
 
-    const getModule = new Function('stdlib', 'foreign', 'heap', source);
-    const foreign = { random: this.engine.random };
-    const module = getModule({ Math, Float64Array }, foreign, this.engine.heap);
-    return {
-      module,
+    this.WASMModule.setMemory(1, 128, "mem", [{
+      offset: this.WASMModule.i32.const(this.engine.heap.byteLength),
+      data: this.engine.heap
+    }]);
+
+    this.WASMModule.autoDrop();
+    console.log(this.WASMModule.emitText());
+
+    if (!this.WASMModule.validate()) {
+      throw new Error('WASM Validation failed!');
+    }
+
+    this.binary = this.WASMModule.emitBinary();
+
+    console.log('Binary size: ' + this.binary.byteLength);
+
+    const instance = await WebAssembly.instantiate(this.binary, {
+      imports: {
+        exp: Math.exp,
+        log: Math.log,
+        pow: Math.pow,
+        random: this.engine.random
+      }
+    });
+
+    const memoryBuffer: ArrayBuffer = instance.instance.exports.mem.buffer;
+
+    if (memoryBuffer.byteLength < this.engine.heap.byteLength) {
+      throw new Error(`Memory is smaller than heap ${memoryBuffer.byteLength} < ${this.engine.heap.byteLength}`);
+    }
+
+    this.engine.heap = memoryBuffer;
+
+    this.asm = {
+      module: this.WASMModule,
       activate: (inputs: number[]) => {
         this.engine.setInputs(inputs);
-        module.activate();
+        instance.instance.exports.activate();
         return this.engine.getOutputs();
       },
       propagate: (targets: number[]) => {
         this.engine.setTargets(targets);
-        module.propagate();
+        instance.instance.exports.propagate();
       }
     };
+
+    return this.asm;
   }
 
   activate(inputs: number[]): number[] {
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.ACTIVATING;
     if (this.asm == null) {
-      this.asm = this.build();
+      throw new Error('The network wasn\'t built');
+      // this.asm = this.build();
     }
     const activation = this.asm.activate(inputs);
     this.engine.status = oldStatus;
@@ -57,7 +98,8 @@ export default class ASM implements Backend {
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.PROPAGATING;
     if (this.asm == null) {
-      this.asm = this.build();
+      throw new Error('The network wasn\'t built');
+      // this.asm = this.build();
     }
     this.asm.propagate(targets);
     this.engine.status = oldStatus;
@@ -65,7 +107,7 @@ export default class ASM implements Backend {
 
   async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
     if (this.asm == null) {
-      this.asm = this.build();
+      this.asm = await this.build();
     }
 
     // start training

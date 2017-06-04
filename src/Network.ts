@@ -1,5 +1,7 @@
 import Lysergic, { StatusTypes, ActivationTypes } from 'lysergic';
-import Backend from './backends/CPU';
+import { Backend } from './backends';
+import CPU from './backends/CPU';
+
 
 
 export interface Boundary {
@@ -30,14 +32,14 @@ export default class Network {
       if ('backend' in options) {
         this.backend = options.backend;
       } else if ('engine' in options) {
-        this.backend = new Backend(options.engine);
+        this.backend = new CPU(options.engine);
       } else if ('bias' in options || 'generator' in options) {
         const engine = new Lysergic(options);
-        this.backend = new Backend(engine);
+        this.backend = new CPU(engine);
       }
       layers = options.layers || [];
     } else {
-      this.backend = new Backend();
+      this.backend = new CPU();
       layers = [...args];
     }
 
@@ -106,6 +108,12 @@ export default class Network {
   static fromJSON(json) {
     const engine = Lysergic.fromJSON(json);
     return new Network({ engine });
+  }
+
+  async build() {
+    if (this.backend.build) {
+      await this.backend.build()
+    }
   }
 }
 

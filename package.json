@@ -34,6 +34,7 @@
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
+    "@types/webassembly-js-api": "0.0.1",
     "lysergic": "latest"
   },
   "jest": {
