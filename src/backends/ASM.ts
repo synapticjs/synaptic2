@@ -1,6 +1,7 @@
 declare var console;
 import Lysergic, { StatusTypes } from 'lysergic';
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
+//import emit from '../emiters/ASM';
 
 export type AsmModule = {
   module: any,
