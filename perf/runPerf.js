@@ -13,8 +13,7 @@ synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 var lstm = new synaptic.Network(
   new synaptic.layers.Input(6),
   new synaptic.layers.LSTM(7),
-  new synaptic.layers.Dense(2),
-  new synaptic.layers.SoftMax(2)
+  new synaptic.layers.Dense(2)
 )
 
 lstm.backend = new synaptic.backends[process.env.BACKEND](lstm.engine)
@@ -86,6 +85,7 @@ lstm.build().then(() => {
 
     //train sequence
     var distractorsCorrect;
+    var prediction;
     var targetsCorrect = distractorsCorrect = 0;
     error = 0;
     for (i = 0; i < length; i++) {
@@ -106,7 +106,7 @@ lstm.build().then(() => {
       }
 
       // check result
-      var prediction = lstm.activate(input);
+      prediction = lstm.activate(input);
 
       if (equal(prediction, output))
         if (i < sequenceLength)
@@ -124,8 +124,11 @@ lstm.build().then(() => {
     }
 
     // calculate error
-    if (trial % 1000 == 0)
+    if (trial % 1000 == 0) {
       correct = 0;
+      console.log(`${error}\t`, prediction)
+    }
+
     trial++;
     var divideError = trial % 1000;
     divideError = divideError == 0 ? 1000 : divideError;

@@ -36,6 +36,23 @@ export function emit(node: nodes.Node, module) {
 
     let functions = node.children.filter($ => $ instanceof nodes.FunctionNode).map(x => emit(x, module));
 
+    let testSignature = module.addFunctionType(`test$$signature`, Binaryen.f64/*ret*/, [/*params*/]);
+    let testFunction = module.addFunction(
+      'test',
+      testSignature,
+      [/*params*/],
+      module.return(
+        module.f64.add(
+          module.f64.load(0 /*offset */, 8, module.i32.const(0)),
+          module.f64.load(0 /*offset */, 8, module.i32.const(8))
+        )
+      )
+    );
+    module.addExport('test', 'test');
+
+    functions.push(testFunction);
+
+    // console.log(node.inspect());
     module.setFunctionTable(functions);
 
     return module;
@@ -49,7 +66,20 @@ export function emit(node: nodes.Node, module) {
 
     if (isAssignment) {
       if (node.lhs instanceof nodes.HeapReferenceNode) {
-        return module.f64.store(0, 8, module.i32.const(node.lhs.position), emit(node.rhs, module));
+        if (node.operator == '=') {
+          return module.f64.store(0, 8, module.i32.const(node.lhs.position * 8), emit(node.rhs, module));
+        } else {
+          let firstOperation = node.operator[0];
+          const isMath = firstOperation in mathOperatorsMap;
+
+          if (isMath) {
+            let rhs = module.f64[mathOperatorsMap[firstOperation]](emit(node.lhs, module), emit(node.rhs, module));
+
+            return module.f64.store(0, 8, module.i32.const(node.lhs.position * 8), rhs);
+          }
+
+          console.error(`<<<<< I DONT KNOW HOW TO EMIT ASSIGNMENT FOR ${node.operator}`);
+        }
       } else {
         console.error(`<<<<< I DONT KNOW HOW TO ASSIGN TO NON HeapReferenceNode`);
         return module.nop();
@@ -67,7 +97,7 @@ export function emit(node: nodes.Node, module) {
 
 
   } else if (node instanceof nodes.HeapReferenceNode) {
-    return module.f64.load(0 /*offset */, 8, module.i32.const(node.position));
+    return module.f64.load(0 /*offset */, 8 /* byte alignment */, module.i32.const(node.position * 8));
   } else if (node instanceof nodes.FloatNumberNode) {
     return module.f64.const(node.numericValue);
   } else if (node instanceof nodes.LayerNode) {
@@ -93,21 +123,14 @@ export function emit(node: nodes.Node, module) {
     }
     console.error(`<<<<< UNKNOWN OPERATOR: ${node.operator}`);
     return module.nop();
+  } else if (node instanceof nodes.BlockNode) {
+    return module.block(node.name || ``, node.children.map(x => emit(x, module)));
   } else if (node instanceof nodes.FunctionNode) {
     let functionSignature = module.addFunctionType(`${node.name}$$signature`, Binaryen.None/*ret*/, [/*params*/]);
 
-
-    let block = module.block(`BodyOf${node.name}`, node.children.map(x => emit(x, module)));
-    // emit(node.children, module)
-
     // Create the function
-    let theFunction = module.addFunction(node.name, functionSignature, [/*params*/], block);
+    let theFunction = module.addFunction(node.name, functionSignature, [/*params*/], emit(node.body, module));
     module.addExport(node.name, node.name);
-
-    // if (node.name == 'propagate') {
-    //   console.log(node.inspect())
-    //   console.log(Binaryen.emitText(block));
-    // }
 
     return theFunction;
   }

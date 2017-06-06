@@ -1,16 +1,6 @@
 import { indent } from 'lysergic/dist/ast/helpers';
 import * as nodes from 'lysergic/dist/ast/nodes';
 
-const binaryOperation = (lhs, operator, rhs) => {
-  if (operator.length === 2 && operator[1] === '=') {
-    return `${lhs} = ${lhs} ${operator[0]} (${rhs})`;
-  } else if (operator === '^') {
-    return `${lhs} = pow(${lhs}, ${rhs})`;
-  } else if (operator === '=') {
-    return `${lhs} = ${rhs}`;
-  }
-  return `${lhs} ${operator} (${rhs})`;
-};
 
 function baseEmit(node: nodes.Node) {
   if (node instanceof nodes.DocumentNode) {
@@ -24,15 +14,31 @@ ${node.children.map(x => emit(x)).map(x => x + ';').join('\n')}
 
 return {
   ${node.children.filter(x => x instanceof nodes.FunctionNode).map((x: nodes.FunctionNode) => x.name + ': ' + x.name).join(',\n  ')}
-}`
+}`;
   } else if (node instanceof nodes.BinaryExpressionNode) {
-    if (node.lhs instanceof nodes.HeapReferenceNode) {
-      return binaryOperation(`H[${node.lhs.position}]`, node.operator, emit(node.rhs));
+    let lhsString = emit(node.lhs);
+    let rhsString = emit(node.rhs);
+
+    const isAssignment = node.operator in { '=': 1, '-=': 1, '+=': 1, '*=': 1, '/=': 1 };
+
+    if (node.lhs instanceof nodes.HeapReferenceNode && isAssignment) {
+      lhsString = `H[${node.lhs.position}]`;
     }
-    return binaryOperation(emit(node.lhs), node.operator, emit(node.rhs));
-    // if `a += b` -> `a = a + (b)` 
+
+    if (node.operator.length === 2 && node.operator[1] === '=' && node.operator != '==') {
+      return `${lhsString} = ${emit(node.lhs)} ${node.operator[0]} (${rhsString})`;
+    } else if (node.operator === '^') {
+      return `${lhsString} = pow(${emit(node.lhs)}, ${rhsString})`;
+    } else if (node.operator === '=') {
+      return `${lhsString} = ${rhsString}`;
+    }
+    return `${lhsString} ${node.operator} ${rhsString}`;
+    // if `a += b` -> `a = a + (b)`
   } else if (node instanceof nodes.HeapReferenceNode) {
-    return `(+H[${node.position}])`;
+    if (node.hasParenthesis)
+      return `+H[${node.position}]`;
+    else
+      return `(+H[${node.position}])`;
   } else if (node instanceof nodes.FloatNumberNode) {
     return node.numericValue.toFixed(1);
   } else if (node instanceof nodes.LayerNode) {
@@ -47,9 +53,11 @@ return {
     return emit(node.condition) + ' ? ' + emit(node.truePart) + ' : ' + emit(node.falsePart)
   } else if (node instanceof nodes.UnaryExpressionNode) {
     return `${node.operator}(${emit(node.rhs)})`;
+  } else if (node instanceof nodes.BlockNode) {
+    return '{\n' + indent(node.children.map(x => emit(x) + ';').join('\n')) + '\n}';
   } else if (node instanceof nodes.FunctionNode) {
     return `function ${node.name}() {
-  ${indent(node.children.map($ => emit($)).join('\n'))}
+  ${indent(emit(node.body))}
 }`;
   }
   return 'CANNOT PRINT NODE: ' + node.constructor.toString();

@@ -112,7 +112,7 @@ export default class Network {
 
   async build() {
     if (this.backend.build) {
-      await this.backend.build()
+      await this.backend.build();
     }
   }
 }
