@@ -64,7 +64,7 @@ export default class WASM implements Backend {
     }
 
     // Copy working memory to the new module memory
-    let newMemory = new Float64Array(this.engine.heap);
+    let newMemory = new Float64Array(memoryBuffer);
     for (let i = 0; i < this.engine.memory.byteLength; i++)
       newMemory[i] = this.engine.memory[i];
 
