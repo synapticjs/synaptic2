@@ -1,11 +1,12 @@
 // This is my attepmt of translating this paper http://www.overcomplete.net/papers/nn2012.pdf to javascript,
 // trying to keep the code as close as posible to the equations and as verbose as possible.
 
-import Lysergic, { ActivationTypes, CostTypes, StatusTypes } from 'lysergic';
-import { Backend, TrainEntry } from '.';
+import Lysergic, { ActivationTypes, StatusTypes } from 'lysergic';
+import { Backend, activationFunction, activationFunctionDerivative } from './Backend';
 
-export default class Paper implements Backend {
+export default class Paper extends Backend {
   constructor(public engine = new Lysergic()) {
+    super(engine);
     this.activateUnit = this.activateUnit.bind(this);
     this.propagateUnit = this.propagateUnit.bind(this);
     this.activate = this.activate.bind(this);
@@ -13,7 +14,7 @@ export default class Paper implements Backend {
     this.bigParenthesisTerm = this.bigParenthesisTerm.bind(this);
     this.activationFunction = this.activationFunction.bind(this);
     this.activationFunctionDerivative = this.activationFunctionDerivative.bind(this);
-    this.costFunction = this.costFunction.bind(this);
+
     this.train = this.train.bind(this);
   }
 
@@ -138,87 +139,53 @@ export default class Paper implements Backend {
     return dt * w[k][k] * s[k] + Σ(units.filter(a => a !== k), a => w[k][a] * y[a]);
   }
 
-  activationFunction(unit: number): number {
-    let x;
+
+  private activationFunction(unit: number): number {
+    const x: number = this.engine.state[unit];
     const type = this.engine.activationFunction[unit];
+
     switch (type) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.engine.state[unit];
-        return 1 / (1 + Math.exp(-x));
-
-      case ActivationTypes.TANH:
-        x = this.engine.state[unit];
-        const eP = Math.exp(x);
-        const eN = 1 / eP;
-        return (eP - eN) / (eP + eN);
-
-      case ActivationTypes.RELU:
-        x = this.engine.state[unit];
-        return x > 0 ? x : 0;
-
       case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0];
         const gatedUnit = this.engine.gatedBy[unit][0];
         const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit];
-        const maxActivation = inputsOfGatedUnit.reduce((max, input) => Math.max(this.engine.activation[input], max), -Infinity);
-        const inputUnitWithHigherActivation = inputsOfGatedUnit.reduce((found, each) => this.engine.activation[each] === maxActivation ? each : found, null);
+
+        const allActivations = inputsOfGatedUnit.map($ => this.engine.activation[$]);
+        const maxActivation = Math.max(...allActivations);
+
+        const inputUnitWithHigherActivation = inputsOfGatedUnit.reduce((found, unit) => this.engine.activation[unit] === maxActivation ? unit : found, null);
         return inputUnitWithHigherActivation === inputUnit ? 1 : 0;
 
       case ActivationTypes.DROPOUT:
-        const chances = this.engine.state[unit];
-        return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1;
+        const chances = x;
 
-      // case ActivationTypes.EXP:
-      //   return Math.exp(this.engine.state[unit]);
-
-      // case ActivationTypes.INVERSE_IDENTITY:
-      //   return 1 / this.engine.state[unit];
+        if (this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING) {
+          return 0;
+        } else {
+          return 1;
+        }
       default:
-        return this.engine.state[unit];
+        return activationFunction(x, type);
     }
   }
 
-  activationFunctionDerivative(unit: number) {
-    let x: number;
+  private activationFunctionDerivative(unit: number) {
+    const x: number = this.engine.state[unit];
+    const fx: number = this.engine.activation[unit];
+
     const type = this.engine.activationFunction[unit];
+
     switch (type) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.activationFunction(unit);
-        return x * (1 - x);
-
-      case ActivationTypes.TANH:
-        x = this.activationFunction(unit);
-        return 1 - Math.pow(x, 2);
-
-      default:
+      case ActivationTypes.MAX_POOLING:
         return 0;
+      case ActivationTypes.DROPOUT:
+        return 0;
+      default:
+        return activationFunctionDerivative(x, fx, type);
     }
   }
 
-  costFunction(target: number[], predicted: number[], costType: CostTypes) {
-    let i: number, x = 0;
-    switch (costType) {
-      case CostTypes.MEAN_SQUARE_ERROR:
-        for (i = 0; i < target.length; i++) {
-          x += Math.pow(target[i] - predicted[i], 2);
-        }
-        return x / target.length;
-
-      case CostTypes.CROSS_ENTROPY:
-        for (i = 0; i < target.length; i++) {
-          x -= (target[i] * Math.log(predicted[i] + 1e-15)) + ((1 - target[i]) * Math.log((1 + 1e-15) - predicted[i])); // +1e-15 is a tiny push away to avoid Math.log(0)
-        }
-        return x;
-
-      case CostTypes.BINARY:
-        for (i = 0; i < target.length; i++) {
-          x += Math.round(target[i] * 2) != Math.round(predicted[i] * 2) ? 1 : 0;
-        }
-        return x;
-    }
-  }
-
-  activate(inputs: number[]): number[] {
+  async activate(inputs: number[]): Promise<ArrayLike<number>> {
     this.engine.status = StatusTypes.ACTIVATING;
     const activations = this.engine.layers.map((layer, layerIndex) => {
       return layer.map((unit, unitIndex) => {
@@ -230,7 +197,7 @@ export default class Paper implements Backend {
     return activations.pop(); // return activation of the last layer (aka output layer)
   }
 
-  propagate(targets: number[]) {
+  async propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING;
     this.engine.layers
       .slice(1) // input layer doesn't propagate
@@ -245,40 +212,6 @@ export default class Paper implements Backend {
           });
       });
     this.engine.status = StatusTypes.IDLE;
-  }
-
-  train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }) {
-    return new Promise(resolve => {
-
-      // start training
-      let startTime = new Date().getTime();
-      let error = Infinity;
-      let iterations = 0;
-
-      this.engine.learningRate = learningRate;
-      this.engine.status = StatusTypes.TRAINING;
-
-      // train
-      while (error > minError && iterations < maxIterations) {
-        error = 0;
-        for (let data of dataset) {
-          const { input, output } = data;
-          const predictedOutput = this.activate(input);
-          this.propagate(output);
-          error += this.costFunction(output, predictedOutput, costFunction);
-        }
-        error /= dataset.length;
-        iterations++;
-      }
-
-      // end training
-      this.engine.status = StatusTypes.IDLE;
-      resolve({
-        error,
-        iterations,
-        time: new Date().getTime() - startTime
-      });
-    });
   }
 }
 

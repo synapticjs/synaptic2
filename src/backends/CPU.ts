@@ -1,13 +1,8 @@
+import { ActivationTypes, StatusTypes } from 'lysergic';
+import { Backend, activationFunction, activationFunctionDerivative } from './Backend';
 declare var console;
 
-import Lysergic, { ActivationTypes, CostTypes, StatusTypes } from 'lysergic';
-import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
-
-export default class CPU implements Backend {
-  constructor(public engine = new Lysergic()) {
-
-  }
-
+export class CPU extends Backend {
   private activateUnit(j: number): number {
     let i = 0, k = 0, h = 0, g = 0, to = 0, from = 0, engine = this.engine;
     let state = 0;
@@ -81,7 +76,7 @@ export default class CPU implements Backend {
   }
 
   /** this calculate the big parenthesis term that is present in eq. 18 and eq. 22 */
-  bigParenthesisTerm(k: number, j: number) {
+  private bigParenthesisTerm(k: number, j: number) {
     let result = this.engine.derivativeTerm[k][j] * this.engine.weight[k][k] * this.engine.state[k];
     for (let i = 0; i < this.engine.inputsOfGatedBy[k][j].length; i++) {
       let a = this.engine.inputsOfGatedBy[k][j][i];
@@ -92,129 +87,49 @@ export default class CPU implements Backend {
     return result;
   }
 
-  activationFunction(unit: number): number {
-    let x;
+  private activationFunction(unit: number): number {
+    const x: number = this.engine.state[unit];
     const type = this.engine.activationFunction[unit];
+
     switch (type) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.engine.state[unit];
-        return 1 / (1 + Math.exp(-x));
-
-      case ActivationTypes.TANH:
-        x = this.engine.state[unit];
-        const eP = Math.exp(x);
-        const eN = 1 / eP;
-        return (eP - eN) / (eP + eN);
-
-      case ActivationTypes.RELU:
-        x = this.engine.state[unit];
-        return x > 0 ? x : 0;
-
       case ActivationTypes.MAX_POOLING:
         const inputUnit = this.engine.inputsOf[unit][0];
         const gatedUnit = this.engine.gatedBy[unit][0];
         const inputsOfGatedUnit = this.engine.inputsOfGatedBy[gatedUnit][unit];
-        const maxActivation = inputsOfGatedUnit.reduce((max, input) => Math.max(this.engine.activation[input], max), -Infinity);
+
+        const allActivations = inputsOfGatedUnit.map($ => this.engine.activation[$]);
+        const maxActivation = Math.max(...allActivations);
+
         const inputUnitWithHigherActivation = inputsOfGatedUnit.reduce((found, unit) => this.engine.activation[unit] === maxActivation ? unit : found, null);
         return inputUnitWithHigherActivation === inputUnit ? 1 : 0;
 
       case ActivationTypes.DROPOUT:
-        const chances = this.engine.state[unit];
-        return this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING ? 0 : 1;
+        const chances = x;
 
-      // case ActivationTypes.EXP:
-      //   return Math.exp(this.engine.state[unit]);
-
-      // case ActivationTypes.INVERSE_IDENTITY:
-      //   return 1 / this.engine.state[unit];
-
+        if (this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING) {
+          return 0;
+        } else {
+          return 1;
+        }
       default:
-        return this.engine.state[unit];
+        return activationFunction(x, type);
     }
   }
 
-  activationFunctionDerivative(unit: number) {
-    let x: number;
+  private activationFunctionDerivative(unit: number) {
+    const x: number = this.engine.state[unit];
+    const fx: number = this.engine.activation[unit];
+
     const type = this.engine.activationFunction[unit];
+
     switch (type) {
-      case ActivationTypes.LOGISTIC_SIGMOID:
-        x = this.engine.activation[unit];
-        return x * (1 - x);
-
-      case ActivationTypes.TANH:
-        x = this.engine.activation[unit];
-        return 1 - Math.pow(x, 2);
-
-      case ActivationTypes.IDENTITY:
-        return 1;
-      /*
-      case ActivationTypes.EXP:
-        return this.engine.activation[unit];
-
-      case ActivationTypes.INVERSE_IDENTITY:
-        x = this.engine.activation[unit];
-        return -1 / (x * x);
-
-      /*case ActivationTypes.RELU:
-        return 0
-
-      case ActivationTypes.IDENTITY:
-        return 0
-
       case ActivationTypes.MAX_POOLING:
-        return 0
-
-      case ActivationTypes.DROPOUT:
-        return 0*/
-      default:
         return 0;
+      case ActivationTypes.DROPOUT:
+        return 0;
+      default:
+        return activationFunctionDerivative(x, fx, type);
     }
-  }
-
-  costFunction(target: number[], predicted: number[], costType: CostTypes) {
-    let i: number, x = 0;
-    switch (costType) {
-      case CostTypes.MEAN_SQUARE_ERROR:
-        for (i = 0; i < target.length; i++) {
-          x += Math.pow(target[i] - predicted[i], 2);
-        }
-        return x / target.length;
-
-      case CostTypes.CROSS_ENTROPY:
-        for (i = 0; i < target.length; i++) {
-          x -= (target[i] * Math.log(predicted[i] + 1e-15)) + ((1 - target[i]) * Math.log((1 + 1e-15) - predicted[i])); // +1e-15 is a tiny push away to avoid Math.log(0)
-        }
-        return x;
-
-      case CostTypes.BINARY:
-        for (i = 0; i < target.length; i++) {
-          x += Math.round(target[i] * 2) != Math.round(predicted[i] * 2) ? 1 : 0;
-        }
-        return x;
-    }
-  }
-
-  activate(inputs: number[]): number[] {
-    this.engine.status = StatusTypes.ACTIVATING;
-    let outputLayerIndex = this.engine.layers.length - 1;
-    let activation = new Array(this.engine.layers[outputLayerIndex].length);
-
-    for (let j = 0; j < this.engine.layers[0].length; j++) {
-      this.engine.activation[this.engine.layers[0][j]] = inputs[j];
-    }
-
-    for (let layer = 1; layer < this.engine.layers.length - 1; layer++) {
-      for (let j = 0; j < this.engine.layers[layer].length; j++) {
-        this.activateUnit(this.engine.layers[layer][j]);
-      }
-    }
-
-    for (let j = 0; j < this.engine.layers[outputLayerIndex].length; j++) {
-      activation[j] = this.activateUnit(this.engine.layers[outputLayerIndex][j]);
-    }
-
-    this.engine.status = StatusTypes.IDLE;
-    return activation;
   }
 
   private propagateUnitWeights(unit: number) {
@@ -240,7 +155,31 @@ export default class CPU implements Backend {
     }
   }
 
-  propagate(targets: number[]) {
+  async activate(inputs: number[]) {
+    this.engine.status = StatusTypes.ACTIVATING;
+    let outputLayerIndex = this.engine.layers.length - 1;
+    let activation = new Array(this.engine.layers[outputLayerIndex].length);
+
+    for (let j = 0; j < this.engine.layers[0].length; j++) {
+      this.engine.activation[this.engine.layers[0][j]] = inputs[j];
+    }
+
+    for (let layer = 1; layer < this.engine.layers.length - 1; layer++) {
+      for (let j = 0; j < this.engine.layers[layer].length; j++) {
+        this.activateUnit(this.engine.layers[layer][j]);
+      }
+    }
+
+    for (let j = 0; j < this.engine.layers[outputLayerIndex].length; j++) {
+      activation[j] = this.activateUnit(this.engine.layers[outputLayerIndex][j]);
+    }
+
+    this.engine.status = StatusTypes.IDLE;
+    return activation;
+  }
+
+
+  async propagate(targets: number[]) {
     this.engine.status = StatusTypes.PROPAGATING;
     let outputLayerIndex = this.engine.layers.length - 1;
     if (this.engine.layers[outputLayerIndex].length != targets.length) {
@@ -260,37 +199,10 @@ export default class CPU implements Backend {
     }
     this.engine.status = StatusTypes.IDLE;
   }
-
-  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
-
-    // start training
-    let startTime = new Date().getTime();
-    let error = Infinity;
-    let iterations = 0;
-
-    this.engine.learningRate = learningRate;
-    this.engine.status = StatusTypes.TRAINING;
-
-    // train
-    while (error > minError && iterations < maxIterations) {
-      error = 0;
-      for (let index = 0; index < dataset.length; index++) {
-        const { input, output } = dataset[index];
-        const predictedOutput = this.activate(input);
-        this.propagate(output);
-        error += this.costFunction(output, predictedOutput, costFunction);
-      }
-      error /= dataset.length;
-      iterations++;
-      console.log({ error, iterations });
-    }
-
-    // end training
-    this.engine.status = StatusTypes.IDLE;
-    return {
-      error,
-      iterations,
-      time: new Date().getTime() - startTime
-    };
-  }
 }
+
+declare var module;
+
+export default CPU;
+
+console.log('BCPU', CPU, module.default);

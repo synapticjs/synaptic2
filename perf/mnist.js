@@ -2,10 +2,18 @@ var synaptic = process.env.NODE_ENV == 'node' ? require('../dist') : require('..
 
 process.env.BACKEND = process.env.BACKEND || 'WASM'
 
+
+const backend = synaptic.backends[process.env.BACKEND];
+
+console.log('Available backends: ' + Object.keys(synaptic.backends).map($ => $ + ': ' + typeof synaptic.backends[$]).join(' | '));
+console.log('Backend: ', backend)
+
 var MersenneTwister = require('mersenne-twister')
 
-var mnist = require('mnist')
+console.time('Loading MNIST');
+var mnist = require('mnist');
 var mnistSet = mnist.set(1000);
+console.timeEnd('Loading MNIST');
 
 var generator = new MersenneTwister(100010);
 
@@ -19,12 +27,15 @@ var lstm = new synaptic.Network(
   new synaptic.layers.Dense(10)
 )
 
-lstm.backend = new synaptic.backends[process.env.BACKEND](lstm.engine)
+
+lstm.backend = new backend(lstm.engine)
 lstm.engine.random = random;
 lstm.learningRate = 0.1;
 
-lstm.backend.build().then(() => {
+console.time('Build network')
 
+lstm.backend.build().then(() => {
+  console.timeEnd('Build network')
   console.time('MNIST')
   var trainer = new synaptic.Trainer(lstm)
 

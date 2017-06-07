@@ -12,7 +12,8 @@ module.exports = {
     publicPath: '/',
   },
   externals: {
-    "binaryen": "binaryen"
+    "./vendor/binaryen.js": "binaryen",
+    "binaryen": "./vendor/binaryen.js"
   },
   plugins: [
     new webpack.NoErrorsPlugin()

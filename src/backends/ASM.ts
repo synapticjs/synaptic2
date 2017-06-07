@@ -1,6 +1,6 @@
 declare var console;
-import Lysergic, { StatusTypes } from 'lysergic';
-import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
+import { StatusTypes } from 'lysergic';
+import { Backend } from './Backend';
 import emit from '../emiters/asm';
 
 export type AsmModule = {
@@ -9,13 +9,15 @@ export type AsmModule = {
   propagate: (targets: number[]) => void,
 }
 
-export default class ASM implements Backend {
-
+export default class ASM extends Backend {
   asm: AsmModule = null;
 
-  constructor(public engine = new Lysergic()) { }
+  async build() {
+    if (this.engine.status == StatusTypes.BUILDING)
+      throw new Error("Already building.");
 
-  async build(): Promise<AsmModule> {
+
+    this.engine.status = StatusTypes.BUILDING;
     const AST = this.engine.getAST();
     const source = emit(AST);
 
@@ -37,65 +39,31 @@ export default class ASM implements Backend {
       }
     };
 
-    return this.asm;
+    this.built = true;
+
+    this.engine.status = StatusTypes.IDLE;
   }
 
-  activate(inputs: number[]): number[] {
+  async activate(inputs: number[]): Promise<number[]> {
+    if (!this.built && this.engine.status != StatusTypes.BUILDING) {
+      await this.build();
+    }
+
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.ACTIVATING;
-    if (this.asm == null) {
-      throw new Error('The network wasn\'t built');
-      // this.asm = this.build();
-    }
     const activation = this.asm.activate(inputs);
     this.engine.status = oldStatus;
     return activation;
   }
 
-  propagate(targets: number[]) {
+  async propagate(targets: number[]) {
+    if (!this.built && this.engine.status != StatusTypes.BUILDING) {
+      await this.build();
+    }
+
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.PROPAGATING;
-    if (this.asm == null) {
-      throw new Error('The network wasn\'t built');
-      // this.asm = this.build();
-    }
     this.asm.propagate(targets);
     this.engine.status = oldStatus;
-  }
-
-  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
-    if (this.asm == null) {
-      this.asm = await this.build();
-    }
-
-    // start training
-    let startTime = new Date().getTime();
-    let error = Infinity;
-    let iterations = 0;
-
-    this.engine.learningRate = learningRate;
-    this.engine.status = StatusTypes.TRAINING;
-
-    // train
-    while (error > minError && iterations < maxIterations) {
-      error = 0;
-      for (let index = 0; index < dataset.length; index++) {
-        const { input, output } = dataset[index];
-        const predictedOutput = this.activate(input);
-        this.propagate(output);
-        error += Lysergic.costFunction(output, predictedOutput, costFunction);
-      }
-      error /= dataset.length;
-      iterations++;
-    }
-
-    // end training
-    this.engine.status = StatusTypes.IDLE;
-
-    return {
-      error,
-      iterations,
-      time: new Date().getTime() - startTime
-    };
   }
 }

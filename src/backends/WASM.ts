@@ -1,8 +1,8 @@
 /// <reference path="../../node_modules/@types/webassembly-js-api/index.d.ts" />
 
 declare var console, global;
-import Lysergic, { StatusTypes } from 'lysergic';
-import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
+import { StatusTypes } from 'lysergic';
+import { Backend } from './Backend';
 import emit from '../emiters/wasm';
 
 
@@ -12,17 +12,14 @@ export type AsmModule = {
   propagate: (targets: number[]) => void,
 }
 
-export default class WASM implements Backend {
-
+export default class WASM extends Backend {
   asm: AsmModule = null;
-
-  constructor(public engine = new Lysergic()) { }
 
   WASMModule: any = null;
 
   binary: ArrayBuffer | Uint8Array = null;
 
-  async build(): Promise<AsmModule> {
+  async build() {
     if (!global.WebAssembly) {
       throw new Error('Your platform doesnt support WebAssembly. (requires compilant browser or Node 8)');
     }
@@ -99,65 +96,29 @@ export default class WASM implements Backend {
       }
     };
 
-    return this.asm;
+    this.built = true;
   }
 
-  activate(inputs: number[]): number[] {
+  async activate(inputs: number[]) {
+    if (!this.built) {
+      await this.build();
+    }
+
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.ACTIVATING;
-    if (this.asm == null) {
-      throw new Error('The network wasn\'t built');
-      // this.asm = this.build();
-    }
     const activation = this.asm.activate(inputs);
     this.engine.status = oldStatus;
     return activation;
   }
 
-  propagate(targets: number[]) {
+  async propagate(targets: number[]) {
+    if (!this.built) {
+      await this.build();
+    }
+
     const oldStatus = this.engine.status;
     this.engine.status = StatusTypes.PROPAGATING;
-    if (this.asm == null) {
-      throw new Error('The network wasn\'t built');
-      // this.asm = this.build();
-    }
     this.asm.propagate(targets);
     this.engine.status = oldStatus;
-  }
-
-  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
-    if (this.asm == null) {
-      this.asm = await this.build();
-    }
-
-    // start training
-    let startTime = new Date().getTime();
-    let error = Infinity;
-    let iterations = 0;
-
-    this.engine.learningRate = learningRate;
-    this.engine.status = StatusTypes.TRAINING;
-
-    // train
-    while (error > minError && iterations < maxIterations) {
-      error = 0;
-      for (let index = 0; index < dataset.length; index++) {
-        const { input, output } = dataset[index];
-        const predictedOutput = this.activate(input);
-        this.propagate(output);
-        error += Lysergic.costFunction(output, predictedOutput, costFunction);
-      }
-      error /= dataset.length;
-      iterations++;
-    }
-
-    // end training
-    this.engine.status = StatusTypes.IDLE;
-
-    return {
-      error,
-      iterations,
-      time: new Date().getTime() - startTime
-    };
   }
 }
