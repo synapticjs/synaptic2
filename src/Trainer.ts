@@ -12,7 +12,8 @@ export default class Trainer {
     learningRate = 0.3,
     minError = 0.05,
     maxIterations = 1000,
-    costFunction = CostTypes.MEAN_SQUARE_ERROR
+    costFunction = CostTypes.MEAN_SQUARE_ERROR,
+    ...rest
   }: TrainOptions): Promise<TrainResult> {
     if (!dataset.every($ => 'input' in $ && 'output' in $)) {
       throw new Error('Not every entry contains `input` and `output` fields');
@@ -22,7 +23,8 @@ export default class Trainer {
       learningRate,
       minError,
       maxIterations,
-      costFunction
+      costFunction,
+      ...rest
     });
   }
 

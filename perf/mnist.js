@@ -36,6 +36,10 @@ lstm.learningRate = 0.1;
 
 console.time('Build network')
 
+function log(partialResult) {
+  printer.printError(partialResult.error * 10);
+}
+
 lstm.backend.build().then(() => {
   console.timeEnd('Build network')
   console.time('MNIST')
@@ -44,7 +48,8 @@ lstm.backend.build().then(() => {
   trainer.train(mnistSet.training, {
     learningRate: 0.1,
     minError: 0.0001,
-    maxIterations: 30
+    maxIterations: 30,
+    log
   })
     .then(result => {
       console.timeEnd('MNIST')

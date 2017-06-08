@@ -1,10 +1,11 @@
 import Network, { Boundary, Layer } from '../Network';
+import { ActivationTypes } from "../../../lysergic/dist/index";
 
 export default class Dense implements Layer {
 
   layer: number[];
 
-  constructor(public size: number) { }
+  constructor(public size: number, public activationType: ActivationTypes) { }
 
   init(network: Network, boundary: Boundary): Boundary {
 
@@ -12,7 +13,7 @@ export default class Dense implements Layer {
       throw new Error('\'Dense\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.engine.addLayer(this.size);
+    this.layer = network.engine.addLayer(this.size, this.activationType);
 
     // connect all units from previous layer to this one
     boundary.layer.forEach(from => {

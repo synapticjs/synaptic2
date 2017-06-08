@@ -1,4 +1,5 @@
 import Network, { Boundary, Layer } from '../Network';
+import { ActivationTypes } from "../../../lysergic/dist/index";
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
@@ -29,10 +30,10 @@ export default class LSTM implements Layer {
     }
 
     this.prevLayer = boundary.layer;
-    this.inputGate = network.addLayer(this.memoryBlocks);
-    this.forgetGate = network.addLayer(this.memoryBlocks);
-    this.memoryCell = network.addLayer(this.memoryBlocks);
-    this.outputGate = network.addLayer(this.memoryBlocks);
+    this.inputGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
+    this.forgetGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
+    this.memoryCell = network.engine.addLayer(this.memoryBlocks, ActivationTypes.TANH);
+    this.outputGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
 
     // connection from previous layer to memory cell
     connectLayers(network, this.prevLayer, this.memoryCell);

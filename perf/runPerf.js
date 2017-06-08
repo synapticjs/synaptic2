@@ -12,8 +12,8 @@ synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 
 var lstm = new synaptic.Network(
   new synaptic.layers.Input(6),
-  new synaptic.layers.LSTM(6),
-  new synaptic.layers.Dense(2)
+  new synaptic.layers.LSTM(4),
+  new synaptic.layers.Dense(2, synaptic.Lysergic.ActivationTypes.LOGISTIC_SIGMOID)
 )
 
 lstm.backend = new synaptic.backends[process.env.BACKEND](lstm.engine)
@@ -33,7 +33,7 @@ async function test() {
   var prompts = [0, 1];
   var length = 10;
   var criterion = 1;
-  var iterations = 300000;
+  var iterations = 500000;
   var schedule = {};
 
   var cost = synaptic.Lysergic.CostTypes.CROSS_ENTROPY;

@@ -1,4 +1,3 @@
-declare var console;
 import Lysergic, { CostTypes, StatusTypes, ActivationTypes } from 'lysergic';
 
 export interface Dictionary<T> {
@@ -15,6 +14,8 @@ export interface TrainOptions {
   minError?: number;
   maxIterations?: number;
   costFunction?: CostTypes;
+  logEvery?: number;
+  log?: (partial: TrainResult) => void;
 }
 
 export interface TrainResult {
@@ -30,7 +31,7 @@ export abstract class Backend {
   abstract activate(inputs: number[]): Promise<ArrayLike<number>>;
   abstract propagate(targets: number[]): Promise<void>;
 
-  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction }: TrainOptions): Promise<TrainResult> {
+  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction, log, logEvery }: TrainOptions): Promise<TrainResult> {
     if (!this.built) {
       await this.build();
     }
@@ -53,8 +54,20 @@ export abstract class Backend {
         error += Lysergic.costFunction(output, predictedOutput, costFunction);
       }
       error /= dataset.length;
-      console.log('Error: ' + error);
+
       iterations++;
+      if (log) {
+        const partialResult = {
+          error,
+          iterations,
+          time: new Date().getTime() - startTime
+        };
+        if (logEvery) {
+          if (iterations % logEvery) {
+            log(partialResult);
+          }
+        } else log(partialResult);
+      }
     }
 
     // end training
