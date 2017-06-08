@@ -17,6 +17,8 @@ export const mathOperatorsMap = {
   '/': 'div',
   '+': 'add',
   '-': 'sub',
+  'max': 'max',
+  'min': 'min'
 };
 
 export function emit(node: nodes.Node, module) {
@@ -100,10 +102,6 @@ export function emit(node: nodes.Node, module) {
     return module.f64.load(0 /*offset */, 8 /* byte alignment */, module.i32.const(node.position * 8));
   } else if (node instanceof nodes.FloatNumberNode) {
     return module.f64.const(node.numericValue);
-  } else if (node instanceof nodes.LayerNode) {
-    return module.block(`Layer${node.id}`, node.children.map(x => emit(x, module)));
-  } else if (node instanceof nodes.UnitNode) {
-    return module.block(`Unit${node.id}`, node.children.map(x => emit(x, module)));
   } else if (node instanceof nodes.TernaryExpressionNode) {
     return module.if(
       emit(node.condition, module),
@@ -118,8 +116,12 @@ export function emit(node: nodes.Node, module) {
         return module.callImport("exp", [emit(node.rhs, module)], Binaryen.f64);
       case 'rand':
         return module.callImport("rand", [emit(node.rhs, module)], Binaryen.f64);
-      // case 'sqrt':
-      //  return `(f64.sqrt ${emit(node.rhs)})`;
+      case 'ln':
+        return module.callImport("log", [emit(node.rhs, module)], Binaryen.f64);
+      case 'abs':
+        return module.f64.abs(emit(node.rhs, module));
+      case 'sqrt':
+        return module.f64.sqrt(emit(node.rhs, module));
     }
     console.error(`<<<<< UNKNOWN OPERATOR: ${node.operator}`);
     return module.nop();

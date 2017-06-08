@@ -1,6 +1,5 @@
 import { ActivationTypes, StatusTypes } from 'lysergic';
 import { Backend, activationFunction, activationFunctionDerivative } from './Backend';
-declare var console;
 
 export class CPU extends Backend {
   private activateUnit(j: number): number {
@@ -201,8 +200,4 @@ export class CPU extends Backend {
   }
 }
 
-declare var module;
-
 export default CPU;
-
-console.log('BCPU', CPU, module.default);

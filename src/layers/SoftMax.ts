@@ -12,33 +12,11 @@ export default class SoftMax implements Layer {
 
     const prevLayer = boundary.layer;
 
-    //let expY = network.engine.addLayer(prevLayer.length, ActivationTypes.EXP, false);
-    //let sum = network.engine.addLayer(1, ActivationTypes.INVERSE_IDENTITY, false);
-    this.layer = network.engine.addLayer(prevLayer.length, ActivationTypes.IDENTITY, false);
+    this.layer = network.engine.addLayer(prevLayer.length, ActivationTypes.SOFTMAX, false);
 
-    // for (let i = 0; i < prevLayer.length; i++) {
-    //   network.addConnection(prevLayer[i], expY[i], 1);
-    // }
-    // for (let i = 0; i < prevLayer.length; i++) {
-    //   network.addConnection(expY[i], sum[0], 1);
-    // }
-    // for (let i = 0; i < prevLayer.length; i++) {
-    //   network.addConnection(expY[i], this.layer[i], 1);
-    // }
-    // for (let i = 0; i < prevLayer.length; i++) {
-    //   network.addGate(expY[i], this.layer[i], sum[0]);
-    // }
-
-
-    /*
-        [...] {input}
-         |||
-        [... ƒ = EXP(Yi)]--+
-         |||               |
-         |||               V
-         ||| <----- GATES [0 ƒ = INVERSE_IDENTITY(Yi)]
-        [... ƒ = IDENTITY(Yi)]
-    */
+    prevLayer.forEach((from, i) => {
+      network.addConnection(from, this.layer[i]);
+    });
 
     // this layer doesn't change the boundary's dimensions
     return {

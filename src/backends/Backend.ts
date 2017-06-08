@@ -1,3 +1,4 @@
+declare var console;
 import Lysergic, { CostTypes, StatusTypes, ActivationTypes } from 'lysergic';
 
 export interface Dictionary<T> {
@@ -48,10 +49,11 @@ export abstract class Backend {
       for (let index = 0; index < dataset.length; index++) {
         const { input, output } = dataset[index];
         const predictedOutput = await this.activate(input);
-        this.propagate(output);
+        await this.propagate(output);
         error += Lysergic.costFunction(output, predictedOutput, costFunction);
       }
       error /= dataset.length;
+      console.log('Error: ' + error);
       iterations++;
     }
 
@@ -111,14 +113,11 @@ export function activationFunction(x: number, type: ActivationTypes): number {
     case ActivationTypes.INVERSE_IDENTITY:
       return 1 / x;
 
-    case ActivationTypes.SOFTMAX:
-      return 0; // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM
-
-
-
-    case ActivationTypes.MAX_POOLING:
-      return 0;
+    // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM
     case ActivationTypes.DROPOUT:
+    case ActivationTypes.MAX_POOLING:
+    case ActivationTypes.MAXOUT:
+    case ActivationTypes.SOFTMAX:
       return 0;
   }
 }
@@ -154,9 +153,11 @@ export function activationFunctionDerivative(x: number, fx: number, type: Activa
     case ActivationTypes.INVERSE_IDENTITY:
       return -(1 / (x * x));
 
+    // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM
     case ActivationTypes.DROPOUT:
     case ActivationTypes.MAX_POOLING:
+    case ActivationTypes.MAXOUT:
     case ActivationTypes.SOFTMAX:
-      return 0; // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM
+      return 0;
   }
 }

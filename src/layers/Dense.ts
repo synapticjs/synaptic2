@@ -12,7 +12,7 @@ export default class Dense implements Layer {
       throw new Error('\'Dense\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.addLayer(this.size);
+    this.layer = network.engine.addLayer(this.size);
 
     // connect all units from previous layer to this one
     boundary.layer.forEach(from => {

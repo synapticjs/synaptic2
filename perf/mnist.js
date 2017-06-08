@@ -5,8 +5,8 @@ process.env.BACKEND = process.env.BACKEND || 'WASM'
 
 const backend = synaptic.backends[process.env.BACKEND];
 
-console.log('Available backends: ' + Object.keys(synaptic.backends).map($ => $ + ': ' + typeof synaptic.backends[$]).join(' | '));
-console.log('Backend: ', backend)
+console.log('Available backends: ' + Object.keys(synaptic.backends).join(' | '));
+console.log('Backend: ', backend ? 'OK' : 'NOT FOUND')
 
 var MersenneTwister = require('mersenne-twister')
 
@@ -24,7 +24,8 @@ synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 var lstm = new synaptic.Network(
   new synaptic.layers.Input2D(28, 28),
   new synaptic.layers.Dense(15),
-  new synaptic.layers.Dense(10)
+  new synaptic.layers.Dense(10),
+  new synaptic.layers.SoftMax()
 )
 
 
