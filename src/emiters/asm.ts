@@ -1,5 +1,6 @@
 import { indent } from 'lysergic/dist/ast/helpers';
 import * as nodes from 'lysergic/dist/ast/nodes';
+import { Variable } from "../../../lysergic/dist/index";
 
 
 function baseEmit(node: nodes.Node) {
@@ -24,21 +25,30 @@ return {
 
     const isAssignment = node.operator in { '=': 1, '-=': 1, '+=': 1, '*=': 1, '/=': 1 };
 
-    if (node.lhs instanceof nodes.HeapReferenceNode && isAssignment) {
-      lhsString = `H[${node.lhs.position}]`;
+    if (isAssignment) {
+      if (node.lhs instanceof Variable) {
+        lhsString = `H[${node.lhs.position}] /* ${node.lhs.key} */`;
+      } else if (node.lhs instanceof nodes.HeapReferenceNode) {
+        lhsString = `H[${node.lhs.position}]`;
+      }
     }
 
     if (node.operator.length === 2 && node.operator[1] === '=' && node.operator != '==') {
-      return `${lhsString} = ${emit(node.lhs)} ${node.operator[0]} (${rhsString})`;
+      return `${lhsString} = \n` + indent(`${emit(node.lhs)} ${node.operator[0]} (\n${indent(rhsString)}\n)\n`);
     } else if (node.operator === '^') {
       return `pow(${emit(node.lhs)}, ${rhsString})`;
     } else if (node.operator === 'max') {
       return `max(${emit(node.lhs)}, ${rhsString})`;
     } else if (node.operator === '=') {
-      return `${lhsString} = ${rhsString}`;
+      return `${lhsString} = \n${indent(rhsString)}\n`;
     }
     return `${lhsString} ${node.operator} ${rhsString}`;
     // if `a += b` -> `a = a + (b)`
+  } else if (node instanceof Variable) {
+    if (node.hasParenthesis)
+      return `+H[${node.position}] /* ${node.key} */`;
+    else
+      return `(+H[${node.position}] /* ${node.key} */)`;
   } else if (node instanceof nodes.HeapReferenceNode) {
     if (node.hasParenthesis)
       return `+H[${node.position}]`;

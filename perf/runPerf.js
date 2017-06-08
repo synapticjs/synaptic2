@@ -1,5 +1,5 @@
 var synaptic = process.env.NODE_ENV == 'node' ? require('../dist') : require('../dist/synaptic');
-
+var printer = require('./printer')
 process.env.BACKEND = process.env.BACKEND || 'WASM'
 
 var MersenneTwister = require('mersenne-twister')
@@ -12,7 +12,7 @@ synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 
 var lstm = new synaptic.Network(
   new synaptic.layers.Input(6),
-  new synaptic.layers.LSTM(7),
+  new synaptic.layers.LSTM(6),
   new synaptic.layers.Dense(2)
 )
 
@@ -22,16 +22,20 @@ lstm.learningRate = 0.1;
 
 lstm.engine.status = synaptic.Lysergic.StatusTypes.TRAINING
 
-lstm.build().then(() => {
+async function test() {
+
+  await lstm.build()
+
+  console.time('LSTM')
 
   var targets = [2, 4];
   var distractors = [3, 5];
   var prompts = [0, 1];
   var length = 10;
-  var criterion = 0.5;
-  var iterations = 100000;
-  var rate = .1;
+  var criterion = 1;
+  var iterations = 300000;
   var schedule = {};
+
   var cost = synaptic.Lysergic.CostTypes.CROSS_ENTROPY;
 
   var trial, correct, i, j, success;
@@ -55,13 +59,11 @@ lstm.build().then(() => {
     return true;
   };
 
-  var start;
+  var start = Date.now();
 
+  var errorAvgAccumulator = 0;
+  var prediction = null;
   while (trial < iterations && success < criterion) {
-    if (trial == 1) {
-      start = Date.now();
-      console.time('LSTM')
-    }
     // generate sequence
     var sequence = [],
       sequenceLength = length - prompts.length;
@@ -81,11 +83,8 @@ lstm.build().then(() => {
       sequence.push(prompts[i]);
     }
 
-
-
     //train sequence
     var distractorsCorrect;
-    var prediction;
     var targetsCorrect = distractorsCorrect = 0;
     error = 0;
     for (i = 0; i < length; i++) {
@@ -106,7 +105,7 @@ lstm.build().then(() => {
       }
 
       // check result
-      prediction = lstm.activate(input);
+      prediction = await lstm.activate(input);
 
       if (equal(prediction, output))
         if (i < sequenceLength)
@@ -114,7 +113,7 @@ lstm.build().then(() => {
         else
           targetsCorrect++;
       else {
-        lstm.propagate(output);
+        await lstm.propagate(output);
       }
 
       error += synaptic.Lysergic.costFunction(output, prediction, synaptic.Lysergic.CostTypes.CROSS_ENTROPY);
@@ -126,14 +125,27 @@ lstm.build().then(() => {
     // calculate error
     if (trial % 1000 == 0) {
       correct = 0;
-      console.log(`${error}\t`, prediction)
-    }
 
+    }
     trial++;
     var divideError = trial % 1000;
     divideError = divideError == 0 ? 1000 : divideError;
     success = correct / divideError;
     error /= length;
+
+    if (trial % 5000 == 0) {
+      printer.printError(errorAvgAccumulator / 5000);
+      errorAvgAccumulator = 0;
+    } else {
+      errorAvgAccumulator += error;
+    }
+  }
+
+  var results = {
+    iterations: trial,
+    success: success,
+    error: error,
+    time: Date.now() - start
   }
 
   lstm.engine.status = synaptic.Lysergic.StatusTypes.IDLE
@@ -141,11 +153,10 @@ lstm.build().then(() => {
   console.timeEnd('LSTM')
   console.log({
     iterations: trial,
-    success: success,
     error: error,
-    time: Date.now() - start
-  })
-}, e => {
-  console.error(e)
-  console.error(e.stack)
-})
+    time: Date.now() - start,
+    success: results.success >= criterion
+  });
+}
+
+test();
