@@ -18,9 +18,11 @@ var lstm = new synaptic.Network(
 
 lstm.backend = new synaptic.backends[process.env.BACKEND](lstm.engine)
 lstm.engine.random = random;
-lstm.learningRate = 0.1;
+lstm.learningRate = 0.03;
 
 lstm.engine.status = synaptic.Lysergic.StatusTypes.TRAINING
+
+var logEvery = 2500;
 
 async function test() {
 
@@ -32,7 +34,7 @@ async function test() {
   var distractors = [3, 5];
   var prompts = [0, 1];
   var length = 10;
-  var criterion = 1;
+  var maxError = 0.01;
   var iterations = 500000;
   var schedule = {};
 
@@ -63,7 +65,7 @@ async function test() {
 
   var errorAvgAccumulator = 0;
   var prediction = null;
-  while (trial < iterations && success < criterion) {
+  while (trial < iterations) {
     // generate sequence
     var sequence = [],
       sequenceLength = length - prompts.length;
@@ -125,26 +127,37 @@ async function test() {
     // calculate error
     if (trial % 1000 == 0) {
       correct = 0;
-
     }
+
     trial++;
     var divideError = trial % 1000;
     divideError = divideError == 0 ? 1000 : divideError;
     success = correct / divideError;
     error /= length;
 
-    if (trial % 5000 == 0) {
-      printer.printError(errorAvgAccumulator / 5000);
+    errorAvgAccumulator += 1 - success;
+
+    if (trial % logEvery == 0) {
+      printer.printError(errorAvgAccumulator / logEvery);
+
+      if ((errorAvgAccumulator / logEvery) < maxError) {
+        break;
+      }
+
       errorAvgAccumulator = 0;
-    } else {
-      errorAvgAccumulator += error;
     }
+  }
+
+  if ((trial % logEvery) == 0) {
+    error = 1 - success;
+  } else {
+    error = errorAvgAccumulator / (trial % logEvery);
   }
 
   var results = {
     iterations: trial,
     success: success,
-    error: error,
+    error,
     time: Date.now() - start
   }
 
@@ -155,7 +168,7 @@ async function test() {
     iterations: trial,
     error: error,
     time: Date.now() - start,
-    success: results.success >= criterion
+    success: error < maxError
   });
 }
 
