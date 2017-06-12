@@ -3,8 +3,8 @@ function interpolateBoundary(t, a, b) {
   return Math.min(Math.max(a, a + t * (b - a)), b);
 }
 
-module.exports.printError = function (error) {
-  var width = 100;
+module.exports.printError = function (error, errorSet) {
+  var width = 50;
 
   var spaces = width - interpolateBoundary(error, 0, width)
 
@@ -12,22 +12,15 @@ module.exports.printError = function (error) {
 
   progress = progress.map(($, $$) => $$ <= spaces ? '=' : ' ').join('')
 
-  console.log('Error: ' + error.toFixed(6) + ' [' + progress + ']');
+  return 'Error: ' + error.toFixed(6) + ' [' + progress + '] ' + (errorSet ? '\n' + module.exports.errorSet(errorSet) : "");
 }
 
 const braile = ' ⡀⣀⣄⣤⣴⣶⣾⣿'
 
-module.exports.every = function (predicted, target, error) {
-  var width = 100;
+module.exports.errorSet = function (errors) {
+  var max = Math.max(...errors);
 
-  var spaces = width - interpolateBoundary(error, 0, width)
+  errors = errors.map($ => $ / max)
 
-  var progress = (new Array(predicted.length)).fill(0).map(($, $$) => target[$$] - predicted[$$]);
-
-  var max = Math.max(...progress);
-  var min = Math.min(...progress);
-
-  progress = progress.map($ => ($ - min) / (max - min))
-
-  console.log('Prediction error: ' + error.toFixed(6) + ' [' + progress.map($ => braile[($ * 8) | 0]).join('') + ']');
+  return 'Error set: [' + errors.map($ => braile[($ * 8) | 0] || ' ').join('') + ']';
 }
