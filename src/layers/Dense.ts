@@ -1,5 +1,6 @@
 import Network, { Boundary, Layer } from '../Network';
 import { ActivationTypes } from "../../../lysergic/dist/index";
+import { createRandomWeights } from "./layerUtils";
 
 export default class Dense implements Layer {
 
@@ -15,10 +16,14 @@ export default class Dense implements Layer {
 
     this.layer = network.engine.addLayer(this.size, this.activationType);
 
+    let weights = createRandomWeights(boundary.layer.length * this.layer.length);
+
+    let actualValue = 0;
+
     // connect all units from previous layer to this one
     boundary.layer.forEach(from => {
       this.layer.forEach(to => {
-        network.addConnection(from, to);
+        network.addConnection(from, to, weights[actualValue++]);
       });
     });
 

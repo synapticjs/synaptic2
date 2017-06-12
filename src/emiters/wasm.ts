@@ -1,7 +1,7 @@
 import * as nodes from 'lysergic/dist/ast/nodes';
+import binaryen = require('binaryen');
 
-declare var require, console;
-const Binaryen = require('../../vendor/binaryen');
+declare var console;
 
 export const comparisonMap = {
   '>': 'gt',
@@ -27,10 +27,10 @@ export function emit(node: nodes.Node, module) {
   }
 
   if (node instanceof nodes.DocumentNode) {
-    if (!module) module = new Binaryen.Module();
+    if (!module) module = new binaryen.Module();
 
-    let fiF = module.addFunctionType("fiF", Binaryen.f64, [Binaryen.f64]);
-    let fiFF = module.addFunctionType("fiFF", Binaryen.f64, [Binaryen.f64, Binaryen.f64]);
+    let fiF = module.addFunctionType("fiF", binaryen.f64, [binaryen.f64]);
+    let fiFF = module.addFunctionType("fiFF", binaryen.f64, [binaryen.f64, binaryen.f64]);
 
     module.addImport("exp", "imports", "exp", fiF);
     module.addImport("log", "imports", "log", fiF);
@@ -38,7 +38,7 @@ export function emit(node: nodes.Node, module) {
 
     let functions = node.children.filter($ => $ instanceof nodes.FunctionNode).map(x => emit(x, module));
 
-    let testSignature = module.addFunctionType(`test$$signature`, Binaryen.f64/*ret*/, [/*params*/]);
+    let testSignature = module.addFunctionType(`test$$signature`, binaryen.f64/*ret*/, [/*params*/]);
     let testFunction = module.addFunction(
       'test',
       testSignature,
@@ -87,7 +87,7 @@ export function emit(node: nodes.Node, module) {
         return module.nop();
       }
     } else if (isPow) {
-      return module.callImport("pow", [emit(node.lhs, module), emit(node.rhs, module)], Binaryen.f64);
+      return module.callImport("pow", [emit(node.lhs, module), emit(node.rhs, module)], binaryen.f64);
     } else if (isComparison) {
       return module.f64[comparisonMap[node.operator]](emit(node.lhs, module), emit(node.rhs, module));
     } else if (isMath) {
@@ -113,11 +113,11 @@ export function emit(node: nodes.Node, module) {
       case '-':
         return module.f64.neg(emit(node.rhs, module));
       case 'exp':
-        return module.callImport("exp", [emit(node.rhs, module)], Binaryen.f64);
+        return module.callImport("exp", [emit(node.rhs, module)], binaryen.f64);
       case 'rand':
-        return module.callImport("rand", [emit(node.rhs, module)], Binaryen.f64);
+        return module.callImport("rand", [emit(node.rhs, module)], binaryen.f64);
       case 'ln':
-        return module.callImport("log", [emit(node.rhs, module)], Binaryen.f64);
+        return module.callImport("log", [emit(node.rhs, module)], binaryen.f64);
       case 'abs':
         return module.f64.abs(emit(node.rhs, module));
       case 'sqrt':
@@ -128,7 +128,7 @@ export function emit(node: nodes.Node, module) {
   } else if (node instanceof nodes.BlockNode) {
     return module.block(node.name || ``, node.children.map(x => emit(x, module)));
   } else if (node instanceof nodes.FunctionNode) {
-    let functionSignature = module.addFunctionType(`${node.name}$$signature`, Binaryen.None/*ret*/, [/*params*/]);
+    let functionSignature = module.addFunctionType(`${node.name}$$signature`, binaryen.none/*ret*/, [/*params*/]);
 
     // Create the function
     let theFunction = module.addFunction(node.name, functionSignature, [/*params*/], emit(node.body, module));

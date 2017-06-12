@@ -28,13 +28,14 @@
     "ts-loader": "^2.0.3",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
-    "typescript": "^2.3.2",
+    "typescript": "^2.3.4",
     "webpack": "^1.13.2",
     "webpack-dashboard": "^0.2.0",
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
     "@types/webassembly-js-api": "0.0.1",
+    "binaryen": "^1.37.13",
     "lysergic": "latest"
   },
   "jest": {

@@ -37,8 +37,10 @@ lstm.learningRate = 0.1;
 console.time('Build network')
 
 function log(partialResult) {
-  printer.printError(partialResult.error * 10);
+  printer.printError(partialResult.error);
 }
+
+
 
 lstm.backend.build().then(() => {
   console.timeEnd('Build network')
@@ -46,13 +48,15 @@ lstm.backend.build().then(() => {
   var trainer = new synaptic.Trainer(lstm)
 
   trainer.train(mnistSet.training, {
-    learningRate: 0.1,
-    minError: 0.0001,
-    maxIterations: 30,
-    log
+    learningRate: 0.11,
+    minError: 0.001,
+    maxIterations: 1800,
+    log,
+    // every: printer.every
   })
     .then(result => {
       console.timeEnd('MNIST')
+      if (result.error > 0.001) process.exit(1);
       console.log(result)
     }, e => {
       console.error(e);

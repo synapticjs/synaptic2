@@ -16,6 +16,7 @@ export interface TrainOptions {
   costFunction?: CostTypes;
   logEvery?: number;
   log?: (partial: TrainResult) => void;
+  every?: (predicted: ArrayLike<number>, target: ArrayLike<number>, error: number) => void;
 }
 
 export interface TrainResult {
@@ -31,7 +32,7 @@ export abstract class Backend {
   abstract activate(inputs: number[]): Promise<ArrayLike<number>>;
   abstract propagate(targets: number[]): Promise<void>;
 
-  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction, log, logEvery }: TrainOptions): Promise<TrainResult> {
+  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction, log, logEvery, every }: TrainOptions): Promise<TrainResult> {
     if (!this.built) {
       await this.build();
     }
@@ -47,11 +48,15 @@ export abstract class Backend {
     // train
     while (error > minError && iterations < maxIterations) {
       error = 0;
+      let predictedOutput: ArrayLike<number> = null;
       for (let index = 0; index < dataset.length; index++) {
         const { input, output } = dataset[index];
-        const predictedOutput = await this.activate(input);
+        predictedOutput = await this.activate(input);
         await this.propagate(output);
-        error += Lysergic.costFunction(output, predictedOutput, costFunction);
+        let partialError = Lysergic.costFunction(output, predictedOutput, costFunction);
+        error += partialError;
+
+        every && every(predictedOutput, output, partialError);
       }
       error /= dataset.length;
 
@@ -60,7 +65,8 @@ export abstract class Backend {
         const partialResult = {
           error,
           iterations,
-          time: new Date().getTime() - startTime
+          time: new Date().getTime() - startTime,
+          predictedOutput
         };
         if (logEvery) {
           if (iterations % logEvery) {
@@ -126,6 +132,9 @@ export function activationFunction(x: number, type: ActivationTypes): number {
     case ActivationTypes.INVERSE_IDENTITY:
       return 1 / x;
 
+    case ActivationTypes.STEP:
+      return x > 0 ? 1 : 0;
+
     // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM
     case ActivationTypes.DROPOUT:
     case ActivationTypes.MAX_POOLING:
@@ -165,6 +174,9 @@ export function activationFunctionDerivative(x: number, fx: number, type: Activa
 
     case ActivationTypes.INVERSE_IDENTITY:
       return -(1 / (x * x));
+
+    case ActivationTypes.STEP:
+      return 0;
 
     // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM
     case ActivationTypes.DROPOUT:
