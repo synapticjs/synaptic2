@@ -7,7 +7,7 @@
     "clean": "(rm -rf dist || true)",
     "build": "npm run clean && NODE_ENV=production `npm bin`/tsc && NODE_ENV=production webpack --config webpack.config.js && cp ./static/* dist",
     "build:test": "npm run clean && NODE_ENV=production `npm bin`/tsc && cp static/* dist",
-    "test": "npm run build:test && jest --logHeapUsage --runInBand",
+    "test": "npm run build:test && mocha dist/test/**/*.spec.js",
     "test:node": "npm run build:test && NODE_ENV=node jest --logHeapUsage --runInBand",
     "profile": "npm run build:test && (rm *.log || true) && node --prof perf/runPerf.js && (for f in *.log; do node --prof-process $f; done)",
     "profile:node": "npm run build:node && (rm *.log || true) && (NODE_ENV=node node --prof perf/runPerf.js) && (for f in *.log; do node --prof-process $f; done)",
@@ -20,11 +20,13 @@
   "license": "MIT",
   "typings": "dist/index.d.ts",
   "devDependencies": {
+    "@types/mocha": "^2.2.41",
+    "@types/webassembly-js-api": "0.0.1",
     "babili": "0.0.12",
     "babili-webpack-plugin": "0.0.11",
-    "jest-cli": "^16.0.2",
     "mersenne-twister": "^1.1.0",
     "mnist": "^1.0.5",
+    "mocha": "^3.4.2",
     "ts-loader": "^2.0.3",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
@@ -34,7 +36,6 @@
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
-    "@types/webassembly-js-api": "0.0.1",
     "binaryen": "^1.37.13",
     "lysergic": "latest"
   },

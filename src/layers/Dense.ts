@@ -1,5 +1,5 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes } from "../../../lysergic/dist/index";
+import { ActivationTypes } from "lysergic";
 import { createRandomWeights } from "./layerUtils";
 
 export default class Dense implements Layer {
