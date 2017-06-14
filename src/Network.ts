@@ -1,6 +1,5 @@
-import Lysergic, { StatusTypes, ActivationTypes } from 'lysergic';
-import { Backend } from './backends';
-import CPU from './backends/CPU';
+import Lysergic, { StatusTypes, ActivationTypes, ILysergicOptions } from 'lysergic';
+import backends, { Backend } from './backends';
 
 
 
@@ -21,28 +20,40 @@ export default class Network {
   engine: Lysergic;
   backend: Backend;
 
+  constructor(options: { backend?: typeof Backend; engine?: Lysergic; layers?: Layer[], engineOptions?: ILysergicOptions });
   constructor(...layers: Layer[]);
-  constructor(options: { backend?: Backend; engine?: Lysergic; bias?: boolean; generator?: any; layers?: Layer[] });
   constructor(...args) {
     let layers;
 
     let options = args[0];
 
+    let engine: Lysergic = null;
+    let backendCtor = null;
+
+    let engineOptions: ILysergicOptions = {};
+
     if (hasOptions(options)) {
       if ('backend' in options) {
-        this.backend = options.backend;
-      } else if ('engine' in options) {
-        this.backend = new CPU(options.engine);
-      } else if ('bias' in options || 'generator' in options) {
-        const engine = new Lysergic(options);
-        this.backend = new CPU(engine);
+        backendCtor = options.backend;
       }
+
+      if ('engine' in options) {
+        engine = options.engine;
+      }
+
+      if ('engineOptions' in options) {
+        engineOptions = options.engineOptions;
+      }
+
       layers = options.layers || [];
     } else {
-      this.backend = new CPU();
       layers = [...args];
     }
 
+    engine = engine || new Lysergic(engineOptions);
+    backendCtor = backendCtor || backends.ASM;
+
+    this.backend = new backendCtor(engine);
     this.engine = this.backend.engine;
 
     let prevBoundary: Boundary = null;
@@ -102,7 +113,7 @@ export default class Network {
   }
 
   propagate(target: number[]) {
-    this.backend.propagate(target);
+    return this.backend.propagate(target);
   }
 
   static fromJSON(json) {

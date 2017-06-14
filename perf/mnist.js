@@ -23,11 +23,13 @@ var random = generator.random.bind(generator);
 synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 synaptic.Lysergic.RandomGenerator = random;
 
-var lstm = new synaptic.Network(
-  new synaptic.layers.Input2D(28, 28),
-  new synaptic.layers.Dense(15),
-  new synaptic.layers.Dense(10, synaptic.Lysergic.ActivationTypes.SOFTMAX)
-)
+var lstm = new synaptic.Network({
+  layers: [
+    new synaptic.layers.Input2D(28, 28),
+    new synaptic.layers.Dense(15),
+    new synaptic.layers.Dense(10, synaptic.Lysergic.ActivationTypes.SOFTMAX)
+  ]
+})
 
 
 lstm.backend = new backend(lstm.engine)
