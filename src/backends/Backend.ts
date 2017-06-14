@@ -75,7 +75,7 @@ export abstract class Backend {
           predictedOutput
         };
         if (logEvery && logEvery > 1) {
-          if (iterations % logEvery) {
+          if ((iterations % logEvery) == 0) {
             log(partialResult, errorSet);
           }
         } else log(partialResult, errorSet);

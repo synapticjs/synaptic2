@@ -13,7 +13,7 @@ export function createRandomWeights(size: number, generator = Math.random): Floa
 export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] = 0.02 * generator() + 0.01;
+      array[i] = 0.0002 * generator();
     }
   return array;
 }

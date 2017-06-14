@@ -6,7 +6,7 @@ export default class Dense implements Layer {
 
   layer: number[];
 
-  constructor(public size: number, public activationType: ActivationTypes) { }
+  constructor(public size: number, public activationType?: ActivationTypes) { }
 
   init(network: Network, boundary: Boundary): Boundary {
 

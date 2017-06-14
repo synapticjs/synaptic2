@@ -1,4 +1,4 @@
-var synaptic = process.env.NODE_ENV == 'node' ? require('../dist') : require('../dist/synaptic');
+var synaptic = process.env.NODE_ENV == 'node' ? require('../dist/src') : require('../dist/synaptic');
 var printer = require('./printer')
 
 process.env.BACKEND = process.env.BACKEND || 'WASM'
