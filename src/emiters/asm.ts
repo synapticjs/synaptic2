@@ -1,6 +1,6 @@
 import { indent } from 'lysergic/dist/ast/helpers';
 import * as nodes from 'lysergic/dist/ast/nodes';
-import { Variable } from "../../../lysergic/dist/index";
+import { Variable } from "lysergic";
 
 
 function baseEmit(node: nodes.Node) {

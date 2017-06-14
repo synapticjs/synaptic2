@@ -21,12 +21,12 @@ var generator = new MersenneTwister(100010);
 var random = generator.random.bind(generator);
 
 synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
+synaptic.Lysergic.RandomGenerator = random;
 
 var lstm = new synaptic.Network(
-    new synaptic.layers.Input2D(28, 28),
-    new synaptic.layers.Dense(15),
-    new synaptic.layers.Dense(10),
-    new synaptic.layers.SoftMax()
+  new synaptic.layers.Input2D(28, 28),
+  new synaptic.layers.Dense(15),
+  new synaptic.layers.Dense(10, synaptic.Lysergic.ActivationTypes.SOFTMAX)
 )
 
 
@@ -37,34 +37,34 @@ lstm.learningRate = 0.1;
 console.time('Build network')
 
 function log(partialResult, errorSet) {
-    console.log('\x1B[?25l\x1Bc');
-    console.log(printer.printError(partialResult.error, errorSet));
+  console.log('\x1B[?25l\x1Bc');
+  console.log(printer.printError(partialResult.error, errorSet));
 }
 
 
 
 lstm.backend.build().then(() => {
-    console.timeEnd('Build network')
-    console.time('MNIST')
-    var trainer = new synaptic.Trainer(lstm)
+  console.timeEnd('Build network')
+  console.time('MNIST')
+  var trainer = new synaptic.Trainer(lstm)
 
-    trainer.train(mnistSet.training, {
-        learningRate: 0.11,
-        minError: 0.001,
-        maxIterations: 1800,
-        log,
-        costFunction: synaptic.Lysergic.CostTypes.SOFTMAX
-        // every: printer.every
-    })
-        .then(result => {
-            console.timeEnd('MNIST')
-            if (result.error > 0.001) process.exit(1);
-            console.log(result)
-        }, e => {
-            console.error(e);
-            console.error(e.stack);
-        });
+  trainer.train(mnistSet.training, {
+    learningRate: 0.11,
+    minError: 0.001,
+    maxIterations: 1800,
+    log,
+    costFunction: synaptic.Lysergic.CostTypes.SOFTMAX
+    // every: printer.every
+  })
+    .then(result => {
+      console.timeEnd('MNIST')
+      if (result.error > 0.001) process.exit(1);
+      console.log(result)
+    }, e => {
+      console.error(e);
+      console.error(e.stack);
+    });
 }, e => {
-    console.error(e);
-    console.error(e.stack);
+  console.error(e);
+  console.error(e.stack);
 })
