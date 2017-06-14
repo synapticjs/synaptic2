@@ -31,7 +31,6 @@ var lstm = new synaptic.Network({
   ]
 })
 
-
 lstm.backend = new backend(lstm.engine)
 lstm.engine.random = random;
 lstm.learningRate = 0.1;
