@@ -13,7 +13,7 @@ export function createRandomWeights(size: number, generator = Math.random): Floa
 export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] = 0.0001 * generator();
+      array[i] = 0.02 * generator() + 0.01;
     }
   return array;
 }
@@ -21,7 +21,7 @@ export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Floa
 export function fillRandomArraySigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] = 0.0002 * (generator() * 2 - 1);
+      array[i] = 0.02 * (generator() * 2 - 1) + 0.1;
     }
   return array;
 }
