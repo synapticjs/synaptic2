@@ -1,5 +1,5 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes } from "../../../lysergic/dist/index";
+import { ActivationTypes } from "lysergic";
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
