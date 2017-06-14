@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "binaryen": "^1.37.13",
-    "lysergic": "latest"
+    "lysergic": "0.1.5"
   },
   "jest": {
     "testEnvironment": "node"
