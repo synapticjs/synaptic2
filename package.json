@@ -2,7 +2,7 @@
   "name": "synaptic-engine",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "clean": "(rm -rf dist || true)",
     "build": "npm run clean && NODE_ENV=production `npm bin`/tsc && NODE_ENV=production webpack --config webpack.config.js && cp ./static/* dist",
@@ -18,7 +18,7 @@
   },
   "author": "Juan Cazala <cazala@mail.sfsu.edu> (http://caza.la/)",
   "license": "MIT",
-  "typings": "dist/index.d.ts",
+  "typings": "dist/src/index.d.ts",
   "devDependencies": {
     "@types/mocha": "^2.2.41",
     "@types/webassembly-js-api": "0.0.1",
@@ -38,8 +38,5 @@
   "dependencies": {
     "binaryen": "^1.37.13",
     "lysergic": "0.1.5"
-  },
-  "jest": {
-    "testEnvironment": "node"
   }
 }

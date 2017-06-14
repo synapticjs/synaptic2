@@ -1,2 +1,2 @@
-import synaptic = require('.');
+import synaptic = require('./src');
 export = synaptic;
