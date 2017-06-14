@@ -62,8 +62,8 @@ export class AND extends PerformanceTest {
       throw new Error(`[1,0] did not output 0, got ${result[0]}`);
 
     result = await network.activate([1, 1]);
-    if (Math.round(result[0]) != 0)
-      throw new Error(`[1,1] did not output 0, got ${result[0]}`);
+    if (Math.round(result[0]) != 1)
+      throw new Error(`[1,1] did not output 1, got ${result[0]}`);
   }
 };
 

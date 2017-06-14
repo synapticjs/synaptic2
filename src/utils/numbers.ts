@@ -1,14 +1,34 @@
-export function createRandomWeights(size: number, generator = Math.random): Float64Array {
+export function randn(size: number, min = 0, max = 1, generator = Math.random): Float64Array {
   let array = new Float64Array(size);
 
   fillRandomArrayUnsigned(array, generator);
+
+  let scale = max - min;
+
+  scaleVector(array, scale);
+  addVector(array, min);
 
   // softMaxArray(array);
 
   return array;
 }
 
+export function scaleVector<T extends number[] | Float32Array | Float64Array>(array: T, scale: number) {
+  if (array && 'length' in array && array.length)
+    for (let i = 0; i < array.length; i++) {
+      array[i] *= scale;
+    }
+  return array;
+}
 
+
+export function addVector<T extends number[] | Float32Array | Float64Array>(array: T, scale: number) {
+  if (array && 'length' in array && array.length)
+    for (let i = 0; i < array.length; i++) {
+      array[i] += scale;
+    }
+  return array;
+}
 
 export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
@@ -82,9 +102,11 @@ export function normalizeArray(array: number[] | Float32Array | Float64Array) {
   return;
 }
 
-
-export function gaussianNormalization(array: number[] | Float32Array | Float64Array) {
-  let invSqrt = 1 / Math.sqrt(array.length);
+// http://cs231n.github.io/neural-networks-2/
+export function gaussianNormalization(array: number[] | Float32Array | Float64Array, num = 0) {
+  let invSqrt = num == 0
+    ? 1 / Math.sqrt(array.length)
+    : 1 / Math.sqrt(num / array.length);
 
   for (let i = 0; i < array.length; i++) {
     array[i] = array[i] / invSqrt;

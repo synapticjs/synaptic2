@@ -29,7 +29,8 @@ export default class Dropout implements Layer {
       network.addConnection(from, to, 1);
 
       // this unit will act as a gate, randomly dropping inputs
-      const gate = network.addUnit(ActivationTypes.DROPOUT);
+      // const gate = network.addUnit(ActivationTypes.DROPOUT);
+      const gate = network.addUnit(ActivationTypes.IDENTITY);
       network.addGate(from, to, gate);
       this.gater.push(gate);
       // use the unit's state to store the chances to drop

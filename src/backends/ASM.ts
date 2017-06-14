@@ -1,4 +1,4 @@
-declare var console;
+// declare var console;
 import { StatusTypes } from 'lysergic';
 import { Backend } from './Backend';
 import emit from '../emiters/asm';
@@ -21,7 +21,7 @@ export default class ASM extends Backend {
     const AST = this.engine.getAST();
     const source = emit(AST);
 
-    console.log(source);
+    // console.log(source);
     const getModule = new Function('stdlib', 'foreign', 'heap', source);
     const foreign = { random: this.engine.random };
     const module = getModule({ Math, Float64Array }, foreign, this.engine.heap);

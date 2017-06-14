@@ -102,14 +102,14 @@ export class CPU extends Backend {
         const inputUnitWithHigherActivation = inputsOfGatedUnit.reduce((found, unit) => this.engine.activation[unit] === maxActivation ? unit : found, null);
         return inputUnitWithHigherActivation === inputUnit ? 1 : 0;
 
-      case ActivationTypes.DROPOUT:
-        const chances = x;
+      // case ActivationTypes.DROPOUT:
+      //   const chances = x;
 
-        if (this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING) {
-          return 0;
-        } else {
-          return 1;
-        }
+      //   if (this.engine.random() < chances && this.engine.status === StatusTypes.TRAINING) {
+      //     return 0;
+      //   } else {
+      //     return 1;
+      //   }
       default:
         return activationFunction(x, type);
     }
@@ -124,8 +124,7 @@ export class CPU extends Backend {
     switch (type) {
       case ActivationTypes.MAX_POOLING:
         return 0;
-      case ActivationTypes.DROPOUT:
-        return 0;
+
       default:
         return activationFunctionDerivative(x, fx, type);
     }

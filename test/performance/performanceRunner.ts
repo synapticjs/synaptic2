@@ -13,7 +13,8 @@ export async function run(runner: PerformanceTest, options: {
 
   console.time('Train');
   let trainResult = await runner.run(network);
-  console.time('Train');
+  console.timeEnd('Train');
+  console.log('Train result: ', trainResult);
 
   let testSet = await runner.getTestingSet();
 

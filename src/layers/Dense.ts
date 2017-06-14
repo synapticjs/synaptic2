@@ -1,6 +1,6 @@
 import Network, { Boundary, Layer } from '../Network';
 import { ActivationTypes } from "lysergic";
-import { createRandomWeights } from "./layerUtils";
+import numbers = require("../utils/numbers");
 
 export default class Dense implements Layer {
 
@@ -16,7 +16,10 @@ export default class Dense implements Layer {
 
     this.layer = network.engine.addLayer(this.size, this.activationType);
 
-    let weights = createRandomWeights(boundary.layer.length * this.layer.length, network.engine.random);
+    let weights = numbers.randn(boundary.layer.length * this.layer.length, 0, 1, network.engine.random);
+
+    // http://cs231n.github.io/neural-networks-2/
+    numbers.gaussianNormalization(weights, 2);
 
     let actualValue = 0;
 

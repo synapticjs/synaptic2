@@ -3,7 +3,7 @@ import MersenneTwister = require('mersenne-twister');
 import { layers, Network, Lysergic } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainResult } from "../../../src/backends/index";
-import { CostTypes, ActivationTypes } from 'lysergic';
+import { CostTypes } from 'lysergic';
 
 const generator = new MersenneTwister(100010);
 const random = generator.random.bind(generator);
@@ -11,11 +11,10 @@ const random = generator.random.bind(generator);
 let baseNetwork = new Network({
   layers: [
     new layers.Input(1),
-    new layers.Dense(1, ActivationTypes.TANH)
+    new layers.Dense(1)
   ],
   engineOptions: {
-    generator: random,
-    bias: false
+    generator: random
   }
 });
 

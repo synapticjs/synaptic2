@@ -40,7 +40,7 @@ describe('Performance tasks', () => {
     it('OR', run(OR, backends.ASM));
     it('NOT', run(NOT, backends.ASM));
     it('MNIST', run(MNIST, backends.ASM));
-    it.only('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.ASM));
+    it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.ASM));
   });
 
   describe('WASM', () => {
