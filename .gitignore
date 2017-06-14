@@ -7,3 +7,6 @@ dist
 typings
 typings/**/*
 typings/**
+package-lock.json
+*.log
+*.log.*
