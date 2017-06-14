@@ -1,25 +1,27 @@
-export function createRandomWeights(size: number): Float64Array {
+export function createRandomWeights(size: number, generator = Math.random): Float64Array {
   let array = new Float64Array(size);
 
-  fillRandomArrayUnsigned(array);
+  fillRandomArrayUnsigned(array, generator);
 
   // softMaxArray(array);
 
   return array;
 }
 
-export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Float64Array>(array: T): T {
+
+
+export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] = 0.0001 * Math.random();
+      array[i] = 0.0001 * generator();
     }
   return array;
 }
 
-export function fillRandomArraySigned<T extends number[] | Float32Array | Float64Array>(array: T): T {
+export function fillRandomArraySigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] = 0.0002 * (Math.random() - 0.5);
+      array[i] = 0.0002 * (generator() * 2 - 1);
     }
   return array;
 }
@@ -75,6 +77,17 @@ export function normalizeArray(array: number[] | Float32Array | Float64Array) {
 
   for (let i = 0; i < array.length; i++) {
     array[i] = (array[i] - min) / distance;
+  }
+
+  return;
+}
+
+
+export function gaussianNormalization(array: number[] | Float32Array | Float64Array) {
+  let invSqrt = 1 / Math.sqrt(array.length);
+
+  for (let i = 0; i < array.length; i++) {
+    array[i] = array[i] / invSqrt;
   }
 
   return;

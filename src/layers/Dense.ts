@@ -16,7 +16,7 @@ export default class Dense implements Layer {
 
     this.layer = network.engine.addLayer(this.size, this.activationType);
 
-    let weights = createRandomWeights(boundary.layer.length * this.layer.length);
+    let weights = createRandomWeights(boundary.layer.length * this.layer.length, network.engine.random);
 
     let actualValue = 0;
 
