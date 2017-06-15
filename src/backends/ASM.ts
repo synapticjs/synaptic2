@@ -72,7 +72,7 @@ return {
     }
 
     // start training
-    let startTime = new Date().getTime();
+    let startTime = Date.now();
     let error = Infinity;
     let iterations = 0;
 
@@ -98,7 +98,7 @@ return {
     return {
       error,
       iterations,
-      time: new Date().getTime() - startTime
+      time: Date.now() - startTime
     };
   }
 }

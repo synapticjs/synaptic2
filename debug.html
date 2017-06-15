@@ -50,41 +50,41 @@
   ]
 
   function h() {
-    console.log(lstm.activate([1,0,1]))
-    console.log(lstm2.activate([1,0,1]))
+    console.log(lstm.activate([1, 0, 1]))
+    console.log(lstm2.activate([1, 0, 1]))
 
-    console.log(lstm.propagate([1,0,1]))
-    console.log(lstm2.propagate([1,0,1]))
+    console.log(lstm.propagate([1, 0, 1]))
+    console.log(lstm2.propagate([1, 0, 1]))
 
-    console.log(lstm.activate([0,1,0]))
-    console.log(lstm2.activate([0,1,0]))
+    console.log(lstm.activate([0, 1, 0]))
+    console.log(lstm2.activate([0, 1, 0]))
 
-    console.log(lstm.propagate([0,1,0]))
-    console.log(lstm2.propagate([0,1,0]))
+    console.log(lstm.propagate([0, 1, 0]))
+    console.log(lstm2.propagate([0, 1, 0]))
 
-    console.log(lstm.activate([1,0,1]))
-    console.log(lstm2.activate([1,0,1]))
+    console.log(lstm.activate([1, 0, 1]))
+    console.log(lstm2.activate([1, 0, 1]))
 
-    console.log(lstm.propagate([1,0,1]))
-    console.log(lstm2.propagate([1,0,1]))
+    console.log(lstm.propagate([1, 0, 1]))
+    console.log(lstm2.propagate([1, 0, 1]))
 
-    console.log(lstm.activate([0,1,0]))
-    console.log(lstm2.activate([0,1,0]))
+    console.log(lstm.activate([0, 1, 0]))
+    console.log(lstm2.activate([0, 1, 0]))
 
-    console.log(lstm.propagate([0,1,0]))
-    console.log(lstm2.propagate([0,1,0]))
+    console.log(lstm.propagate([0, 1, 0]))
+    console.log(lstm2.propagate([0, 1, 0]))
 
-    console.log(lstm.activate([1,0,1]))
-    console.log(lstm2.activate([1,0,1]))
+    console.log(lstm.activate([1, 0, 1]))
+    console.log(lstm2.activate([1, 0, 1]))
 
-    console.log(lstm.propagate([1,0,1]))
-    console.log(lstm2.propagate([1,0,1]))
+    console.log(lstm.propagate([1, 0, 1]))
+    console.log(lstm2.propagate([1, 0, 1]))
 
-    console.log(lstm.activate([0,1,0]))
-    console.log(lstm2.activate([0,1,0]))
+    console.log(lstm.activate([0, 1, 0]))
+    console.log(lstm2.activate([0, 1, 0]))
 
-    console.log(lstm.propagate([0,1,0]))
-    console.log(lstm2.propagate([0,1,0]))
+    console.log(lstm.propagate([0, 1, 0]))
+    console.log(lstm2.propagate([0, 1, 0]))
   }
 
 
@@ -92,12 +92,14 @@
   var trainer2 = new synaptic.Trainer(ff2)
   var trainer3 = new synaptic.Trainer(ff3)
   function b() {
+    console.time('ASM')
     trainer.train(XOR, {
       learningRate: 0.3,
       minError: 0.000005,
       maxIterations: 5000
     })
       .then(result => {
+        console.timeEnd('ASM')
         // document.write('<pre>ASM:' + JSON.stringify(result, null, 2) + '</pre>')
         console.log('ASM', result)
         console.log(`[0, 0] => ${ff.activate([0, 0])}`)

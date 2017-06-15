@@ -1,4 +1,4 @@
-declare var console;
+
 
 import Lysergic, { ActivationTypes, CostTypes, StatusTypes } from 'lysergic';
 import { TrainEntry, Backend, TrainOptions, TrainResult } from '.';
@@ -282,7 +282,6 @@ export default class CPU implements Backend {
       }
       error /= dataset.length;
       iterations++;
-      console.log({ error, iterations });
     }
 
     // end training
