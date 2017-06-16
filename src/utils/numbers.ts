@@ -1,3 +1,5 @@
+import { ActivationTypes } from "lysergic";
+
 export function randn(size: number, min = 0, max = 1, generator = Math.random): Float64Array {
   let array = new Float64Array(size);
 
@@ -113,4 +115,35 @@ export function gaussianNormalization(array: number[] | Float32Array | Float64Ar
   }
 
   return;
+}
+
+
+
+// http://cs231n.github.io/neural-networks-2/
+export function getWeightsFor(units: number, activationType: ActivationTypes, generator = Math.random) {
+  let weights = randn(units, 0, 1, generator);
+
+  if (activationType == ActivationTypes.SOFTMAX) {
+    // http://cs231n.github.io/neural-networks-2/
+    gaussianNormalization(weights, 2);
+    return weights;
+  }
+
+  if (activationType == ActivationTypes.TANH) {
+    gaussianNormalization(weights, 2);
+    return weights;
+  }
+
+  if (activationType == ActivationTypes.LOGISTIC_SIGMOID) {
+    gaussianNormalization(weights, 2);
+    scaleVector(weights, 4);
+    return weights;
+  }
+
+
+  scaleVector(weights, 0.002);
+  addVector(weights, 0.001);
+
+
+  return weights;
 }

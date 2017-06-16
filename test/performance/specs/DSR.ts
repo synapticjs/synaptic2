@@ -24,7 +24,8 @@ const baseNetwork = new Network({
     new layers.Dense(2)
   ],
   engineOptions: {
-    generator: random
+    generator: random,
+    bias: true
   }
 });
 

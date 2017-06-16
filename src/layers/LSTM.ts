@@ -1,5 +1,6 @@
 import Network, { Boundary, Layer } from '../Network';
 import { ActivationTypes } from "lysergic";
+import numbers = require("../utils/numbers");
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
@@ -32,7 +33,10 @@ export default class LSTM implements Layer {
     this.prevLayer = boundary.layer;
     this.inputGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
     this.forgetGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
-    this.memoryCell = network.engine.addLayer(this.memoryBlocks, ActivationTypes.TANH);
+
+    // WHY SOFTSIGN? https://deeplearning4j.org/lstm.html
+    this.memoryCell = network.engine.addLayer(this.memoryBlocks, ActivationTypes.SOFTSIGN);
+
     this.outputGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
 
     // connection from previous layer to memory cell
@@ -82,10 +86,14 @@ export default class LSTM implements Layer {
 
 // helper to connect layers
 function connectLayers(network: Network, from: number[], to: number[], connectionType?) {
+  let weights = numbers.getWeightsFor(from.length * to.length, network.engine.activationFunction[from[0]], network.engine.random);
+
+  let i = 0;
+
   from.forEach((neuronA, indexA) => {
     to.forEach((neuronB, indexB) => {
       if (from !== to || indexA === indexB) { // if layers are different, connect all to all, if self-connecting layer, just connect matching indexes (elementwise)
-        network.addConnection(neuronA, neuronB);
+        network.addConnection(neuronA, neuronB, weights[i++]);
       }
     });
   });

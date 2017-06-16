@@ -1,5 +1,5 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes, WHOLE_LAYER_ACTIVATION_KIND } from "lysergic";
+import { ActivationTypes } from "lysergic";
 import numbers = require("../utils/numbers");
 
 export default class Dense implements Layer {
@@ -16,25 +16,14 @@ export default class Dense implements Layer {
 
     this.layer = network.engine.addLayer(this.size, this.activationType);
 
-    let weights = numbers.randn(boundary.layer.length * this.layer.length, 0, 1, network.engine.random);
+    let weights = numbers.getWeightsFor(boundary.layer.length * this.layer.length, this.activationType, network.engine.random);
 
-    if (
-      this.activationType & WHOLE_LAYER_ACTIVATION_KIND
-      || this.activationType == ActivationTypes.TANH
-    ) {
-      // http://cs231n.github.io/neural-networks-2/
-      numbers.gaussianNormalization(weights, 2);
-    } else {
-      numbers.scaleVector(weights, 0.002);
-      numbers.addVector(weights, 0.001);
-    }
-
-    let actualValue = 0;
+    let i = 0;
 
     // connect all units from previous layer to this one
     boundary.layer.forEach(from => {
       this.layer.forEach(to => {
-        network.addConnection(from, to, weights[actualValue++]);
+        network.addConnection(from, to, weights[i++]);
       });
     });
 
