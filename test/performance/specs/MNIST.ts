@@ -33,10 +33,10 @@ let baseNetwork = new Network({
 });
 
 export class MNIST extends PerformanceTest {
-  costFunction: CostTypes = Lysergic.CostTypes.MEAN_SQUARE_ERROR;
+  costFunction: CostTypes = Lysergic.CostTypes.SOFTMAX;
   logEvery = 10;
   maxIterations = 300;
-  minError = 0.01;
+  minError = 0.1;
 
   async build(backend) {
     const network = baseNetwork.clone();

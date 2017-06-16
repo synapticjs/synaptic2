@@ -26,7 +26,6 @@ describe('Performance tasks', () => {
     it('AND', run(AND, backends.Paper));
     it('OR', run(OR, backends.Paper));
     it('NOT', run(NOT, backends.Paper));
-    // it.only('DSR', run(DSR, backends.Paper));
   });
 
   describe('CPU', () => {
@@ -34,7 +33,6 @@ describe('Performance tasks', () => {
     it('AND', run(AND, backends.CPU));
     it('OR', run(OR, backends.CPU));
     it('NOT', run(NOT, backends.CPU));
-    // it.only('DSR', run(DSR, backends.CPU));
   });
 
   describe('ASM', () => {
@@ -44,13 +42,13 @@ describe('Performance tasks', () => {
     it('NOT', run(NOT, backends.ASM));
     it('MNIST', run(MNIST, backends.ASM));
     it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.ASM));
-    it.only('DSR', run(DSR, backends.ASM));
+    it('DSR', run(DSR, backends.ASM));
   });
 
   describe('WASM', () => {
     it('XOR', run(XOR, backends.WASM));
     it('MNIST', run(MNIST, backends.WASM));
     it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.WASM));
-    it.only('DSR', run(DSR, backends.WASM));
+    it('DSR', run(DSR, backends.WASM));
   });
 });

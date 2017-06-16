@@ -1,5 +1,4 @@
 import MersenneTwister = require('mersenne-twister');
-import mnist = require('mnist');
 import { layers, Lysergic, Network } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainEntry, TrainResult } from "../../../src/backends/index";
@@ -8,18 +7,9 @@ import { CostTypes } from 'lysergic';
 const generator = new MersenneTwister(100010);
 const random = generator.random.bind(generator);
 
-let mnistSet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], test: [] };
+const emptySet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], test: [] };
 
 
-{ // initialize training set
-  const oldRandom = Math.random;
-  Math.random = random;
-  try {
-    mnistSet = mnist.set(1000);
-  } finally {
-    Math.random = oldRandom;
-  }
-}
 
 const targets = [2, 4];
 const distractors = [3, 5];
@@ -45,7 +35,7 @@ export class DSR extends PerformanceTest {
   costFunction: CostTypes = Lysergic.CostTypes.SOFTMAX;
   logEvery = 10000;
   maxIterations = 500000;
-  minError = 0.01;
+  minError = 0.008;
   learningRate = 0.03;
 
   async build(backend) {
@@ -223,11 +213,11 @@ export class DSR extends PerformanceTest {
   }
 
   async getTrainigSet() {
-    return mnistSet.training;
+    return emptySet.training;
   }
 
   async getTestingSet() {
-    return mnistSet.test;
+    return emptySet.test;
   }
 
   async validate(network: Network, trainResult: TrainResult) {

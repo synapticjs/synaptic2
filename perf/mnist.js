@@ -39,7 +39,7 @@ console.time('Build network')
 
 function log(partialResult, errorSet) {
   console.log('\x1B[?25l\x1Bc');
-  console.log(printer.printError(partialResult.error, errorSet));
+  console.log(printer.printError(partialResult.error/*, errorSet*/));
 }
 
 
@@ -51,7 +51,7 @@ lstm.backend.build().then(() => {
 
   trainer.train(mnistSet.training, {
     learningRate: 0.11,
-    minError: 0.001,
+    minError: 0.01,
     maxIterations: 1800,
     log,
     costFunction: synaptic.Lysergic.CostTypes.SOFTMAX
