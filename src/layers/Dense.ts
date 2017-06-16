@@ -18,7 +18,10 @@ export default class Dense implements Layer {
 
     let weights = numbers.randn(boundary.layer.length * this.layer.length, 0, 1, network.engine.random);
 
-    if (this.activationType & WHOLE_LAYER_ACTIVATION_KIND) {
+    if (
+      this.activationType & WHOLE_LAYER_ACTIVATION_KIND
+      || this.activationType == ActivationTypes.TANH
+    ) {
       // http://cs231n.github.io/neural-networks-2/
       numbers.gaussianNormalization(weights, 2);
     } else {
