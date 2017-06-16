@@ -11,6 +11,7 @@ import NOT from './performance/specs/NOT';
 import MNIST from './performance/specs/MNIST';
 import SOFTMAX_MNIST from './performance/specs/SOFTMAX_MNIST';
 import DSR from './performance/specs/DSR';
+import TIMING_TASK from './performance/specs/TIMING_TASK';
 
 function run(test, backend) {
   return function (done) {
@@ -42,6 +43,7 @@ describe('Performance tasks', () => {
     it('NOT', run(NOT, backends.ASM));
     it('MNIST', run(MNIST, backends.ASM));
     it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.ASM));
+    it('TIMING_TASK', run(TIMING_TASK, backends.ASM));
     it('DSR', run(DSR, backends.ASM));
   });
 
@@ -49,6 +51,7 @@ describe('Performance tasks', () => {
     it('XOR', run(XOR, backends.WASM));
     it('MNIST', run(MNIST, backends.WASM));
     it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.WASM));
+    it('TIMING_TASK', run(TIMING_TASK, backends.WASM));
     it('DSR', run(DSR, backends.WASM));
   });
 });
