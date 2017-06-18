@@ -93,6 +93,7 @@ export abstract class Backend {
         // logDimension('state', this.compiler);
 
         let partialError = cost(output, predictedOutput, costFunction);
+
         await this.propagate(output);
         // console.log('\x1B[?25l\x1Bc');
         // logDimension('activation', this.compiler);

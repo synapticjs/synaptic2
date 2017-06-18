@@ -8,7 +8,7 @@ function interpolateBoundary(t, a, b) {
   return Math.min(Math.max(a, a + t * (b - a)), b);
 }
 
-function printError(error, errorSet) {
+export function printError(error, errorSet) {
   let width = 50;
 
   let spaces = width - interpolateBoundary(error, 0, width);
