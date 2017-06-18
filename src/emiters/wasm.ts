@@ -1,4 +1,4 @@
-import * as nodes from 'lysergic/dist/ast/nodes';
+import { nodes } from 'lysergic';
 import binaryen = require('binaryen');
 
 declare var console;
@@ -87,6 +87,9 @@ export function emit(node: nodes.Node, module) {
         return module.nop();
       }
     } else if (isPow) {
+      if (node.rhs instanceof nodes.FloatNumberNode && node.rhs.numericValue == 2) {
+        return module.f64.mul(emit(node.lhs, module), emit(node.lhs, module));
+      }
       return module.callImport("pow", [emit(node.lhs, module), emit(node.rhs, module)], binaryen.f64);
     } else if (isComparison) {
       return module.f64[comparisonMap[node.operator]](emit(node.lhs, module), emit(node.rhs, module));
@@ -96,8 +99,6 @@ export function emit(node: nodes.Node, module) {
       console.error(`<<<<< UNKNOWN OPERATOR: ${node.operator}`);
       return module.nop();
     }
-
-
   } else if (node instanceof nodes.HeapReferenceNode) {
     return module.f64.load(0 /*offset */, 8 /* byte alignment */, module.i32.const(node.position * 8));
   } else if (node instanceof nodes.FloatNumberNode) {

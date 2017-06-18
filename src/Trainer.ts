@@ -1,6 +1,6 @@
 import Network from './Network';
 import { TrainResult, TrainOptions, TrainEntry } from './backends/Backend';
-import { CostTypes } from "lysergic";
+import { CostTypes } from "./utils/cost";
 
 // -- Trainer
 

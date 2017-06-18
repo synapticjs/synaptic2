@@ -1,4 +1,4 @@
-import { ActivationTypes } from 'lysergic';
+import { Activations } from 'lysergic';
 import Network, { Boundary, Layer } from '../Network';
 
 export default class ZeroPadding3D implements Layer {
@@ -20,7 +20,7 @@ export default class ZeroPadding3D implements Layer {
       for (y = -this.padding; y < boundary.height + this.padding; y++) {
         for (x = -this.padding; x < boundary.width + this.padding; x++) {
 
-          const unit = network.addUnit(ActivationTypes.IDENTITY);
+          const unit = network.addUnit(Activations.ActivationTypes.IDENTITY);
           this.layer.push(unit);
 
           // only connect the non-padding units

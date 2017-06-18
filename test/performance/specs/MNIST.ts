@@ -1,12 +1,12 @@
 import MersenneTwister = require('mersenne-twister');
 import mnist = require('mnist');
-import { layers, Lysergic, Network } from '../../../src';
+
+import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainEntry } from "../../../src/backends/index";
-import { CostTypes } from 'lysergic';
 
 const generator = new MersenneTwister(100010);
-const random = generator.random.bind(generator);
+const random = generator.random_excl.bind(generator); // .random = [0,1) .random_excl = (0,1)
 
 let mnistSet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], test: [] };
 
@@ -28,21 +28,21 @@ let baseNetwork = new Network({
     new layers.Dense(10)
   ],
   engineOptions: {
-    generator: random
+    generator: random,
+    bias: true
   }
 });
 
 export class MNIST extends PerformanceTest {
-  costFunction: CostTypes = Lysergic.CostTypes.SOFTMAX;
-  logEvery = 10;
+  costFunction: CostTypes = CostTypes.SOFTMAX;
+  logEvery = 1;
   maxIterations = 300;
-  minError = 0.1;
+  minError = 0.01;
 
   async build(backend) {
     const network = baseNetwork.clone();
 
-    network.backend = new backend(network.engine);
-
+    network.backend = new backend(network.compiler);
     await network.build();
 
     return network;

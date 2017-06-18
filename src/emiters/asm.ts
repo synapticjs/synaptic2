@@ -1,6 +1,5 @@
 import { indent } from 'lysergic/dist/ast/helpers';
-import * as nodes from 'lysergic/dist/ast/nodes';
-import { Variable } from "lysergic";
+import { nodes } from "lysergic";
 
 
 function baseEmit(node: nodes.Node) {
@@ -26,7 +25,7 @@ return {
     const isAssignment = node.operator in { '=': 1, '-=': 1, '+=': 1, '*=': 1, '/=': 1 };
 
     if (isAssignment) {
-      if (node.lhs instanceof Variable) {
+      if (node.lhs instanceof nodes.Variable) {
         lhsString = `H[${node.lhs.position}] /* ${node.lhs.key} */`;
       } else if (node.lhs instanceof nodes.HeapReferenceNode) {
         lhsString = `H[${node.lhs.position}]`;
@@ -44,7 +43,7 @@ return {
     }
     return `${lhsString} ${node.operator} ${rhsString}`;
     // if `a += b` -> `a = a + (b)`
-  } else if (node instanceof Variable) {
+  } else if (node instanceof nodes.Variable) {
     if (node.hasParenthesis)
       return `+H[${node.position}] /* ${node.key} */`;
     else

@@ -1,5 +1,5 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes } from 'lysergic';
+import { Activations } from 'lysergic';
 
 export class ReLU implements Layer {
 
@@ -11,7 +11,7 @@ export class ReLU implements Layer {
     }
 
     const prevLayer = boundary.layer;
-    this.layer = network.addLayer(prevLayer.length, ActivationTypes.RELU);
+    this.layer = network.addLayer(prevLayer.length, Activations.ActivationTypes.RELU);
 
     for (let i = 0; i < prevLayer.length; i++) {
       network.addConnection(prevLayer[i], this.layer[i], 1);

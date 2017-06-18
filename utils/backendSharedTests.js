@@ -10,11 +10,11 @@ var MersenneTwister = require('mersenne-twister');
 
 var generator = new MersenneTwister(100010);
 
-var random = generator.random.bind(generator);
+var random = generator.random_excl.bind(generator);
 
 var mnist = require('mnist')
 
-synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
+synaptic.Lysergic.RandomGenerator = random;
 
 
 const COMPUTED_KEYS = [

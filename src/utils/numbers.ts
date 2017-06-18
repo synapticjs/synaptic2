@@ -1,13 +1,15 @@
-import { ActivationTypes } from "lysergic";
+import { Activations } from "lysergic";
 
 export function randn(size: number, min = 0, max = 1, generator = Math.random): Float64Array {
   let array = new Float64Array(size);
 
   fillRandomArrayUnsigned(array, generator);
 
-  let scale = max - min;
+  // we use the random numbers as µ in the interpolation
 
-  scaleVector(array, scale);
+  // interpolation = µ(b - a) + a
+
+  scaleVector(array, max - min);
   addVector(array, min);
 
   // softMaxArray(array);
@@ -24,10 +26,10 @@ export function scaleVector<T extends number[] | Float32Array | Float64Array>(ar
 }
 
 
-export function addVector<T extends number[] | Float32Array | Float64Array>(array: T, scale: number) {
+export function addVector<T extends number[] | Float32Array | Float64Array>(array: T, num: number) {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] += scale;
+      array[i] += num;
     }
   return array;
 }
@@ -35,15 +37,7 @@ export function addVector<T extends number[] | Float32Array | Float64Array>(arra
 export function fillRandomArrayUnsigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
   if (array && 'length' in array && array.length)
     for (let i = 0; i < array.length; i++) {
-      array[i] = 0.0002 * generator();
-    }
-  return array;
-}
-
-export function fillRandomArraySigned<T extends number[] | Float32Array | Float64Array>(array: T, generator = Math.random): T {
-  if (array && 'length' in array && array.length)
-    for (let i = 0; i < array.length; i++) {
-      array[i] = 0.02 * (generator() * 2 - 1) + 0.1;
+      array[i] = generator(); // Domain of generator() must be (0,1)
     }
   return array;
 }
@@ -120,30 +114,51 @@ export function gaussianNormalization(array: number[] | Float32Array | Float64Ar
 
 
 // http://cs231n.github.io/neural-networks-2/
-export function getWeightsFor(units: number, activationType: ActivationTypes, generator = Math.random) {
-  let weights = randn(units, 0, 1, generator);
+export function getWeightsFor(from: number, to: number, layerCount: number, layerIndex: number, activationType: Activations.ActivationTypes, generator = Math.random) {
 
-  if (activationType == ActivationTypes.SOFTMAX) {
-    // http://cs231n.github.io/neural-networks-2/
-    gaussianNormalization(weights, 2);
+  const layerFactor = 1 - layerIndex / layerCount;
+
+  const units = from * to;
+
+  let weights = normalDistribution(units, 0, 1, generator);
+
+  if (activationType == Activations.ActivationTypes.TANH) {
+    scaleVector(weights, 0.25 / Math.sqrt(to));
     return weights;
   }
 
-  if (activationType == ActivationTypes.TANH) {
-    gaussianNormalization(weights, 2);
+  if (activationType == Activations.ActivationTypes.LOGISTIC_SIGMOID) {
+    scaleVector(weights, 1 / Math.sqrt(to));
+    scaleVector(weights, layerFactor);
     return weights;
   }
 
-  if (activationType == ActivationTypes.LOGISTIC_SIGMOID) {
-    gaussianNormalization(weights, 2);
-    scaleVector(weights, 4);
-    return weights;
-  }
-
-
-  scaleVector(weights, 0.002);
+  scaleVector(weights, 0.00002 * layerFactor);
   addVector(weights, 0.001);
 
-
   return weights;
+}
+
+export function normalDistribution(size: number, mean: number = 0, stdDev: number = 1, generator = Math.random) {
+  // Adapted from http://blog.yjl.im/2010/09/simulating-normal-random-variable-using.html
+
+  let toReturn = new Float64Array(size);
+
+  for (let i = 0; i < size; i++) {
+    let V1, V2, S, X;
+
+    do {
+      let U1 = generator();
+      let U2 = generator();
+      V1 = (2 * U1) - 1;
+      V2 = (2 * U2) - 1;
+      S = (V1 * V1) + (V2 * V2);
+    } while (S > 1);
+
+    X = Math.sqrt(-2 * Math.log(S) / S) * V1;
+    X = mean + stdDev * X;
+    toReturn[i] = X;
+  }
+
+  return toReturn;
 }

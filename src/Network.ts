@@ -1,13 +1,13 @@
-import Lysergic, { StatusTypes, ActivationTypes, ILysergicOptions } from 'lysergic';
+import { Lysergic, Activations, ILysergicOptions, StatusTypes } from 'lysergic';
 import backends, { Backend } from './backends';
-
-
 
 export interface Boundary {
   width: number;
   height: number;
   depth: number;
   layer: number[];
+  layerIndex?: number;
+  totalLayers?: number;
 }
 
 export interface Layer {
@@ -17,13 +17,13 @@ export interface Layer {
 }
 
 export default class Network {
-  engine: Lysergic;
+  compiler: Lysergic;
   backend: Backend;
 
   constructor(options: { backend?: typeof Backend; engine?: Lysergic; layers?: Layer[], engineOptions?: ILysergicOptions });
   constructor(...layers: Layer[]);
   constructor(...args) {
-    let layers;
+    let layers: Layer[];
 
     let options = args[0];
 
@@ -54,21 +54,22 @@ export default class Network {
     backendCtor = backendCtor || backends.ASM;
 
     this.backend = new backendCtor(engine);
-    this.engine = this.backend.engine;
+    this.compiler = this.backend.compiler;
 
     let prevBoundary: Boundary = null;
     let nextBoundary: Boundary = null;
 
     // init layers
-    this.engine.status = StatusTypes.INIT;
+    this.compiler.engineStatus = StatusTypes.INIT;
     const boundaries: Boundary[] = [];
-    layers.forEach(layer => {
+    layers.forEach((layer, i) => {
       prevBoundary = layer.init && layer.init(this, prevBoundary) || prevBoundary;
+      prevBoundary = { ...prevBoundary, layerIndex: i, totalLayers: layers.length };
       boundaries.push(prevBoundary);
     });
 
     // reverse init layers
-    this.engine.status = StatusTypes.REVERSE_INIT;
+    this.compiler.engineStatus = StatusTypes.REVERSE_INIT;
     boundaries.reverse();
     layers.concat().reverse()
       .forEach((layer, index) => {
@@ -77,31 +78,31 @@ export default class Network {
       });
 
     // done
-    this.engine.status = StatusTypes.IDLE;
+    this.compiler.engineStatus = StatusTypes.IDLE;
   }
 
-  addUnit(activationFunction?: ActivationTypes, biased = true) {
-    return this.engine.addUnit(activationFunction, biased);
+  addUnit(activationFunction?: Activations.ActivationTypes, bias = true) {
+    return this.compiler.addUnit({ activationFunction, bias });
   }
 
   addConnection(from: number, to: number, weight: number = null) {
-    return this.engine.addConnection(from, to, weight);
+    return this.compiler.addConnection(from, to, weight);
   }
 
   addGate(from: number, to: number, gater: number) {
-    return this.engine.addGate(from, to, gater);
+    return this.compiler.addGate(from, to, gater);
   }
 
   addLayer(width = 0, height = 1, depth = 1) {
-    return this.engine.addLayer(width * height * depth);
+    return this.compiler.topology.addLayer(width * height * depth, {});
   }
 
   getLayers() {
-    return this.engine.layers.slice(); // return a clone of the layers array
+    return this.compiler.topology.layers.slice(); // return a clone of the layers array
   }
 
   toJSON() {
-    return this.engine.toJSON();
+    return this.compiler.toJSON();
   }
 
   clone() {
@@ -122,9 +123,17 @@ export default class Network {
   }
 
   async build() {
+    if (this.compiler.engineStatus != StatusTypes.IDLE) {
+      throw new Error('You cannot build the network on state ' + StatusTypes[this.compiler.engineStatus]);
+    }
+    this.compiler.engineStatus = StatusTypes.BUILDING;
+
+    await this.compiler.build();
     await this.backend.build();
+    this.compiler.engineStatus = StatusTypes.IDLE;
   }
 }
+
 
 // -- helper to figure out if the user passed options or just layers
 

@@ -2,14 +2,19 @@ declare var console;
 
 import { Backend, TrainResult } from "../../src/backends/index";
 import { PerformanceTest } from "./interfaces";
-import { Lysergic } from "../../src/index";
+import { cost } from "../../src/utils/cost";
 
-export async function run(runner: PerformanceTest, options: {
+export async function run(test: string, options: {
   backend: typeof Backend
 }): Promise<TrainResult> {
+  const module = await import('./specs/' + test);
+  const runner: PerformanceTest = module.default;
+
   console.time('Build network');
   let network = await runner.build(options.backend);
   console.timeEnd('Build network');
+
+
 
   console.time('Train');
   let trainResult = await runner.run(network);
@@ -26,7 +31,7 @@ export async function run(runner: PerformanceTest, options: {
     for (let index = 0; index < testSet.length; index++) {
       const x = testSet[index];
       let predictedOutput = await network.activate(x.input);
-      let partialError = Lysergic.costFunction(x.output, predictedOutput, runner.costFunction);
+      let partialError = cost(x.output, predictedOutput, runner.costFunction);
       error += partialError;
     }
     console.timeEnd('Activativate');

@@ -1,8 +1,7 @@
 declare var console;
 
 import { TrainResult, Backend, TrainEntry } from "../../src/backends/Backend";
-import { Trainer, Network, Lysergic } from "../../src/index";
-import { CostTypes } from 'lysergic';
+import { Trainer, Network, CostTypes } from "../../src/index";
 
 function interpolateBoundary(t, a, b) {
 
@@ -36,7 +35,7 @@ export abstract class PerformanceTest {
   learningRate = 0.1;
   minError = 0.001;
   maxIterations = 10000;
-  costFunction: CostTypes = Lysergic.CostTypes.MEAN_SQUARE_ERROR;
+  costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
   logEvery = 0;
 
   abstract async build(backend: typeof Backend): Promise<Network>;

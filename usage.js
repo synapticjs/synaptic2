@@ -91,21 +91,21 @@ const ConvNet = new Network(
 
 // with config
 const Net = new Network({
-    bias: false,
-    generator: () => Math.random() * 2 - 1,
-    layers: [
-      new Input(2),
-      new Dense(5),
-      new Dense(1)
-    ]
+  bias: false,
+  generator: () => Math.random(),
+  layers: [
+    new Input(2),
+    new Dense(5),
+    new Dense(1)
+  ]
 })
 
 // with custom backend
 const Net = new Network({
-    backend: new CPU(),
-    layers: [
-      new Input(2),
-      new Dense(5),
-      new Dense(1)
-    ]
+  backend: new CPU(),
+  layers: [
+    new Input(2),
+    new Dense(5),
+    new Dense(1)
+  ]
 })

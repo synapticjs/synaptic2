@@ -7,7 +7,7 @@
     "clean": "(rm -rf dist || true)",
     "build": "npm run clean && NODE_ENV=production `npm bin`/tsc && NODE_ENV=production webpack --config webpack.config.js && cp ./static/* dist",
     "build:test": "npm run clean && NODE_ENV=production `npm bin`/tsc && cp static/* dist",
-    "test": "npm run build:test && mocha dist/test/**/*.spec.js",
+    "test": "npm run build:test && `npm bin`/mocha dist/test/**/*.spec.js",
     "test:node": "npm run build:test && NODE_ENV=node jest --logHeapUsage --runInBand",
     "profile": "npm run build:test && (rm *.log || true) && node --prof perf/runPerf.js && (for f in *.log; do node --prof-process $f; done)",
     "profile:node": "npm run build:node && (rm *.log || true) && (NODE_ENV=node node --prof perf/runPerf.js) && (for f in *.log; do node --prof-process $f; done)",
@@ -27,16 +27,16 @@
     "mersenne-twister": "^1.1.0",
     "mnist": "^1.0.5",
     "mocha": "^3.4.2",
-    "ts-loader": "^2.0.3",
+    "ts-loader": "^2.1.0",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
-    "typescript": "^2.3.4",
+    "typescript": "^2.4.0",
     "webpack": "^1.13.2",
     "webpack-dashboard": "^0.2.0",
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
     "binaryen": "^1.37.13",
-    "lysergic": "^0.1.5"
+    "lysergic": "^0.2.1"
   }
 }

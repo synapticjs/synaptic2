@@ -1,12 +1,13 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes } from "lysergic";
+import { Activations } from "lysergic";
 import numbers = require("../utils/numbers");
 
 // this is a basic LSTM block, consisting of a memory cell, with input, forget and output gates
 
-const defaults = {
-  peepholes: true
-};
+export interface ILSTMOptions {
+  peepholes?: boolean;
+  activationFunction?: Activations.ActivationTypes;
+}
 
 
 export default class LSTM implements Layer {
@@ -20,8 +21,17 @@ export default class LSTM implements Layer {
   memoryCell = null;
   outputGate = null;
 
-  constructor(public memoryBlocks: number, { peepholes } = defaults) {
+  activationFunction: Activations.ActivationTypes;
+
+  constructor(public memoryBlocks: number, options: ILSTMOptions = {}) {
+    const {
+      peepholes = true,
+      // WHY SOFTSIGN? https://deeplearning4j.org/lstm.html
+      activationFunction = Activations.ActivationTypes.SOFTSIGN
+    } = options;
+
     this.peepholes = peepholes;
+    this.activationFunction = activationFunction;
   }
 
   init(network: Network, boundary: Boundary): Boundary {
@@ -31,24 +41,23 @@ export default class LSTM implements Layer {
     }
 
     this.prevLayer = boundary.layer;
-    this.inputGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
-    this.forgetGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
+    this.inputGate = network.compiler.topology.addLayer(this.memoryBlocks, Activations.ActivationTypes.LOGISTIC_SIGMOID);
+    this.forgetGate = network.compiler.topology.addLayer(this.memoryBlocks, Activations.ActivationTypes.LOGISTIC_SIGMOID);
 
-    // WHY SOFTSIGN? https://deeplearning4j.org/lstm.html
-    this.memoryCell = network.engine.addLayer(this.memoryBlocks, ActivationTypes.SOFTSIGN);
+    this.memoryCell = network.compiler.topology.addLayer(this.memoryBlocks, this.activationFunction);
 
-    this.outputGate = network.engine.addLayer(this.memoryBlocks, ActivationTypes.LOGISTIC_SIGMOID);
+    this.outputGate = network.compiler.topology.addLayer(this.memoryBlocks, Activations.ActivationTypes.LOGISTIC_SIGMOID);
 
     // connection from previous layer to memory cell
-    connectLayers(network, this.prevLayer, this.memoryCell);
+    connectLayers(network, this.prevLayer, this.memoryCell, boundary.totalLayers, boundary.layerIndex);
 
     // self-connection from memory cell
-    connectLayers(network, this.memoryCell, this.memoryCell);
+    connectLayers(network, this.memoryCell, this.memoryCell, boundary.totalLayers, boundary.layerIndex);
 
     // connections from previous layer to gates
-    connectLayers(network, this.prevLayer, this.inputGate);
-    connectLayers(network, this.prevLayer, this.forgetGate);
-    connectLayers(network, this.prevLayer, this.outputGate);
+    connectLayers(network, this.prevLayer, this.inputGate, boundary.totalLayers, boundary.layerIndex);
+    connectLayers(network, this.prevLayer, this.forgetGate, boundary.totalLayers, boundary.layerIndex);
+    connectLayers(network, this.prevLayer, this.outputGate, boundary.totalLayers, boundary.layerIndex);
 
     // input and forget gates
     gateLayer(network, this.inputGate, this.memoryCell, 'INBOUND');
@@ -68,16 +77,16 @@ export default class LSTM implements Layer {
     this.nextLayer = boundary.layer;
 
     // direct connection from prevLayer to nextLayer
-    connectLayers(network, this.prevLayer, this.nextLayer);
+    connectLayers(network, this.prevLayer, this.nextLayer, boundary.totalLayers, boundary.layerIndex);
 
     // output gate
     gateLayer(network, this.outputGate, this.memoryCell, 'OUTBOUND');
 
     // recurrent connections from each memory cell to each gates (aka peepholes) - Fig. 4 (b)
     if (this.peepholes) {
-      connectLayers(network, this.memoryCell, this.inputGate);
-      connectLayers(network, this.memoryCell, this.forgetGate);
-      connectLayers(network, this.memoryCell, this.outputGate);
+      connectLayers(network, this.memoryCell, this.inputGate, boundary.totalLayers, boundary.layerIndex);
+      connectLayers(network, this.memoryCell, this.forgetGate, boundary.totalLayers, boundary.layerIndex);
+      connectLayers(network, this.memoryCell, this.outputGate, boundary.totalLayers, boundary.layerIndex);
     }
   }
 }
@@ -85,8 +94,8 @@ export default class LSTM implements Layer {
 // ---
 
 // helper to connect layers
-function connectLayers(network: Network, from: number[], to: number[], connectionType?) {
-  let weights = numbers.getWeightsFor(from.length * to.length, network.engine.activationFunction[from[0]], network.engine.random);
+function connectLayers(network: Network, from: number[], to: number[], totalLayers: number, layerIndex: number) {
+  let weights = numbers.getWeightsFor(from.length, to.length, totalLayers, layerIndex, network.compiler.topology.activationFunction[from[0]], network.compiler.random);
 
   let i = 0;
 
@@ -115,7 +124,7 @@ function gateLayer(network: Network, gaterLayer: number[], gatedLayer: number[],
       case 'INBOUND':
         to = gatedLayer[index];
         gater = gaterLayer[index];
-        network.engine.connections
+        network.compiler.topology.connections
           .filter(connection => connection.to === to) // get all the connections projected into this unit
           .filter(connection => connection.from !== to) // filter out self-connections
           .map(connection => connection.from) // grab the unit projecting the connection
@@ -126,7 +135,7 @@ function gateLayer(network: Network, gaterLayer: number[], gatedLayer: number[],
         gatedLayer.forEach(neuron => {
           from = gatedLayer[index];
           gater = gaterLayer[index];
-          network.engine.connections
+          network.compiler.topology.connections
             .filter(connection => connection.from === from) // get all the connections projected from this unit
             .filter(connection => connection.to !== from) // filter out self-connections
             .map(connection => connection.to) // grab the unit receiving the connection

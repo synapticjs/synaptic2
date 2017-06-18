@@ -1,12 +1,12 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes } from "lysergic";
+import { Activations } from "lysergic";
 import numbers = require("../utils/numbers");
 
 export default class Dense implements Layer {
 
   layer: number[];
 
-  constructor(public size: number, public activationType?: ActivationTypes) { }
+  constructor(public size: number, public activationType: Activations.ActivationTypes = Activations.ActivationTypes.LOGISTIC_SIGMOID) { }
 
   init(network: Network, boundary: Boundary): Boundary {
 
@@ -14,9 +14,9 @@ export default class Dense implements Layer {
       throw new Error('\'Dense\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.engine.addLayer(this.size, this.activationType);
+    this.layer = network.compiler.topology.addLayer(this.size, { activationFunction: this.activationType });
 
-    let weights = numbers.getWeightsFor(boundary.layer.length * this.layer.length, this.activationType, network.engine.random);
+    let weights = numbers.getWeightsFor(boundary.layer.length, this.layer.length, boundary.totalLayers, boundary.layerIndex, this.activationType, network.compiler.random);
 
     let i = 0;
 

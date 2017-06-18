@@ -1,25 +1,24 @@
 declare var require;
 
 import MersenneTwister = require('mersenne-twister');
-import { layers, Lysergic, Network } from '../../../src';
+import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainEntry } from "../../../src/backends/index";
-import { CostTypes } from 'lysergic';
 
 const { resolve } = require('path');
 
-const mnistSet: {
+const dataSet: {
   training: TrainEntry[],
   test: TrainEntry[]
 } = require(resolve('./test/performance/specs/mocks/samples-timing-task.json'));
 
 const generator = new MersenneTwister(100010);
-const random = generator.random.bind(generator);
+const random = generator.random_excl.bind(generator);
 
 const baseNetwork = new Network({
   layers: [
     new layers.Input(2),
-    new layers.LSTM(5),
+    new layers.LSTM(6),
     new layers.Dense(1)
   ],
   engineOptions: {
@@ -29,8 +28,8 @@ const baseNetwork = new Network({
 });
 
 
-export class MNIST extends PerformanceTest {
-  costFunction: CostTypes = Lysergic.CostTypes.MEAN_SQUARE_ERROR;
+export class TIMING_TASK extends PerformanceTest {
+  costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
   logEvery = 10;
   maxIterations = 300;
   minError = 0.005;
@@ -39,7 +38,7 @@ export class MNIST extends PerformanceTest {
   async build(backend) {
     const network = baseNetwork.clone();
 
-    network.backend = new backend(network.engine);
+    network.backend = new backend(network.compiler);
 
     await network.build();
 
@@ -47,12 +46,12 @@ export class MNIST extends PerformanceTest {
   }
 
   async getTrainigSet() {
-    return mnistSet.training;
+    return dataSet.training;
   }
 
   async getTestingSet() {
-    return mnistSet.test;
+    return dataSet.test;
   }
 };
 
-export default new MNIST;
+export default new TIMING_TASK;

@@ -4,54 +4,49 @@ import { backends } from '../src';
 
 import { run as notMochaRunner } from './performance/performanceRunner';
 
-import XOR from './performance/specs/XOR';
-import AND from './performance/specs/AND';
-import OR from './performance/specs/OR';
-import NOT from './performance/specs/NOT';
-import MNIST from './performance/specs/MNIST';
-import SOFTMAX_MNIST from './performance/specs/SOFTMAX_MNIST';
-import DSR from './performance/specs/DSR';
-import TIMING_TASK from './performance/specs/TIMING_TASK';
+function run(test: string, backend, only?: boolean) {
 
-function run(test, backend) {
-  return function (done) {
+  const fn = only ? it.only : it;
+
+  fn(test, function (done) {
     this.timeout(60000);
 
     notMochaRunner(test, { backend }).then(() => done(), err => done(err));
-  };
+  });
 }
 
-describe('Performance tasks', () => {
-  describe('Paper', () => {
-    it('XOR', run(XOR, backends.Paper));
-    it('AND', run(AND, backends.Paper));
-    it('OR', run(OR, backends.Paper));
-    it('NOT', run(NOT, backends.Paper));
-  });
 
-  describe('CPU', () => {
-    it('XOR', run(XOR, backends.CPU));
-    it('AND', run(AND, backends.CPU));
-    it('OR', run(OR, backends.CPU));
-    it('NOT', run(NOT, backends.CPU));
-  });
+describe('Performance tasks', () => {
+  // describe('Paper', () => {
+  //   it('XOR', run('XOR', backends.Paper));
+  //   it('AND', run('AND', backends.Paper));
+  //   it('OR', run('OR', backends.Paper));
+  //   it('NOT', run('NOT', backends.Paper));
+  // });
+
+  // describe('CPU', () => {
+  //   it('XOR', run('XOR', backends.CPU));
+  //   it('AND', run('AND', backends.CPU));
+  //   it('OR', run('OR', backends.CPU));
+  //   it('NOT', run('NOT', backends.CPU));
+  // });
 
   describe('ASM', () => {
-    it('XOR', run(XOR, backends.ASM));
-    it('AND', run(AND, backends.ASM));
-    it('OR', run(OR, backends.ASM));
-    it('NOT', run(NOT, backends.ASM));
-    it('MNIST', run(MNIST, backends.ASM));
-    it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.ASM));
-    it('TIMING_TASK', run(TIMING_TASK, backends.ASM));
-    it('DSR', run(DSR, backends.ASM));
+    run('XOR', backends.ASM);
+    run('AND', backends.ASM);
+    run('OR', backends.ASM);
+    run('NOT', backends.ASM);
+    run('MNIST', backends.ASM);
+    run('SOFTMAX_MNIST', backends.ASM);
+    run('TIMING_TASK', backends.ASM);
+    run('DSR', backends.ASM);
   });
 
   describe('WASM', () => {
-    it('XOR', run(XOR, backends.WASM));
-    it('MNIST', run(MNIST, backends.WASM));
-    it('SOFTMAX_MNIST', run(SOFTMAX_MNIST, backends.WASM));
-    it('TIMING_TASK', run(TIMING_TASK, backends.WASM));
-    it('DSR', run(DSR, backends.WASM));
+    run('XOR', backends.WASM);
+    // run('MNIST', backends.WASM);
+    // run('SOFTMAX_MNIST', backends.WASM);
+    run('TIMING_TASK', backends.WASM);
+    run('DSR', backends.WASM);
   });
 });

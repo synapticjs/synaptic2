@@ -1,11 +1,13 @@
 import MersenneTwister = require('mersenne-twister');
-import { layers, Lysergic, Network } from '../../../src';
+
+import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
-import { TrainEntry, TrainResult } from "../../../src/backends/index";
-import { CostTypes } from 'lysergic';
+import { TrainResult, TrainEntry } from "../../../src/backends/index";
+import { StatusTypes } from 'lysergic';
+import { cost } from "../../../src/utils/cost";
 
 const generator = new MersenneTwister(100010);
-const random = generator.random.bind(generator);
+const random = generator.random_excl.bind(generator);
 
 const emptySet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], test: [] };
 
@@ -33,7 +35,7 @@ const baseNetwork = new Network({
 
 
 export class DSR extends PerformanceTest {
-  costFunction: CostTypes = Lysergic.CostTypes.SOFTMAX;
+  costFunction: CostTypes = CostTypes.SOFTMAX;
   logEvery = 10000;
   maxIterations = 500000;
   minError = 0.008;
@@ -42,7 +44,7 @@ export class DSR extends PerformanceTest {
   async build(backend) {
     const network = baseNetwork.clone();
 
-    network.backend = new backend(network.engine);
+    network.backend = new backend(network.compiler);
 
     await network.build();
 
@@ -52,7 +54,7 @@ export class DSR extends PerformanceTest {
   async run(network: Network): Promise<TrainResult> {
 
     const generator = new MersenneTwister(10001);
-    const random = generator.random.bind(generator);
+    const random = generator.random_excl.bind(generator);
 
     let noRepeat = function (range, avoid) {
       let theNumber = random() * range | 0;
@@ -71,7 +73,7 @@ export class DSR extends PerformanceTest {
     };
 
 
-    network.engine.status = Lysergic.StatusTypes.TRAINING;
+    network.compiler.engineStatus = StatusTypes.TRAINING;
 
 
     let length = 10;
@@ -154,7 +156,7 @@ export class DSR extends PerformanceTest {
           await network.propagate(output);
         }
 
-        let partialError = Lysergic.costFunction(output, prediction, this.costFunction);
+        let partialError = cost(output, prediction, this.costFunction);
 
         error += partialError;
 
@@ -208,7 +210,7 @@ export class DSR extends PerformanceTest {
       predictedOutput
     };
 
-    network.engine.status = Lysergic.StatusTypes.IDLE;
+    network.compiler.engineStatus = StatusTypes.IDLE;
 
     return results;
   }

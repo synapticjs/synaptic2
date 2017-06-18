@@ -1,5 +1,5 @@
 import Network, { Boundary, Layer } from '../Network';
-import { ActivationTypes } from 'lysergic';
+import { Activations } from 'lysergic';
 
 export default class Dropout implements Layer {
 
@@ -19,7 +19,7 @@ export default class Dropout implements Layer {
 
     let unit: number, from: number, to: number; // , gate: number
     for (let i = 0; i < boundary.layer.length; i++) {
-      unit = network.addUnit(ActivationTypes.IDENTITY);
+      unit = network.addUnit(Activations.ActivationTypes.IDENTITY);
       this.layer.push(unit);
 
       from = boundary.layer[i];
@@ -30,11 +30,11 @@ export default class Dropout implements Layer {
 
       // this unit will act as a gate, randomly dropping inputs
       // const gate = network.addUnit(ActivationTypes.DROPOUT);
-      const gate = network.addUnit(ActivationTypes.IDENTITY);
+      const gate = network.addUnit(Activations.ActivationTypes.IDENTITY);
       network.addGate(from, to, gate);
       this.gater.push(gate);
       // use the unit's state to store the chances to drop
-      network.engine.state[gate] = this.chances;
+      network.compiler.ast.setVariable('state', gate, this.chances);
       // self-connect the unit so it keeps its state
       network.addConnection(gate, gate);
     }

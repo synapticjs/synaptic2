@@ -1,69 +1,52 @@
-// declare var console;
-import { StatusTypes } from 'lysergic';
+declare var console;
 import { Backend } from './Backend';
 import emit from '../emiters/asm';
-
-export type AsmModule = {
-  module: any,
-  activate: (inputs: number[]) => number[],
-  propagate: (targets: number[]) => void,
-}
-
+import { StatusTypes } from "lysergic";
+console;
 export default class ASM extends Backend {
-  asm: AsmModule = null;
+  asmModule: any;
 
   async build() {
-    if (this.engine.status == StatusTypes.BUILDING)
-      throw new Error("Already building.");
-
-
-    this.engine.status = StatusTypes.BUILDING;
-    const AST = this.engine.getAST();
+    const AST = this.compiler.getAST();
     const source = emit(AST);
 
     // console.log(source);
-    const getModule = new Function('stdlib', 'foreign', 'heap', source);
-    const foreign = { random: this.engine.random };
-    const module = getModule({ Math, Float64Array }, foreign, this.engine.heap);
 
-    this.asm = {
-      module,
-      activate: (inputs: number[]) => {
-        this.engine.setInputs(inputs);
-        module.activate();
-        return this.engine.getOutputs();
-      },
-      propagate: (targets: number[]) => {
-        this.engine.setTargets(targets);
-        module.propagate();
+    const getModule = new Function('stdlib', 'foreign', 'heap', source);
+    const foreign = { random: this.compiler.random };
+
+    const memory = await this.compiler.getBuffer();
+
+    let memoryElems = await this.compiler.getMemory();
+
+    for (let i = 0; i < memoryElems.length; i++) {
+      let element = memoryElems[i];
+      if (isNaN(element) || element == undefined) {
+        throw new Error(`Memory index ${i} is NaN (${element})`);
       }
+    }
+
+    this.asmModule = getModule({ Math, Float64Array }, foreign, memory);
+
+    this.activate = async (inputs: number[]) => {
+      const oldStatus = this.compiler.engineStatus;
+      this.compiler.engineStatus = StatusTypes.ACTIVATING;
+
+      await this.compiler.setInputs(inputs);
+      this.asmModule.activate();
+      const activation = await this.compiler.getOutputs();
+      this.compiler.engineStatus = oldStatus;
+      return activation;
+    };
+
+    this.propagate = async (targets: number[]) => {
+      const oldStatus = this.compiler.engineStatus;
+      this.compiler.engineStatus = StatusTypes.PROPAGATING;
+      await this.compiler.setTargets(targets);
+      this.asmModule.propagate();
+      this.compiler.engineStatus = oldStatus;
     };
 
     this.built = true;
-
-    this.engine.status = StatusTypes.IDLE;
-  }
-
-  async activate(inputs: number[]): Promise<number[]> {
-    if (!this.built && this.engine.status != StatusTypes.BUILDING) {
-      await this.build();
-    }
-
-    const oldStatus = this.engine.status;
-    this.engine.status = StatusTypes.ACTIVATING;
-    const activation = this.asm.activate(inputs);
-    this.engine.status = oldStatus;
-    return activation;
-  }
-
-  async propagate(targets: number[]) {
-    if (!this.built && this.engine.status != StatusTypes.BUILDING) {
-      await this.build();
-    }
-
-    const oldStatus = this.engine.status;
-    this.engine.status = StatusTypes.PROPAGATING;
-    this.asm.propagate(targets);
-    this.engine.status = oldStatus;
   }
 }

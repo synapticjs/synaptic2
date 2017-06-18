@@ -1,4 +1,4 @@
-import { ActivationTypes } from 'lysergic';
+import { Activations } from 'lysergic';
 import Network, { Boundary, Layer } from '../Network';
 
 export default class MaxPool implements Layer {
@@ -22,7 +22,7 @@ export default class MaxPool implements Layer {
       for (let y = 0; y < boundary.height; y++) {
         for (let x = 0; x < boundary.width; x += this.downsampling) {
 
-          const unit = network.addUnit(ActivationTypes.IDENTITY);
+          const unit = network.addUnit(Activations.ActivationTypes.IDENTITY);
           this.layer.push(unit);
 
           for (let offsetX = 0; offsetX < this.downsampling; offsetX++) {
@@ -38,7 +38,7 @@ export default class MaxPool implements Layer {
               network.addConnection(from, to, 1);
 
               // this unit will act as a gate, letting only the connections from the unit with the higher activation in the pool go thru
-              const gate = network.addUnit(ActivationTypes.MAX_POOLING);
+              const gate = network.addUnit(Activations.ActivationTypes.MAX_POOLING);
               network.addGate(from, to, gate);
               this.gater.push(gate);
               // connect the unit from the previous layer as an input of the gate so each gate knows which input they are gating

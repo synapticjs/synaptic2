@@ -1,5 +1,7 @@
 declare var console
-import Lysergic, { CostTypes, StatusTypes, ActivationTypes } from 'lysergic';
+import Lysergic, { Activations, StatusTypes } from 'lysergic';
+import { CostTypes } from "../index";
+import { cost } from "../utils/cost";
 
 export interface Dictionary<T> {
   [key: string]: T;
@@ -27,27 +29,48 @@ export interface TrainResult {
   predictedOutput: ArrayLike<number>;
 }
 
+
+export function logDimension(dimension: string, compiler: Lysergic) {
+  let variables = compiler.ast.getVariables().filter($ => $.key.startsWith(dimension));
+
+  console.log('Dimension ' + dimension);
+  variables.map($ => {
+    let label = compiler.heap.memory.length > $.position
+      ? compiler.heap.memory[$.position]
+      : `Position ${$.position} doesn't exist. Max: ${compiler.heap.memory.length}`;
+    console.log(`  *(${$.position}) = ${$.key} = ${label}`);
+  });
+}
+
 export abstract class Backend {
   built = false;
 
-  constructor(public engine = new Lysergic()) { }
-  abstract activate(inputs: number[]): Promise<ArrayLike<number>>;
-  abstract propagate(targets: number[]): Promise<void>;
+  constructor(public compiler = new Lysergic()) { }
+
+  async activate(inputs: number[]): Promise<ArrayLike<number>> {
+    throw new Error('Activate is not implemented');
+  }
+
+  async propagate(targets: number[]) {
+    throw new Error('Propagate is not implemented');
+  }
 
   async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction, log, logEvery, every }: TrainOptions): Promise<TrainResult> {
     if (!this.built) {
-      await this.build();
+      await this.compiler.build();
     }
 
-    console.log('Using cost function ' + CostTypes[costFunction]);
+    // console.log('Before activation:');
+    // console.dir(this.compiler.toJSON());
+    // console.log('Using cost function ' + CostTypes[costFunction]);
 
     // start training
     let startTime = new Date().getTime();
     let error = Infinity;
     let iterations = 0;
 
-    this.engine.learningRate = learningRate;
-    this.engine.status = StatusTypes.TRAINING;
+    this.compiler.learningRate = learningRate;
+    this.compiler.engineStatus = StatusTypes.TRAINING;
     let predictedOutput: ArrayLike<number> = null;
 
     // train
@@ -56,13 +79,35 @@ export abstract class Backend {
       let errorSet = [];
       for (let index = 0; index < dataset.length; index++) {
         const { input, output } = dataset[index];
+
+        // console.log('Before activation:');
+        // logDimension('activation', this.compiler);
+        // logDimension('weight', this.compiler);
+        // logDimension('state', this.compiler);
         predictedOutput = await this.activate(input);
-        let partialError = Lysergic.costFunction(output, predictedOutput, costFunction);
+
+        // console.log('After activation:');
+        // console.dir(this.compiler.toJSON());
+        // logDimension('activation', this.compiler);
+        // logDimension('weight', this.compiler);
+        // logDimension('state', this.compiler);
+
+        let partialError = cost(output, predictedOutput, costFunction);
         await this.propagate(output);
+        // console.log('\x1B[?25l\x1Bc');
+        // logDimension('activation', this.compiler);
+        // logDimension('weight', this.compiler);
+        // logDimension('state', this.compiler);
+        // console.log(' ');
+        // console.log('After propagation:');
+        // console.dir(this.compiler.toJSON());
+
         errorSet.push(partialError);
         error += partialError;
 
         every && every(predictedOutput, output, partialError, iterations);
+
+        // break;
       }
       error /= dataset.length;
 
@@ -80,10 +125,11 @@ export abstract class Backend {
           }
         } else log(partialResult, errorSet);
       }
+      // break;
     }
 
     // end training
-    this.engine.status = StatusTypes.IDLE;
+    this.compiler.engineStatus = StatusTypes.IDLE;
 
     return {
       error,
@@ -99,47 +145,47 @@ export abstract class Backend {
 }
 
 
-export function activationFunction(x: number, type: ActivationTypes): number {
+export function activationFunction(x: number, type: Activations.ActivationTypes): number {
   switch (type) {
-    case ActivationTypes.LOGISTIC_SIGMOID:
+    case Activations.ActivationTypes.LOGISTIC_SIGMOID:
       return 1 / (1 + Math.exp(-x));
 
-    case ActivationTypes.TANH:
+    case Activations.ActivationTypes.TANH:
       const eP = Math.exp(x);
       const eN = 1 / eP;
       return (eP - eN) / (eP + eN);
 
-    case ActivationTypes.RELU:
+    case Activations.ActivationTypes.RELU:
       return x > 0 ? x : 0;
 
     // Required for NTM
-    case ActivationTypes.RELU_PLUSONE:
+    case Activations.ActivationTypes.RELU_PLUSONE:
       return 1 + (x > 0 ? x : 0);
 
     // https://en.wikipedia.org/wiki/Gaussian_function
-    case ActivationTypes.GAUSSIAN:
+    case Activations.ActivationTypes.GAUSSIAN:
       const pow = x * x;
       return Math.exp(-pow);
 
     // Glorot, Xavier, Antoine Bordes, and Yoshua Bengio. "Deep sparse rectifier neural networks." International Conference on Artificial Intelligence and Statistics. 2011.
-    case ActivationTypes.SOFTPLUS:
+    case Activations.ActivationTypes.SOFTPLUS:
       return Math.log(1 + Math.exp(x));
 
     // http://www.iro.umontreal.ca/~lisa/publications2/index.php/attachments/single/205
     // http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
-    case ActivationTypes.SOFTSIGN:
+    case Activations.ActivationTypes.SOFTSIGN:
       return x / (1 + Math.abs(x));
 
-    case ActivationTypes.EXP:
+    case Activations.ActivationTypes.EXP:
       return Math.exp(x);
 
-    case ActivationTypes.IDENTITY:
+    case Activations.ActivationTypes.IDENTITY:
       return x;
 
-    case ActivationTypes.INVERSE_IDENTITY:
+    case Activations.ActivationTypes.INVERSE_IDENTITY:
       return 1 / x;
 
-    case ActivationTypes.STEP:
+    case Activations.ActivationTypes.STEP:
       return x > 0 ? 1 : 0;
 
     default:
@@ -147,38 +193,38 @@ export function activationFunction(x: number, type: ActivationTypes): number {
   }
 }
 
-export function activationFunctionDerivative(x: number, fx: number, type: ActivationTypes): number {
+export function activationFunctionDerivative(x: number, fx: number, type: Activations.ActivationTypes): number {
   switch (type) {
-    case ActivationTypes.LOGISTIC_SIGMOID:
+    case Activations.ActivationTypes.LOGISTIC_SIGMOID:
       return fx * (1 - fx);
 
-    case ActivationTypes.TANH:
+    case Activations.ActivationTypes.TANH:
       return 1 - (fx * fx);
 
-    case ActivationTypes.IDENTITY:
+    case Activations.ActivationTypes.IDENTITY:
       return 1;
 
-    case ActivationTypes.GAUSSIAN:
+    case Activations.ActivationTypes.GAUSSIAN:
       return -2 * x * fx;
 
-    case ActivationTypes.RELU_PLUSONE:
-    case ActivationTypes.RELU:
+    case Activations.ActivationTypes.RELU_PLUSONE:
+    case Activations.ActivationTypes.RELU:
       return x > 0 ? 1 : 0;
 
-    case ActivationTypes.SOFTPLUS:
+    case Activations.ActivationTypes.SOFTPLUS:
       return 1 / (1 + Math.exp(-x));
 
-    case ActivationTypes.SOFTSIGN:
+    case Activations.ActivationTypes.SOFTSIGN:
       const aux = 1 + Math.abs(x);
       return 1 / (aux * aux);
 
-    case ActivationTypes.EXP:
+    case Activations.ActivationTypes.EXP:
       return fx;
 
-    case ActivationTypes.INVERSE_IDENTITY:
+    case Activations.ActivationTypes.INVERSE_IDENTITY:
       return -(1 / (x * x));
 
-    case ActivationTypes.STEP:
+    case Activations.ActivationTypes.STEP:
       return 0;
 
     // TODO: REVIEW HOW TO DERIVATE WITH THE GENERALIZED ALGORIHM

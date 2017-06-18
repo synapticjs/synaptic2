@@ -18,16 +18,15 @@ console.timeEnd('Loading MNIST');
 
 var generator = new MersenneTwister(100010);
 
-var random = generator.random.bind(generator);
+var random = generator.random_excl.bind(generator);
 
-synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
 synaptic.Lysergic.RandomGenerator = random;
 
 var lstm = new synaptic.Network({
   layers: [
     new synaptic.layers.Input2D(28, 28),
     new synaptic.layers.Dense(15),
-    new synaptic.layers.Dense(10, synaptic.Lysergic.ActivationTypes.SOFTMAX)
+    new synaptic.layers.Dense(10, synaptic.Lysergic.Activations.ActivationTypes.SOFTMAX)
   ]
 })
 
@@ -44,7 +43,7 @@ function log(partialResult, errorSet) {
 
 
 
-lstm.backend.build().then(() => {
+lstm.build().then(() => {
   console.timeEnd('Build network')
   console.time('MNIST')
   var trainer = new synaptic.Trainer(lstm)

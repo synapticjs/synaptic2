@@ -1,18 +1,18 @@
 import MersenneTwister = require('mersenne-twister');
 
-import { layers, Network, Lysergic } from '../../../src';
+import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainResult } from "../../../src/backends/index";
-import { CostTypes, ActivationTypes } from 'lysergic';
+import { Activations } from 'lysergic';
 
 const generator = new MersenneTwister(100010);
-const random = generator.random.bind(generator);
+const random = generator.random_excl.bind(generator);
 
 let baseNetwork = new Network({
   layers: [
     new layers.Input(2),
-    new layers.Dense(3, ActivationTypes.TANH),
-    new layers.Dense(1, ActivationTypes.TANH)
+    new layers.Dense(3, Activations.ActivationTypes.TANH),
+    new layers.Dense(1, Activations.ActivationTypes.TANH)
   ],
   engineOptions: {
     generator: random,
@@ -23,12 +23,12 @@ let baseNetwork = new Network({
 export class XOR extends PerformanceTest {
   minError = 0.001;
   maxIterations = 10000;
-  costFunction: CostTypes = Lysergic.CostTypes.MEAN_SQUARE_ERROR;
+  costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
 
   async build(backend) {
     const network = baseNetwork.clone();
 
-    network.backend = new backend(network.engine);
+    network.backend = new backend(network.compiler);
 
     await network.build();
 

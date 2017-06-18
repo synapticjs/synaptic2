@@ -6,9 +6,9 @@ var MersenneTwister = require('mersenne-twister')
 
 var generator = new MersenneTwister(100010);
 
-var random = generator.random.bind(generator);
+var random = generator.random_excl.bind(generator);
 
-synaptic.Lysergic.RandomGenerator = () => random() * 2 - 1;
+synaptic.Lysergic.RandomGenerator = random;
 
 var lstm = new synaptic.Network(
   new synaptic.layers.Input(6),
