@@ -60,7 +60,9 @@ export async function run(test: string, options: {
   logDimensionMean('weight', network.compiler);
 
   console.time('  Train');
+
   console.log('travis_fold:start:Train');
+  console.log('  Train');
   let trainResult = await runner.run(network);
   console.log('travis_fold:end:Train');
   console.timeEnd('  Train');
@@ -78,6 +80,7 @@ export async function run(test: string, options: {
     let error = 0;
     console.log('  Test set: ' + testSet.length + ' items');
     console.log('travis_fold:start:Test');
+    console.log('    Execute test set');
     console.time('    Execute test set');
     let partialErrors = [];
     for (let index = 0; index < testSet.length; index++) {
