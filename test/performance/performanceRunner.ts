@@ -78,9 +78,8 @@ export async function run(test: string, options: {
   if (testSet && testSet.length) {
 
     let error = 0;
-    console.log('  Test set: ' + testSet.length + ' items');
     console.log('travis_fold:start:Test');
-    console.log('    Execute test set');
+    console.log('  Test set: ' + testSet.length + ' items');
     console.time('    Execute test set');
     let partialErrors = [];
     for (let index = 0; index < testSet.length; index++) {
