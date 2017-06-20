@@ -37,6 +37,6 @@
   },
   "dependencies": {
     "binaryen": "^1.37.13",
-    "lysergic": "^0.2.1"
+    "lysergic": "^0.2.4"
   }
 }

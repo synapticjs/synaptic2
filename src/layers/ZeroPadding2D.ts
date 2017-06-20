@@ -20,7 +20,7 @@ export default class ZeroPadding2D implements Layer {
       for (y = -this.padding; y < boundary.height + this.padding; y++) {
         for (x = -this.padding; x < boundary.width + this.padding; x++) {
 
-          const unit = network.addUnit(Activations.ActivationTypes.IDENTITY);
+          const unit = network.addUnit({ activationFunction: Activations.ActivationTypes.IDENTITY });
           this.layer.push(unit);
 
           // only connect the non-padding units

@@ -11,7 +11,6 @@ var pow = stdlib.Math.pow;
 var ln = stdlib.Math.log;
 var abs = stdlib.Math.abs;
 var max = stdlib.Math.max;
-var random = foreign.random;
 
 ${node.children.map(x => emit(x)).map(x => x + ';').join('\n')}
 

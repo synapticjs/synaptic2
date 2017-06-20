@@ -10,3 +10,4 @@ typings/**
 package-lock.json
 *.log
 *.log.*
+test-results

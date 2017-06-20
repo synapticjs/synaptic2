@@ -13,7 +13,7 @@ export default class ASM extends Backend {
     // console.log(source);
 
     const getModule = new Function('stdlib', 'foreign', 'heap', source);
-    const foreign = { random: this.compiler.random };
+    const foreign = {};
 
     const memory = await this.compiler.getBuffer();
 

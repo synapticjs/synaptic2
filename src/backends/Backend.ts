@@ -31,7 +31,7 @@ export interface TrainResult {
 
 
 export function logDimension(dimension: string, compiler: Lysergic) {
-  let variables = compiler.ast.getVariables().filter($ => $.key.startsWith(dimension));
+  let variables = compiler.heap.getVariables().filter($ => $.key.startsWith(dimension));
 
   console.log('Dimension ' + dimension);
   variables.map($ => {
@@ -41,6 +41,18 @@ export function logDimension(dimension: string, compiler: Lysergic) {
     console.log(`  *(${$.position}) = ${$.key} = ${label}`);
   });
 }
+
+
+export function logDimensionMean(dimension: string, compiler: Lysergic) {
+  let variables = compiler.heap.getVariables().filter($ => $.key.startsWith(dimension));
+  let acc = 0;
+  variables.map($ => {
+    acc += compiler.heap.memory[$.position];
+  });
+
+  console.log('Dimension ' + dimension + ' mean = ' + (acc / variables.length));
+}
+
 
 export abstract class Backend {
   built = false;

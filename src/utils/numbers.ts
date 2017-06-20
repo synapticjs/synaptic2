@@ -128,8 +128,8 @@ export function getWeightsFor(from: number, to: number, layerCount: number, laye
   }
 
   if (activationType == Activations.ActivationTypes.LOGISTIC_SIGMOID) {
-    scaleVector(weights, 1 / Math.sqrt(to));
-    scaleVector(weights, layerFactor);
+    scaleVector(weights, 4 * Math.sqrt(6 / (from + to)));
+    // scaleVector(weights, layerFactor);
     return weights;
   }
 

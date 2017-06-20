@@ -8,14 +8,16 @@ const generator = new MersenneTwister(100010);
 const random = generator.random_excl.bind(generator);
 
 let baseNetwork = new Network({
+  generator: random,
   layers: [
     new layers.Input(1),
     new layers.Dense(1)
-  ],
-  engineOptions: {
-    generator: random
-  }
+  ]
 });
+
+declare var console;
+import { logTopology } from "../../../src/utils/topologyPrinter";
+console.log('NOT Topology: \n' + logTopology(baseNetwork));
 
 export class NOT extends PerformanceTest {
   minError = 0.001;

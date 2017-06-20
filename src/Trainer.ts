@@ -19,6 +19,8 @@ export default class Trainer {
       throw new Error('Not every entry contains `input` and `output` fields');
     }
 
+    this.network.compiler.learningRate = learningRate;
+
     return await this.network.backend.train(dataset, {
       learningRate,
       minError,

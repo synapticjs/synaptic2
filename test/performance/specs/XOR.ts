@@ -9,16 +9,20 @@ const generator = new MersenneTwister(100010);
 const random = generator.random_excl.bind(generator);
 
 let baseNetwork = new Network({
+  generator: random,
   layers: [
     new layers.Input(2),
     new layers.Dense(3, Activations.ActivationTypes.TANH),
     new layers.Dense(1, Activations.ActivationTypes.TANH)
   ],
   engineOptions: {
-    generator: random,
     bias: false
   }
 });
+
+declare var console;
+import { logTopology } from "../../../src/utils/topologyPrinter";
+console.log('XOR Topology: \n' + logTopology(baseNetwork));
 
 export class XOR extends PerformanceTest {
   minError = 0.001;

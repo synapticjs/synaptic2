@@ -1,4 +1,4 @@
-import { Lysergic, Activations, ILysergicOptions, StatusTypes } from 'lysergic';
+import { Lysergic, Activations, ILysergicOptions, StatusTypes, Topology } from 'lysergic';
 import backends, { Backend } from './backends';
 
 export interface Boundary {
@@ -20,7 +20,11 @@ export default class Network {
   compiler: Lysergic;
   backend: Backend;
 
-  constructor(options: { backend?: typeof Backend; engine?: Lysergic; layers?: Layer[], engineOptions?: ILysergicOptions });
+  generator: () => number = Math.random.bind(this);
+
+  boundaries: Boundary[] = [];
+
+  constructor(options: { backend?: typeof Backend; engine?: Lysergic; layers?: Layer[], engineOptions?: ILysergicOptions, generator?: () => number });
   constructor(...layers: Layer[]);
   constructor(...args) {
     let layers: Layer[];
@@ -50,8 +54,13 @@ export default class Network {
       layers = [...args];
     }
 
+    if (options.generator) {
+      this.generator = options.generator;
+    }
+
     engine = engine || new Lysergic(engineOptions);
     backendCtor = backendCtor || backends.ASM;
+
 
     this.backend = new backendCtor(engine);
     this.compiler = this.backend.compiler;
@@ -61,10 +70,25 @@ export default class Network {
 
     // init layers
     this.compiler.engineStatus = StatusTypes.INIT;
-    const boundaries: Boundary[] = [];
+    const boundaries: Boundary[] = this.boundaries = [];
     layers.forEach((layer, i) => {
       prevBoundary = layer.init && layer.init(this, prevBoundary) || prevBoundary;
       prevBoundary = { ...prevBoundary, layerIndex: i, totalLayers: layers.length };
+
+      if (!prevBoundary.layer) {
+        throw new Error(`Your layer index ${i} doesn't expose any layer`);
+      }
+
+      let expectedNeurons = prevBoundary.width * prevBoundary.height * prevBoundary.depth;
+
+      if (expectedNeurons == 0) {
+        throw new Error(`Invalid boundary dimentions, expecting unit count to be > 0. Got 0`);
+      }
+
+      if (expectedNeurons != prevBoundary.layer.length) {
+        throw new Error(`Your layer index ${i} doesn't contain the right ammount of units. Got ${prevBoundary.layer.length} Expecting ${expectedNeurons}`);
+      }
+
       boundaries.push(prevBoundary);
     });
 
@@ -81,11 +105,31 @@ export default class Network {
     this.compiler.engineStatus = StatusTypes.IDLE;
   }
 
-  addUnit(activationFunction?: Activations.ActivationTypes, bias = true) {
-    return this.compiler.addUnit({ activationFunction, bias });
+  randomNorm(mean = 0, stdDev = 1) {
+    let V1, V2, S, X;
+
+    do {
+      let U1 = this.generator();
+      let U2 = this.generator();
+      V1 = (2 * U1) - 1;
+      V2 = (2 * U2) - 1;
+      S = (V1 * V1) + (V2 * V2);
+    } while (S > 1);
+
+    X = Math.sqrt(-2 * Math.log(S) / S) * V1;
+    X = mean + stdDev * X;
+    return X;
   }
 
-  addConnection(from: number, to: number, weight: number = null) {
+  addUnit(options: Topology.ITopologyUnitOptions): number;
+  addUnit(activationFunction?: Activations.ActivationTypes, bias?: boolean): number;
+  addUnit() {
+    if (typeof arguments[0] == 'object')
+      return this.compiler.addUnit(arguments[0]);
+    return this.compiler.addUnit({ activationFunction: arguments[0], bias: arguments[1] });
+  }
+
+  addConnection(from: number, to: number, weight: number = this.randomNorm()) {
     return this.compiler.addConnection(from, to, weight);
   }
 
@@ -93,8 +137,29 @@ export default class Network {
     return this.compiler.addGate(from, to, gater);
   }
 
-  addLayer(width = 0, height = 1, depth = 1) {
-    return this.compiler.topology.addLayer(width * height * depth, {});
+  addLayer(): number[];
+  addLayer(size: number, options?: Topology.ITopologyUnitOptions): number[];
+  addLayer(width: number, height: number, options?: Topology.ITopologyUnitOptions): number[];
+  addLayer(width: number, height: number, depth: number, options?: Topology.ITopologyUnitOptions): number[];
+  addLayer() {
+    let args: any[] = Array.prototype.slice.apply(arguments);
+    let options: Topology.ITopologyUnitOptions = {};
+
+    if (args.length > 0) {
+      if (typeof args[args.length - 1] == 'object') {
+        options = args.pop();
+      }
+
+      let unitCount = args.reduce(($, $$) => (+$) * (+$$), 1);
+
+      if (isNaN(unitCount) || unitCount <= 0) {
+        throw new Error('Network.addLayer: unit number must be > 0. Got: ' + unitCount);
+      }
+
+      return this.compiler.topology.addLayer(unitCount, options);
+    } else {
+      return this.compiler.topology.addLayer(0, options);
+    }
   }
 
   getLayers() {

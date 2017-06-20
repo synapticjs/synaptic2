@@ -9,17 +9,21 @@ const generator = new MersenneTwister(100010);
 const random = generator.random_excl.bind(generator);
 
 let baseNetwork = new Network({
+  generator: random,
   layers: [
     new layers.Input(2),
     new layers.Dense(1, Activations.ActivationTypes.TANH)
   ],
   engineOptions: {
-    generator: random,
     bias: false
   }
 });
 
-export class AND extends PerformanceTest {
+declare var console;
+import { logTopology } from "../../../src/utils/topologyPrinter";
+console.log('OR Topology: \n' + logTopology(baseNetwork));
+
+export class OR extends PerformanceTest {
   minError = 0.001;
   maxIterations = 10000;
   costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
@@ -69,4 +73,4 @@ export class AND extends PerformanceTest {
 
 
 
-export default new AND;
+export default new OR;

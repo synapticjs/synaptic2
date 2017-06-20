@@ -22,16 +22,20 @@ let mnistSet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], t
 }
 
 let baseNetwork = new Network({
+  generator: random,
   layers: [
     new layers.Input2D(28, 28),
     new layers.Dense(15),
     new layers.Dense(10, Activations.ActivationTypes.SOFTMAX)
   ],
   engineOptions: {
-    generator: random,
     bias: true
   }
 });
+
+declare var console;
+import { logTopology } from "../../../src/utils/topologyPrinter";
+console.log('SOFTMAX_MNIST Topology: \n' + logTopology(baseNetwork));
 
 export class MNIST extends PerformanceTest {
   costFunction: CostTypes = CostTypes.SOFTMAX;

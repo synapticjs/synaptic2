@@ -16,24 +16,27 @@ const generator = new MersenneTwister(100010);
 const random = generator.random_excl.bind(generator);
 
 const baseNetwork = new Network({
+  generator: random,
   layers: [
     new layers.Input(2),
     new layers.LSTM(6),
     new layers.Dense(1)
   ],
   engineOptions: {
-    generator: random,
-    bias: true
+    bias: false
   }
 });
 
+declare var console;
+import { logTopology } from "../../../src/utils/topologyPrinter";
+console.log('TIMING_TASK Topology: \n' + logTopology(baseNetwork));
 
 export class TIMING_TASK extends PerformanceTest {
   costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
   logEvery = 10;
   maxIterations = 300;
-  minError = 0.005;
-  learningRate = 0.03;
+  minError = 0.05;
+  learningRate = 0.1;
 
   async build(backend) {
     const network = baseNetwork.clone();

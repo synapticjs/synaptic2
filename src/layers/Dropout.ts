@@ -34,7 +34,7 @@ export default class Dropout implements Layer {
       network.addGate(from, to, gate);
       this.gater.push(gate);
       // use the unit's state to store the chances to drop
-      network.compiler.ast.setVariable('state', gate, this.chances);
+      network.compiler.heap.setVariable('state', gate, this.chances);
       // self-connect the unit so it keeps its state
       network.addConnection(gate, gate);
     }

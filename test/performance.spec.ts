@@ -2,7 +2,7 @@
 
 import { backends } from '../src';
 
-import { run as notMochaRunner } from './performance/performanceRunner';
+import { run as notMochaRunner, storeResults } from './performance/performanceRunner';
 
 function run(test: string, backend, only?: boolean) {
 
@@ -36,18 +36,20 @@ describe('Performance tasks', () => {
     run('AND', backends.ASM);
     run('OR', backends.ASM);
     run('NOT', backends.ASM);
+    run('TIMING_TASK', backends.ASM);
+    run('DSR', backends.ASM);
     run('MNIST', backends.ASM);
     run('CONV_MNIST', backends.ASM);
     run('SOFTMAX_MNIST', backends.ASM);
-    run('TIMING_TASK', backends.ASM);
-    run('DSR', backends.ASM);
   });
 
   describe('WASM', () => {
     run('XOR', backends.WASM);
-    // run('MNIST', backends.WASM);
-    // run('SOFTMAX_MNIST', backends.WASM);
     run('TIMING_TASK', backends.WASM);
     run('DSR', backends.WASM);
+    // run('MNIST', backends.WASM);
+    // run('SOFTMAX_MNIST', backends.WASM);
   });
 });
+
+after(() => storeResults('test-results'));

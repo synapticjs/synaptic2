@@ -41,12 +41,10 @@ export default class LSTM implements Layer {
     }
 
     this.prevLayer = boundary.layer;
-    this.inputGate = network.compiler.topology.addLayer(this.memoryBlocks, Activations.ActivationTypes.LOGISTIC_SIGMOID);
-    this.forgetGate = network.compiler.topology.addLayer(this.memoryBlocks, Activations.ActivationTypes.LOGISTIC_SIGMOID);
-
-    this.memoryCell = network.compiler.topology.addLayer(this.memoryBlocks, this.activationFunction);
-
-    this.outputGate = network.compiler.topology.addLayer(this.memoryBlocks, Activations.ActivationTypes.LOGISTIC_SIGMOID);
+    this.inputGate = network.addLayer(this.memoryBlocks, { activationFunction: Activations.ActivationTypes.LOGISTIC_SIGMOID });
+    this.forgetGate = network.addLayer(this.memoryBlocks, { activationFunction: Activations.ActivationTypes.LOGISTIC_SIGMOID });
+    this.memoryCell = network.addLayer(this.memoryBlocks, { activationFunction: this.activationFunction });
+    this.outputGate = network.addLayer(this.memoryBlocks, { activationFunction: Activations.ActivationTypes.LOGISTIC_SIGMOID });
 
     // connection from previous layer to memory cell
     connectLayers(network, this.prevLayer, this.memoryCell, boundary.totalLayers, boundary.layerIndex);
@@ -95,7 +93,7 @@ export default class LSTM implements Layer {
 
 // helper to connect layers
 function connectLayers(network: Network, from: number[], to: number[], totalLayers: number, layerIndex: number) {
-  let weights = numbers.getWeightsFor(from.length, to.length, totalLayers, layerIndex, network.compiler.topology.activationFunction[from[0]], network.compiler.random);
+  let weights = numbers.getWeightsFor(from.length, to.length, totalLayers, layerIndex, network.compiler.topology.activationFunction[from[0]], network.generator);
 
   let i = 0;
 

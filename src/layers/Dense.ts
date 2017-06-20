@@ -14,9 +14,9 @@ export default class Dense implements Layer {
       throw new Error('\'Dense\' can\'t be the first layer of the network!');
     }
 
-    this.layer = network.compiler.topology.addLayer(this.size, { activationFunction: this.activationType });
+    this.layer = network.addLayer(this.size, { activationFunction: this.activationType });
 
-    let weights = numbers.getWeightsFor(boundary.layer.length, this.layer.length, boundary.totalLayers, boundary.layerIndex, this.activationType, network.compiler.random);
+    let weights = numbers.getWeightsFor(boundary.layer.length, this.layer.length, boundary.totalLayers, boundary.layerIndex, this.activationType, network.generator);
 
     let i = 0;
 

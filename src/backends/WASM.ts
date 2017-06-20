@@ -58,8 +58,7 @@ export default class WASM extends Backend {
       imports: {
         exp: Math.exp,
         log: Math.log,
-        pow: Math.pow,
-        random: this.compiler.random
+        pow: Math.pow
       }
     });
 

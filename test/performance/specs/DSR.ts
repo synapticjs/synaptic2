@@ -20,19 +20,21 @@ const prompts = [0, 1];
 const symbols = targets.length + distractors.length + prompts.length;
 
 const baseNetwork = new Network({
+  generator: random,
   layers: [
     new layers.Input(symbols),
     new layers.LSTM(4),
     new layers.Dense(2)
   ],
   engineOptions: {
-    generator: random,
     bias: true
   }
 });
 
 
-
+declare var console;
+import { logTopology } from "../../../src/utils/topologyPrinter";
+console.log('DSR Topology: \n' + logTopology(baseNetwork));
 
 export class DSR extends PerformanceTest {
   costFunction: CostTypes = CostTypes.SOFTMAX;
