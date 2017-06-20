@@ -8,7 +8,7 @@ const path = require('path'), fs = require('fs');
 
 function numToStr(num: number) {
   let ret = num.toFixed(3);
-  if (ret == '0.000') return '     ';
+  if (ret == '0.000') return '_____';
   return ret;
 }
 
