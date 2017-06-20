@@ -9,7 +9,7 @@ function run(test: string, backend, only?: boolean) {
   const fn = only ? it.only : it;
 
   fn(test, function (done) {
-    this.timeout(60000);
+    this.timeout(360000);
 
     notMochaRunner(test, { backend }).then(() => done(), err => done(err));
   });
