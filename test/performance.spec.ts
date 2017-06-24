@@ -1,4 +1,5 @@
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
+declare var process, console;
 
 import { backends } from '../src';
 
@@ -53,4 +54,12 @@ describe('Performance tasks', () => {
   });
 });
 
-after(() => storeResults('test-results'));
+
+after(function () {
+  this.timeout(10000);
+  if (process.env.CI) { // do not store results in CI
+    console.log('Skipping storeResults in CI');
+  } else {
+    storeResults('test-results');
+  }
+});
