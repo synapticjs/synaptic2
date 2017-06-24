@@ -1,18 +1,27 @@
 declare var console;
 import { Backend } from './Backend';
-import emit from '../emiters/asm';
+import emiter = require('../emiters/asm');
 import { StatusTypes } from "lysergic";
-console;
+
 export default class ASM extends Backend {
   asmModule: any;
 
   async build() {
     const AST = this.compiler.getAST();
-    const source = emit(AST);
+    const source = emiter.emit(AST);
 
-    // console.log(source);
+    if (emiter.DEBUG)
+      console.log(source);
 
-    const getModule = new Function('stdlib', 'foreign', 'heap', source);
+    let getModule: (stdlib, foreign, heap) => any;
+
+    try {
+      getModule = new Function('stdlib', 'foreign', 'heap', source) as any;
+    } catch (e) {
+      console.log(source);
+      throw e;
+    }
+
     const foreign = {};
 
     const memory = await this.compiler.getBuffer();

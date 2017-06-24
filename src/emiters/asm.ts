@@ -1,5 +1,18 @@
-import { indent } from 'lysergic/dist/ast/helpers';
+import { indent as originalIndent } from 'lysergic/dist/ast/helpers';
 import { nodes } from "lysergic";
+
+export let DEBUG = false;
+
+
+function onlyWhenDebugging(str: string): string {
+  if (DEBUG) return str;
+  return '';
+}
+
+function indent(str: string): string {
+  if (DEBUG) return originalIndent(str);
+  return str;
+}
 
 
 function baseEmit(node: nodes.Node) {
@@ -25,7 +38,7 @@ return {
 
     if (isAssignment) {
       if (node.lhs instanceof nodes.Variable) {
-        lhsString = `H[${node.lhs.position}] /* ${node.lhs.key} */`;
+        lhsString = `H[${node.lhs.position}]` + onlyWhenDebugging(`/* ${node.lhs.key} */`);
       } else if (node.lhs instanceof nodes.HeapReferenceNode) {
         lhsString = `H[${node.lhs.position}]`;
       }
@@ -34,9 +47,9 @@ return {
     if (node.operator.length === 2 && node.operator[1] === '=' && node.operator != '==') {
       return `${lhsString} = \n` + indent(`${emit(node.lhs)} ${node.operator[0]} (\n${indent(rhsString)}\n)\n`);
     } else if (node.operator === '^') {
-      return `pow(${emit(node.lhs)}, ${rhsString})`;
+      return `pow(${lhsString}, ${rhsString})`;
     } else if (node.operator === 'max') {
-      return `max(${emit(node.lhs)}, ${rhsString})`;
+      return `max(${lhsString}, ${rhsString})`;
     } else if (node.operator === '=') {
       return `${lhsString} = \n${indent(rhsString)}\n`;
     }
@@ -44,9 +57,9 @@ return {
     // if `a += b` -> `a = a + (b)`
   } else if (node instanceof nodes.Variable) {
     if (node.hasParenthesis)
-      return `+H[${node.position}] /* ${node.key} */`;
+      return `+H[${node.position}]` + onlyWhenDebugging(`/* ${node.key} */`);
     else
-      return `(+H[${node.position}] /* ${node.key} */)`;
+      return `(+H[${node.position}])` + onlyWhenDebugging(`/* ${node.key} */)`);
   } else if (node instanceof nodes.HeapReferenceNode) {
     if (node.hasParenthesis)
       return `+H[${node.position}]`;
@@ -55,21 +68,28 @@ return {
   } else if (node instanceof nodes.FloatNumberNode) {
     return node.numericValue.toFixed(1);
   } else if (node instanceof nodes.TernaryExpressionNode) {
-    return '(' + emit(node.condition) + ') ? (' + emit(node.truePart) + ') : (' + emit(node.falsePart) + ')';
+    return '((' + emit(node.condition) + ') ? (' + emit(node.truePart) + ') : (' + emit(node.falsePart) + '))';
   } else if (node instanceof nodes.UnaryExpressionNode) {
     return `${node.operator}(${emit(node.rhs)})`;
   } else if (node instanceof nodes.BlockNode) {
-    return '/* ' + (node.name || 'Unnamed block') + ' */\n' + indent(node.children.map(x => emit(x) + ';').join('\n')) + '\n';
+    return (
+      onlyWhenDebugging('/* ' + (node.name || 'Unnamed block') + ' */\n')
+      +
+      indent(node.children.map(x => emit(x) + ';').join('\n')) + '\n'
+    );
+
   } else if (node instanceof nodes.FunctionNode) {
     return `function ${node.name}() {
   ${indent(emit(node.body))}
 }`;
   }
-  return 'CANNOT PRINT NODE: ' + node.constructor.toString();
+  throw new Error('CANNOT PRINT NODE: ' + node.constructor.toString());
 };
 
-export default function emit(node: nodes.Node) {
+export function emit(node: nodes.Node) {
   if (node.hasParenthesis)
     return '(' + baseEmit.call(null, node) + ')';
   return baseEmit.call(null, node);
 }
+
+export default emit;
