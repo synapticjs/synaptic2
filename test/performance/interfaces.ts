@@ -17,7 +17,7 @@ export function printError(error, errorSet) {
 
   progress = progress.map(($, $$) => $$ <= spaces ? '=' : ' ').join('');
 
-  return 'Error: ' + error.toFixed(6) + ' [' + progress + '] ' + (errorSet ? printErrorSet(errorSet) : "");
+  return 'Error: ' + error.toFixed(10) + ' [' + progress + '] ' + (errorSet ? printErrorSet(errorSet) : "");
 }
 
 const braile = ' ⡀⣀⣄⣤⣴⣶⣾⣿';
@@ -49,7 +49,7 @@ export abstract class PerformanceTest {
       learningRate: this.learningRate,
       minError: this.minError,
       maxIterations: this.maxIterations,
-      log: this.logEvery ? this.log : null,
+      log: this.logEvery ? (a, b) => this.log.apply(this, [a, b, network]) : null,
       costFunction: this.costFunction,
       logEvery: this.logEvery
     });
@@ -57,7 +57,7 @@ export abstract class PerformanceTest {
     return result;
   }
 
-  log(partial: TrainResult, errorSet: ArrayLike<number>) {
+  log(partial: TrainResult, errorSet: ArrayLike<number>, network: Network) {
     console.log(printError(partial.error, errorSet));
   }
 

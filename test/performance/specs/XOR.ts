@@ -12,8 +12,8 @@ let baseNetwork = new Network({
   generator: random,
   layers: [
     new layers.Input(2),
-    new layers.Dense(3, Activations.ActivationTypes.TANH),
-    new layers.Dense(1, Activations.ActivationTypes.TANH)
+    new layers.Dense(3, { activationFunction: Activations.ActivationTypes.LOGISTIC_SIGMOID }),
+    new layers.Regression(1)
   ],
   engineOptions: {
     bias: false

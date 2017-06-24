@@ -12,6 +12,8 @@ import LSTM from './LSTM';
 import MaxPool from './MaxPool';
 import MaxPool2D from './MaxPool2D';
 import MaxPool3D from './MaxPool3D';
+import Softmax from './Softmax';
+import Regression from './Regression';
 import ZeroPadding from './ZeroPadding';
 import ZeroPadding2D from './ZeroPadding2D';
 import ZeroPadding3D from './ZeroPadding3D';
@@ -31,6 +33,8 @@ export default {
   MaxPool,
   MaxPool2D,
   MaxPool3D,
+  Softmax,
+  Regression,
   ZeroPadding,
   ZeroPadding2D,
   ZeroPadding3D

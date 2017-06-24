@@ -26,10 +26,10 @@ let baseNetwork = new Network({
   layers: [
     new layers.Input2D(28, 28),
     new layers.Dense(15),
-    new layers.Dense(10)
+    new layers.Regression(10)
   ],
   engineOptions: {
-    bias: true
+    bias: false
   }
 });
 
@@ -39,9 +39,9 @@ console.log('MNIST Topology: \n' + logTopology(baseNetwork));
 
 export class MNIST extends PerformanceTest {
   costFunction: CostTypes = CostTypes.SOFTMAX;
-  logEvery = 1;
+  logEvery = 10;
   maxIterations = 300;
-  minError = 0.01;
+  minError = 0.02;
 
   async build(backend) {
     const network = baseNetwork.clone();

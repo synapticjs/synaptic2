@@ -3,7 +3,7 @@ import mnist = require('mnist');
 import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainEntry } from "../../../src/backends/index";
-import { Activations } from 'lysergic';
+// import { Activations } from 'lysergic';
 
 const generator = new MersenneTwister(100010);
 const random = generator.random_excl.bind(generator);
@@ -26,7 +26,7 @@ let baseNetwork = new Network({
   layers: [
     new layers.Input2D(28, 28),
     new layers.Dense(15),
-    new layers.Dense(10, Activations.ActivationTypes.SOFTMAX)
+    new layers.Softmax(10, { bias: false })
   ],
   engineOptions: {
     bias: true

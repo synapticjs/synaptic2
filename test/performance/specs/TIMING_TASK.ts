@@ -4,6 +4,7 @@ import MersenneTwister = require('mersenne-twister');
 import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainEntry } from "../../../src/backends/index";
+import { Activations } from "lysergic";
 
 const { resolve } = require('path');
 
@@ -19,8 +20,8 @@ const baseNetwork = new Network({
   generator: random,
   layers: [
     new layers.Input(2),
-    new layers.LSTM(6),
-    new layers.Dense(1)
+    new layers.LSTM(6, { activationFunction: Activations.ActivationTypes.LOGISTIC_SIGMOID }),
+    new layers.Regression(1)
   ],
   engineOptions: {
     bias: false
@@ -34,9 +35,9 @@ console.log('TIMING_TASK Topology: \n' + logTopology(baseNetwork));
 export class TIMING_TASK extends PerformanceTest {
   costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
   logEvery = 10;
-  maxIterations = 300;
-  minError = 0.05;
-  learningRate = 0.1;
+  maxIterations = 200;
+  minError = 0.01;
+  learningRate = 0.03;
 
   async build(backend) {
     const network = baseNetwork.clone();

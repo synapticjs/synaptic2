@@ -3,7 +3,7 @@ import MersenneTwister = require('mersenne-twister');
 import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainResult, TrainEntry } from "../../../src/backends/index";
-import { StatusTypes } from 'lysergic';
+import { StatusTypes, Activations } from 'lysergic';
 import { cost } from "../../../src/utils/cost";
 
 const generator = new MersenneTwister(100010);
@@ -23,8 +23,8 @@ const baseNetwork = new Network({
   generator: random,
   layers: [
     new layers.Input(symbols),
-    new layers.LSTM(4),
-    new layers.Dense(2)
+    new layers.LSTM(4, { activationFunction: Activations.ActivationTypes.SOFTSIGN }),
+    new layers.Regression(2)
   ],
   engineOptions: {
     bias: true
@@ -40,8 +40,8 @@ export class DSR extends PerformanceTest {
   costFunction: CostTypes = CostTypes.SOFTMAX;
   logEvery = 10000;
   maxIterations = 500000;
-  minError = 0.008;
-  learningRate = 0.03;
+  minError = 0.2;
+  learningRate = 0.1;
 
   async build(backend) {
     const network = baseNetwork.clone();
@@ -189,7 +189,7 @@ export class DSR extends PerformanceTest {
           predictedOutput
         };
 
-        this.log(results, errorSet);
+        this.log(results, errorSet, network);
 
         if ((errorAvgAccumulator / this.logEvery) < this.minError) {
           break;
