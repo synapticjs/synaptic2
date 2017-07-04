@@ -33,7 +33,7 @@ describe('Performance tasks', () => {
     // });
 
     describe('ASM', () => {
-        run('XOR', backends.ASM, true);
+        run('XOR', backends.ASM);
         run('AND', backends.ASM);
         run('OR', backends.ASM);
         run('NOT', backends.ASM);
