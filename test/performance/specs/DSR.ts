@@ -3,10 +3,10 @@ import MersenneTwister = require('mersenne-twister');
 import { layers, Network, CostTypes } from '../../../src';
 import { PerformanceTest } from "../interfaces";
 import { TrainResult, TrainEntry } from "../../../src/backends/index";
-import { StatusTypes, Activations } from 'lysergic';
+import { StatusTypes } from 'lysergic';
 import { cost } from "../../../src/utils/cost";
 
-const generator = new MersenneTwister(100010);
+const generator = new MersenneTwister(321);
 const random = generator.random_excl.bind(generator);
 
 const emptySet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], test: [] };
@@ -23,8 +23,9 @@ const baseNetwork = new Network({
   generator: random,
   layers: [
     new layers.Input(symbols),
-    new layers.LSTM(4, { activationFunction: Activations.ActivationTypes.SOFTSIGN }),
-    new layers.Regression(2)
+    new layers.LSTM(4),
+    new layers.Dense(2),
+    new layers.InputToOutput()
   ],
   engineOptions: {
     bias: true

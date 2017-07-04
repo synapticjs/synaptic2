@@ -37,7 +37,7 @@ describe('Performance tasks', () => {
     run('AND', backends.ASM);
     run('OR', backends.ASM);
     run('NOT', backends.ASM);
-    run('TIMING_TASK', backends.ASM);
+    run('TIMING_TASK', backends.ASM, true);
     run('DSR', backends.ASM);
     run('MNIST', backends.ASM);
     run('CONV_MNIST', backends.ASM);
