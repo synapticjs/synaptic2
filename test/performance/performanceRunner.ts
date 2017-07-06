@@ -82,20 +82,34 @@ export async function run(test: string, options: {
     console.log('  Test set: ' + testSet.length + ' items');
     console.time('    Execute test set');
     let partialErrors = [];
+    let correct = 0;
+    let incorrect = 0;
     for (let index = 0; index < testSet.length; index++) {
       const x = testSet[index];
-      let predictedOutput = await network.activate(x.input);
+      let predictedOutput: number[] = Array.prototype.slice.apply(await network.activate(x.input));
       let partialError = cost(x.output, predictedOutput, runner.costFunction);
       partialErrors.push(partialError);
-      console.log('    ' + printError(partialError, null));
-      console.log('    Expected: ' + x.output.map(numToStr).join(' '));
-      console.log('       Given: ' + Array.prototype.slice.apply(predictedOutput).map(numToStr).join(' '));
-      console.log('');
+      if (index < 10) {
+        console.log('    Expected: ' + x.output.map(numToStr).join(' '));
+        console.log('       Given: ' + predictedOutput.map(numToStr).join(' '));
+        console.log('');
+        console.log('    ' + printError(partialError, null));
+      }
+      const target = x.output.indexOf(x.output.reduce((max, num) => num > max ? num : max, -Infinity));
+      const guess = predictedOutput.indexOf(predictedOutput.reduce((max, num) => num > max ? num : max, -Infinity));
+
+      if (target === guess) {
+        correct++;
+      } else {
+        incorrect++;
+      }
+
       error += partialError;
     }
     console.log('travis_fold:end:Test');
     console.timeEnd('    Execute test set');
 
+    console.log(`    Test set classification accuracy: ${correct}/${testSet.length}`);
     console.log('    Test set error: ' + (error / testSet.length));
     console.log(printError(error / testSet.length, partialErrors));
   }

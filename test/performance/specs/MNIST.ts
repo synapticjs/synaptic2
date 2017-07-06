@@ -15,7 +15,7 @@ let mnistSet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], t
   const oldRandom = Math.random;
   Math.random = random;
   try {
-    mnistSet = mnist.set(1000);
+    mnistSet = mnist.set(5000, 1000);
   } finally {
     Math.random = oldRandom;
   }
@@ -39,9 +39,10 @@ console.log('MNIST Topology: \n' + logTopology(baseNetwork));
 
 export class MNIST extends PerformanceTest {
   costFunction: CostTypes = CostTypes.SOFTMAX;
-  logEvery = 10;
-  maxIterations = 300;
-  minError = 0.02;
+  logEvery = 1;
+  maxIterations = 100;
+  minError = 0.05;
+  learningRate = 0.5;
 
   async build(backend) {
     const network = baseNetwork.clone();

@@ -18,7 +18,7 @@ let mnistSet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], t
   const oldRandom = Math.random;
   Math.random = random;
   try {
-    mnistSet = mnist.set(1000);
+    mnistSet = mnist.set(5000, 1000);
   } finally {
     Math.random = oldRandom;
   }
@@ -34,12 +34,6 @@ let baseNetwork = new Network({
       filter: 5,
       depth: 2
     }),
-    new layers.Convolution2D({
-      padding: 3,
-      stride: 2,
-      filter: 5,
-      depth: 1
-    }),
     new layers.Softmax(10)
   ],
   engineOptions: {
@@ -52,8 +46,8 @@ console.log('CONV_MNIST Topology: \n' + logTopology(baseNetwork));
 export class CONV_MNIST extends PerformanceTest {
   costFunction: CostTypes = CostTypes.SOFTMAX;
   logEvery = 1;
-  maxIterations = 300000;
-  minError = 0.01;
+  maxIterations = 100;
+  minError = 0.05;
   learningRate = 0.5;
 
   async build(backend) {

@@ -9,7 +9,7 @@ function run(test: string, backend, only?: boolean) {
 
     const fn = only ? it.only : it;
 
-    fn(test, function(done) {
+    fn(test, function (done) {
         this.timeout(360000);
 
         notMochaRunner(test, { backend }).then(() => done(), err => done(err));
@@ -40,8 +40,8 @@ describe('Performance tasks', () => {
         run('TIMING_TASK', backends.ASM);
         run('DSR', backends.ASM);
         run('MNIST', backends.ASM);
-        run('CONV_MNIST', backends.ASM, true);
         run('SOFTMAX_MNIST', backends.ASM);
+        run('CONV_MNIST', backends.ASM, true);
         // run('WRITE', backends.ASM);
     });
 
@@ -55,7 +55,7 @@ describe('Performance tasks', () => {
 });
 
 
-after(function() {
+after(function () {
     this.timeout(10000);
     if (process.env.CI) { // do not store results in CI
         console.log('Skipping storeResults in CI');
