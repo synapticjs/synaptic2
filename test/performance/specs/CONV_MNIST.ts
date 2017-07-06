@@ -30,8 +30,14 @@ let baseNetwork = new Network({
     new layers.Input2D(28, 28),
     new layers.Convolution2D({
       padding: 3,
-      stride: 1,
-      filter: 3,
+      stride: 2,
+      filter: 5,
+      depth: 2
+    }),
+    new layers.Convolution2D({
+      padding: 3,
+      stride: 2,
+      filter: 5,
       depth: 1
     }),
     new layers.Softmax(10)

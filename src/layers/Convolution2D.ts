@@ -33,27 +33,29 @@ export default class Convolution2D implements Layer {
 
     this.layer = network.addLayer();
 
-    const width = ((boundary.width - this.options.padding) / this.options.stride) | 0;
-    const height = ((boundary.height - this.options.padding) / this.options.stride) | 0;
+    const width = Math.round((boundary.width - this.options.padding * 2) / this.options.stride);
+    const height = Math.round((boundary.height - this.options.padding * 2) / this.options.stride);
     const depth = this.options.depth || 0;
 
     const connections: { from: number, to: number }[] = [];
-
-    for (let z = 0; z < this.options.depth; z++) {
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
+    let x, y, z, fromX, fromY, fromZ, from, to;
+    for (z = 0; z < this.options.depth; z++) {
+      for (y = this.options.padding; y < boundary.height - this.options.padding; y += this.options.stride) {
+        for (x = this.options.padding; x < boundary.width - this.options.padding; x += this.options.stride) {
           // create convolution layer units
-          const unit = network.addUnit(this.options);
+          const unit = network.addUnit();
           this.layer.push(unit);
 
           // connect units to prev layer
-          const filterRadious = this.options.filter / 2;
+          const filterRadious = this.options.filter / 2 | 0;
           for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
             for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-              let fromX = Math.round(x + offsetX);
-              let fromY = Math.round(y + offsetY);
-              for (let fromZ = 0; fromZ < boundary.depth; fromZ++) {
+              fromX = Math.round(x + offsetX);
+              fromY = Math.round(y + offsetY);
+              for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
                 if (this.isValid(boundary, fromX, fromY, fromZ)) {
+                  to = unit;
+                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth];
                   connections.push({
                     from: boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth],
                     to: unit
@@ -72,9 +74,9 @@ export default class Convolution2D implements Layer {
       network.addConnection($.from, $.to, weights[$$]);
     });
 
-    if ((depth | 0) !== (this.layer.length / (width * height))) {
-      throw new Error(`Error while creating Conv2D. Expecting depth=${depth} got ${this.layer.length / (width * height)}`);
-    }
+    //if ((depth | 0) !== (this.layer.length / (width * height))) {
+    //throw new Error(`Error while creating Conv2D. Expecting depth=${depth} got ${this.layer.length / (width * height)}`);
+    //}
 
     return {
       width,
