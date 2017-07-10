@@ -89,7 +89,7 @@ export async function run(test: string, options: {
       let predictedOutput: number[] = Array.prototype.slice.apply(await network.activate(x.input));
       let partialError = cost(x.output, predictedOutput, runner.costFunction);
       partialErrors.push(partialError);
-      if (index < 10) {
+      if (index < 20) {
         console.log('    Expected: ' + x.output.map(numToStr).join(' '));
         console.log('       Given: ' + predictedOutput.map(numToStr).join(' '));
         console.log('');
