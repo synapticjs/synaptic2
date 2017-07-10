@@ -1,4 +1,4 @@
-declare var console
+declare var console;
 import Lysergic, { Activations, StatusTypes } from 'lysergic';
 import { CostTypes } from "../index";
 import { cost } from "../utils/cost";
