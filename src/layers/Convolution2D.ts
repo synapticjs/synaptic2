@@ -42,6 +42,7 @@ export default class Convolution2D implements Layer {
     for (z = 0; z < this.options.depth; z++) {
       for (y = this.options.padding; y < boundary.height - this.options.padding; y += this.options.stride) {
         for (x = this.options.padding; x < boundary.width - this.options.padding; x += this.options.stride) {
+
           // create convolution layer units
           const unit = network.addUnit();
           this.layer.push(unit);
@@ -50,12 +51,16 @@ export default class Convolution2D implements Layer {
           const filterRadious = this.options.filter / 2 | 0;
           for (let offsetY = -filterRadious; offsetY < filterRadious; offsetY++) {
             for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
+
               fromX = Math.round(x + offsetX);
               fromY = Math.round(y + offsetY);
+
               for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
                 if (this.isValid(boundary, fromX, fromY, fromZ)) {
+
                   to = unit;
                   from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth];
+
                   connections.push({
                     from: boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth],
                     to: unit
@@ -73,10 +78,6 @@ export default class Convolution2D implements Layer {
     connections.forEach(($, $$) => {
       network.addConnection($.from, $.to, weights[$$]);
     });
-
-    //if ((depth | 0) !== (this.layer.length / (width * height))) {
-    //throw new Error(`Error while creating Conv2D. Expecting depth=${depth} got ${this.layer.length / (width * height)}`);
-    //}
 
     return {
       width,
