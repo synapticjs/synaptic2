@@ -34,14 +34,11 @@ describe('Performance tasks', () => {
 
     describe('ASM', () => {
         run('XOR', backends.ASM);
-        run('AND', backends.ASM);
-        run('OR', backends.ASM);
-        run('NOT', backends.ASM);
         run('TIMING_TASK', backends.ASM);
         run('DSR', backends.ASM);
         run('MNIST', backends.ASM);
         run('SOFTMAX_MNIST', backends.ASM);
-        run('CONV_MNIST', backends.ASM, true);
+        run('CONV_MNIST', backends.ASM);
         // run('WRITE', backends.ASM);
     });
 
@@ -49,8 +46,9 @@ describe('Performance tasks', () => {
         run('XOR', backends.WASM);
         run('TIMING_TASK', backends.WASM);
         run('DSR', backends.WASM);
-        // run('MNIST', backends.WASM);
-        // run('SOFTMAX_MNIST', backends.WASM);
+        run('MNIST', backends.WASM);
+        run('SOFTMAX_MNIST', backends.WASM);
+        run('CONV_MNIST', backends.WASM);
     });
 });
 
