@@ -1,4 +1,4 @@
-import { indent as originalIndent } from 'lysergic/dist/ast/helpers';
+//declare var console;
 import { nodes } from "lysergic";
 
 export let DEBUG = false;
@@ -7,11 +7,6 @@ export let DEBUG = false;
 function onlyWhenDebugging(str: string): string {
   if (DEBUG) return str;
   return '';
-}
-
-function indent(str: string): string {
-  if (DEBUG) return originalIndent(str);
-  return str;
 }
 
 
@@ -45,13 +40,13 @@ return {
     }
 
     if (node.operator.length === 2 && node.operator[1] === '=' && node.operator != '==') {
-      return `${lhsString} = \n` + indent(`${emit(node.lhs)} ${node.operator[0]} (\n${indent(rhsString)}\n)\n`);
+      return `${lhsString} = ` + `${emit(node.lhs)} ${node.operator[0]} (${rhsString})`;
     } else if (node.operator === '^') {
       return `pow(${lhsString}, ${rhsString})`;
     } else if (node.operator === 'max') {
       return `max(${lhsString}, ${rhsString})`;
     } else if (node.operator === '=') {
-      return `${lhsString} = \n${indent(rhsString)}\n`;
+      return `${lhsString} = ${rhsString}`;
     }
     return `${lhsString} ${node.operator} ${rhsString}`;
     // if `a += b` -> `a = a + (b)`
@@ -72,15 +67,15 @@ return {
   } else if (node instanceof nodes.UnaryExpressionNode) {
     return `${node.operator}(${emit(node.rhs)})`;
   } else if (node instanceof nodes.BlockNode) {
-    return (
-      onlyWhenDebugging('/* ' + (node.name || 'Unnamed block') + ' */\n')
-      +
-      indent(node.children.map(x => emit(x) + ';').join('\n')) + '\n'
-    );
+    return node.children.map(x => emit(x))
+      .map(x => x[x.length - 1] === ';' ? x : x + ';')
+      .map(x => x.slice(0, 2) === '  ' ? x : '  ' + x)
+      .filter(x => !!x && x.trim().length > 0 && x.trim() !== ';')
+      .join('\n');
 
   } else if (node instanceof nodes.FunctionNode) {
     return `function ${node.name}() {
-  ${indent(emit(node.body))}
+${emit(node.body)}
 }`;
   }
   throw new Error('CANNOT PRINT NODE: ' + node.constructor.toString());
