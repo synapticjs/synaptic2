@@ -11,3 +11,4 @@ package-lock.json
 *.log
 *.log.*
 test-results
+.nyc_output

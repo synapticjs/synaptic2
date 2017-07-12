@@ -8,11 +8,11 @@
     "build": "npm run clean && NODE_ENV=production `npm bin`/tsc && NODE_ENV=production webpack --config webpack.config.js && cp ./static/* dist",
     "build:test": "npm run clean && NODE_ENV=production `npm bin`/tsc && cp static/* dist",
     "test": "npm run build:test && `npm bin`/mocha dist/test/**/*.spec.js",
+    "test:coverage": "nyc npm run test",
     "test:node": "npm run build:test && NODE_ENV=node jest --logHeapUsage --runInBand",
     "profile": "npm run build:test && (rm *.log || true) && node --prof perf/runPerf.js && (for f in *.log; do node --prof-process $f; done)",
     "profile:node": "npm run build:node && (rm *.log || true) && (NODE_ENV=node node --prof perf/runPerf.js) && (for f in *.log; do node --prof-process $f; done)",
-    "test:watch": "npm run build:test && jest --watch",
-    "test:coverage": "npm run build:test && jest --coverage",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "dev": "webpack-dashboard -- webpack-dev-server --config ./webpack.config.js",
     "build:node": "`npm bin`/tsc"
   },
@@ -24,9 +24,11 @@
     "@types/webassembly-js-api": "0.0.1",
     "babili": "0.0.12",
     "babili-webpack-plugin": "0.0.11",
+    "coveralls": "^2.13.1",
     "mersenne-twister": "^1.1.0",
     "mnist": "^1.0.5",
     "mocha": "^3.4.2",
+    "nyc": "^11.0.3",
     "ts-loader": "^2.1.0",
     "tslint": "^3.15.1",
     "tslint-config-standard": "^1.5.0",
@@ -38,5 +40,17 @@
   "dependencies": {
     "binaryen": "^1.37.13",
     "lysergic": "^0.2.4"
+  },
+  "nyc": {
+    "include": [
+      "dist/src"
+    ],
+    "exclude": [
+      "dist/test"
+    ],
+    "reporter": [
+      "lcov",
+      "text"
+    ]
   }
 }

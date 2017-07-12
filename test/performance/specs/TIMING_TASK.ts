@@ -20,11 +20,12 @@ const baseNetwork = new Network({
   generator: random,
   layers: [
     new layers.Input(2),
-    new layers.LSTM(6, { activationFunction: Activations.ActivationTypes.LOGISTIC_SIGMOID }),
-    new layers.Regression(1)
+    new layers.LSTM(6, { activationFunction: Activations.ActivationTypes.SOFTSIGN }),
+    new layers.Dense(1),
+    new layers.InputToOutput()
   ],
   engineOptions: {
-    bias: false
+    bias: true
   }
 });
 

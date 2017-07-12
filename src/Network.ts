@@ -86,7 +86,7 @@ export default class Network {
       }
 
       if (expectedNeurons != prevBoundary.layer.length) {
-        throw new Error(`Your layer index ${i} doesn't contain the right ammount of units. Got ${prevBoundary.layer.length} Expecting ${expectedNeurons}`);
+        throw new Error(`Your layer index ${i} doesn't contain the right ammount of units. Got ${prevBoundary.layer.length} Expecting ${expectedNeurons} (incoming Boundary: <${prevBoundary.width},  ${prevBoundary.height}, ${prevBoundary.depth}>)`);
       }
 
       boundaries.push(prevBoundary);
