@@ -38,8 +38,8 @@
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
-    "binaryen": "^1.37.13",
-    "lysergic": "^0.2.4"
+    "binaryen": "^1.37.14",
+    "lysergic": "^0.2.6"
   },
   "nyc": {
     "include": [
