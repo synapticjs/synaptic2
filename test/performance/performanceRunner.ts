@@ -55,6 +55,8 @@ export async function run(test: string, options: {
   console.log('    Units: ' + network.compiler.topology.units);
   console.log('    Connections: ' + network.compiler.topology.connections.length);
   console.log('    Gates: ' + network.compiler.topology.gates.length);
+  console.log('    Momentum: ' + network.compiler.momentum);
+  console.log('    LearningRate: ' + network.compiler.learningRate);
 
   console.log('Initial weights');
   logDimensionMean('weight', network.compiler);

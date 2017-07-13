@@ -37,6 +37,7 @@ export abstract class PerformanceTest {
   maxIterations = 10000;
   costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
   logEvery = 0;
+  momentum = 0;
 
   abstract async build(backend: typeof Backend): Promise<Network>;
 
@@ -51,7 +52,8 @@ export abstract class PerformanceTest {
       maxIterations: this.maxIterations,
       log: this.logEvery ? (a, b) => this.log.apply(this, [a, b, network]) : null,
       costFunction: this.costFunction,
-      logEvery: this.logEvery
+      logEvery: this.logEvery,
+      momentum: this.momentum
     });
 
     return result;

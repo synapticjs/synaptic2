@@ -42,7 +42,7 @@ export class MNIST extends PerformanceTest {
   logEvery = 1;
   maxIterations = 100;
   minError = 0.05;
-  learningRate = 0.5;
+  learningRate = 0.1;
 
   async build(backend) {
     const network = baseNetwork.clone();

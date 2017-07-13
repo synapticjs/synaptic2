@@ -2,7 +2,7 @@
 const letters = `abcdefghijklmnopqrstuvwxyz-().!‘’?,\n `;
 
 
-const text = `?CHAPTER I. Down the Rabbit-Hole
+const text = `\n?CHAPTER I. Down the Rabbit-Hole
 
 Alice was beginning to get very tired of sitting by her sister on the
 bank, and of having nothing to do: once or twice she had peeped into the
@@ -126,10 +126,12 @@ const baseNetwork = new Network({
   layers: [
     new layers.Input(letters.length),
     new layers.LSTM(10),
-    new layers.Softmax(letters.length)
+    new layers.Dense(letters.length),
+    new layers.InputToOutput()
   ],
   engineOptions: {
-    bias: true
+    bias: true,
+    momentum: 0.0001
   }
 });
 
@@ -141,7 +143,7 @@ console.log('WRITE Topology: \n' + logTopology(baseNetwork));
 export class WRITE extends PerformanceTest {
   costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
   logEvery = 1;
-  maxIterations = 30000;
+  maxIterations = 5000;
   minError = 0.005;
   learningRate = 0.2;
 
@@ -159,14 +161,37 @@ export class WRITE extends PerformanceTest {
     let prev = fillChar('\n');
     let text = '';
 
+    function maxIndex(array: number[]) {
+      let index = 0;
+      let value = -Infinity;
+      array.forEach(($, $$) => {
+        if ($ > value) {
+          index = $$;
+          value = $;
+        }
+      });
+      return { value, index };
+    }
+
     for (let index = 0; index < 5; index++) {
       prev = await c.activate(ts[index].input) as any;
-      prev.forEach(($, $$) => text = text + ($ > 0.5 ? letters[$$] : ''));
+
+      let x = maxIndex(prev);
+
+      if (x.value > 0.5) {
+        text = text + letters[x.index];
+      }
     }
 
     for (let index = 0; index < 100; index++) {
       prev = await c.activate(prev) as any;
-      prev.forEach(($, $$) => text = text + ($ > 0.5 ? letters[$$] : ''));
+
+
+      let x = maxIndex(prev);
+
+      if (x.value > 0.5) {
+        text = text + letters[x.index];
+      }
     }
 
     console.log(text);
