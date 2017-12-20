@@ -28,10 +28,10 @@ let baseNetwork = new Network({
     layers: [
         new layers.Input2D(28, 28),
         new layers.Convolution2D({
-            padding: 3, // valid/same default same
-            stride: 2, // strides
-            filter: 5, // kernel_size
-            depth: 1 // filters
+            kernelSize: 5, // kernel_size
+            strides: 2, // strides
+            filters: 1, // filters
+            padding: 'valid' // valid/same default same
         }),
         // new layers.MaxPool2D(2),
         new layers.Softmax(10)

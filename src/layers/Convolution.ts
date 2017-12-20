@@ -1,76 +1,32 @@
 import Network, { Boundary, Layer } from '../Network';
+import BaseConvolution from "./BaseConvolution";
 
 // this is based on this article: http://cs231n.github.io/convolutional-networks/
 
-export default class Convolution implements Layer {
-
-  filter: number;
-  height: number;
-  depth: number;
-  stride: number;
-  padding: number;
-  layer: number[];
+export const PADDING_SAME = 'same';
+export const PADDING_VALID = 'valid';
+export type PADDING_TYPE = 'same' | 'valid';
 
 
-  constructor({ filter = 1, height = 1, depth = 1, stride = 1, padding = 0 }) {
-    this.filter = filter;
-    this.height = height;
-    this.depth = depth;
-    this.stride = stride;
-    this.padding = padding;
-    this.layer = null;
-  }
+export default class Convolution extends BaseConvolution implements Layer {
 
-  init(network: Network, boundary: Boundary) {
+  init(network: Network, boundary: Boundary): Boundary {
 
-    if (boundary == null) {
-      throw new Error('\'Convolution\' can\'t be the first layer of the network!');
-    }
-
-    this.layer = network.addLayer();
-
-    let x: number, y: number, z: number, fromX: number, fromY: number, fromZ: number, from: number, to: number;
-    for (z = 0; z < this.depth; z++) {
-      for (y = 0; y < this.height; y++) {
-        for (x = this.padding; x < boundary.width - this.padding; x += this.stride) {
-
-          // create convolution layer units
-          const unit = network.addUnit();
-          this.layer.push(unit);
-
-          // connect units to prev layer
-          const filterRadious = this.filter / 2;
-          for (let offsetX = -filterRadious; offsetX < filterRadious; offsetX++) {
-            fromX = Math.round(x + offsetX);
-            for (fromZ = 0; fromZ < boundary.depth; fromZ++) {
-              for (fromY = 0; fromY < boundary.height; fromY++) {
-                if (this.isValid(boundary, fromX, fromY, fromZ)) {
-                  to = unit;
-                  from = boundary.layer[fromX + fromY * boundary.height + fromZ * boundary.height * boundary.depth];
-                  network.addConnection(from, to);
-                }
-              }
-            }
-          }
-        }
+    return this.buildConvolution(
+      network,
+      boundary,
+      {
+        yStart: 0,
+        yEnd: 1,
+        yIncr: 1,
+        zStart: 0,
+        zEnd: 1,
+        zIncr: 1,
+        offsetYStart: 0,
+        offsetYEnd: 1,
+        offsetZStart: 0,
+        offsetZEnd: 1,
       }
-    }
-
-    return {
-      width: (boundary.width - this.padding) / this.stride | 0,
-      height: this.height,
-      depth: this.depth,
-      layer: this.layer
-    };
-  }
-
-  // returns true if the coords fall within the layer area
-  isValid(boundary, x, y, z) {
-    return x > 0 &&
-      x < boundary.width &&
-      y > 0 &&
-      y < boundary.height &&
-      z > 0 &&
-      z < boundary.depth;
+    );
   }
 }

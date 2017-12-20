@@ -38,7 +38,7 @@ describe('Performance tasks', () => {
         run('DSR', backends.ASM);
         run('MNIST', backends.ASM);
         run('SOFTMAX_MNIST', backends.ASM);
-        run('CONV_MNIST', backends.ASM);
+        run('CONV_MNIST', backends.ASM, true);
         // run('WRITE', backends.ASM);
     });
 
