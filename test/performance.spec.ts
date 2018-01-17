@@ -7,13 +7,13 @@ import { run as notMochaRunner, storeResults } from './performance/performanceRu
 
 function run(test: string, backend, only?: boolean) {
 
-    const fn = only ? it.only : it;
+  const fn = only ? it.only : it;
 
-    fn(test, function (done) {
-        this.timeout(360000);
+  fn(test, function (done) {
+    this.timeout(360000);
 
-        notMochaRunner(test, { backend }).then(() => done(), err => done(err));
-    });
+    notMochaRunner(test, { backend }).then(() => done(), err => done(err));
+  });
 }
 
 
@@ -54,10 +54,10 @@ describe('Performance tasks', () => {
 
 
 after(function () {
-    this.timeout(10000);
-    if (process.env.CI) { // do not store results in CI
-        console.log('Skipping storeResults in CI');
-    } else {
-        storeResults('test-results');
-    }
+  this.timeout(10000);
+  if (process.env.CI) { // do not store results in CI
+    console.log('Skipping storeResults in CI');
+  } else {
+    storeResults('test-results');
+  }
 });

@@ -18,6 +18,7 @@ export interface TrainOptions {
   maxIterations?: number;
   costFunction?: CostTypes;
   logEvery?: number;
+  momentum?: number;
   log?: (partial: TrainResult, errorSet: ArrayLike<number>) => void;
   every?: (predicted: ArrayLike<number>, target: ArrayLike<number>, error: number, iteration: number) => void;
 }
@@ -67,7 +68,7 @@ export abstract class Backend {
     throw new Error('Propagate is not implemented');
   }
 
-  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction, log, logEvery, every }: TrainOptions): Promise<TrainResult> {
+  async train(dataset: TrainEntry[], { learningRate, minError, maxIterations, costFunction, log, logEvery, every, momentum }: TrainOptions): Promise<TrainResult> {
     if (!this.built) {
       await this.compiler.build();
     }
@@ -87,6 +88,11 @@ export abstract class Backend {
 
     // train
     while (error > minError && iterations < maxIterations) {
+
+      if (momentum) {
+        this.compiler.momentum = momentum * (maxIterations - iterations) / maxIterations;
+      }
+
       error = 0;
       let errorSet = [];
       for (let index = 0; index < dataset.length; index++) {

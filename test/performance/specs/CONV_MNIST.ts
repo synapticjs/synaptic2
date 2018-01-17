@@ -14,13 +14,13 @@ let mnistSet: { training: TrainEntry[], test: TrainEntry[] } = { training: [], t
 
 
 { // initialize training set
-    const oldRandom = Math.random;
-    Math.random = random;
-    try {
-        mnistSet = mnist.set(5000, 1000);
-    } finally {
-        Math.random = oldRandom;
-    }
+  const oldRandom = Math.random;
+  Math.random = random;
+  try {
+    mnistSet = mnist.set(5000, 1000);
+  } finally {
+    Math.random = oldRandom;
+  }
 }
 
 let baseNetwork = new Network({
@@ -28,9 +28,9 @@ let baseNetwork = new Network({
     layers: [
         new layers.Input2D(28, 28),
         new layers.Convolution2D({
-            kernelSize: 5, // kernel_size
-            strides: 2, // strides
-            filters: 1, // filters
+            kernelSize: 5,   // kernel_size
+            strides: 2,      // strides
+            filters: 1,      // filters
             padding: 'valid' // valid/same default same
         }),
         // new layers.MaxPool2D(2),
@@ -57,51 +57,51 @@ let baseNetwork = new Network({
 console.log('CONV_MNIST Topology: \n' + logTopology(baseNetwork));
 
 export class CONV_MNIST extends PerformanceTest {
-    costFunction: CostTypes = CostTypes.SOFTMAX;
-    logEvery = 1;
-    maxIterations = 100;
-    minError = 0.05;
-    learningRate = 0.5;
+  costFunction: CostTypes = CostTypes.SOFTMAX;
+  logEvery = 1;
+  maxIterations = 100;
+  minError = 0.05;
+  learningRate = 0.1;
 
-    async build(backend) {
+  async build(backend) {
 
-        const network = baseNetwork.clone();
-        network.backend = new backend(network.compiler);
-        await network.build();
+    const network = baseNetwork.clone();
+    network.backend = new backend(network.compiler);
+    await network.build();
 
-        return network;
-    }
+    return network;
+  }
 
-    log(partial: TrainResult, errorSet: ArrayLike<number>, network: Network) {
-        super.log(partial, errorSet, network);
-        // network.compiler.learningRate = partial.error * 0.5; // * 0.1;
-    }
+  log(partial: TrainResult, errorSet: ArrayLike<number>, network: Network) {
+    super.log(partial, errorSet, network);
+    // network.compiler.learningRate = partial.error * 0.5; // * 0.1;
+  }
 
-    async getTrainigSet() {
-        /*return [
-            {
-                input: [0, 0, 0, 0],
-                output: [0]
-            }
-        ];*/
-        return mnistSet.training.map($ => ({
-            input: $.input.map($ => $ - 0.5),
-            output: $.output
-        }));
-    }
+  async getTrainigSet() {
+    /*return [
+        {
+            input: [0, 0, 0, 0],
+            output: [0]
+        }
+    ];*/
+    return mnistSet.training.map($ => ({
+      input: $.input.map($ => $ - 0.5),
+      output: $.output
+    }));
+  }
 
-    async getTestingSet() {
-        /*return [
-            {
-                input: [0, 0, 0, 0],
-                output: [0]
-            }
-        ]*/
-        return mnistSet.test.map($ => ({
-            input: $.input.map($ => $ - 0.5),
-            output: $.output
-        }));
-    }
+  async getTestingSet() {
+    /*return [
+        {
+            input: [0, 0, 0, 0],
+            output: [0]
+        }
+    ]*/
+    return mnistSet.test.map($ => ({
+      input: $.input.map($ => $ - 0.5),
+      output: $.output
+    }));
+  }
 };
 
 export default new CONV_MNIST;

@@ -26,8 +26,9 @@ console.log('XOR Topology: \n' + logTopology(baseNetwork));
 
 export class XOR extends PerformanceTest {
   minError = 0.001;
-  maxIterations = 10000;
+  maxIterations = 1000;
   costFunction: CostTypes = CostTypes.MEAN_SQUARE_ERROR;
+  momentum = 0.001;
 
   async build(backend) {
     const network = baseNetwork.clone();

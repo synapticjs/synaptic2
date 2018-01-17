@@ -36,6 +36,8 @@ return {
         lhsString = `H[${node.lhs.position}]` + onlyWhenDebugging(`/* ${node.lhs.key} */`);
       } else if (node.lhs instanceof nodes.HeapReferenceNode) {
         lhsString = `H[${node.lhs.position}]`;
+      } else if (node.lhs instanceof nodes.HeapPointer) {
+        lhsString = `H[(${emit(node.lhs.position)} | 0)]`;
       }
     }
 
@@ -45,6 +47,8 @@ return {
       return `pow(${lhsString}, ${rhsString})`;
     } else if (node.operator === 'max') {
       return `max(${lhsString}, ${rhsString})`;
+    } else if (node.operator === 'kronecker') {
+      return `((${lhsString}) == (${rhsString}) ? 1.0 : 0.0)`;
     } else if (node.operator === '=') {
       return `${lhsString} = ${rhsString}`;
     }
@@ -54,34 +58,63 @@ return {
     if (node.hasParenthesis)
       return `+H[${node.position}]` + onlyWhenDebugging(`/* ${node.key} */`);
     else
-      return `(+H[${node.position}])` + onlyWhenDebugging(`/* ${node.key} */)`);
+      return `(+H[${node.position}]` + onlyWhenDebugging(`/* ${node.key} */`) + ')';
   } else if (node instanceof nodes.HeapReferenceNode) {
     if (node.hasParenthesis)
       return `+H[${node.position}]`;
     else
       return `(+H[${node.position}])`;
   } else if (node instanceof nodes.FloatNumberNode) {
-    return node.numericValue.toFixed(1);
+    return node.numericValue.toFixed(10);
+  } else if (node instanceof nodes.IntNumberNode) {
+    return node.numericValue.toFixed(0);
   } else if (node instanceof nodes.TernaryExpressionNode) {
     return '((' + emit(node.condition) + ') ? (' + emit(node.truePart) + ') : (' + emit(node.falsePart) + '))';
   } else if (node instanceof nodes.UnaryExpressionNode) {
     return `${node.operator}(${emit(node.rhs)})`;
   } else if (node instanceof nodes.BlockNode) {
-    return node.children.map(x => emit(x))
-      .map(x => x[x.length - 1] === ';' ? x : x + ';')
-      .map(x => x.slice(0, 2) === '  ' ? x : '  ' + x)
-      .filter(x => !!x && x.trim().length > 0 && x.trim() !== ';')
-      .join('\n');
-
+    return (
+      onlyWhenDebugging('/* ' + (node.name || 'Unnamed block') + ' */\n')
+      +
+      node.children.map(x => emit(x))
+        .map(x => x[x.length - 1] === ';' ? x : x + ';')
+        .map(x => x.slice(0, 2) === '  ' ? x : '  ' + x)
+        .filter(x => !!x && x.trim().length > 0 && x.trim() !== ';')
+        .join('\n')
+    );
   } else if (node instanceof nodes.FunctionNode) {
     return `function ${node.name}() {
 ${emit(node.body)}
 }`;
+  } else if (node instanceof nodes.ForLoopNode) {
+    const varName = node.var.variable.name;
+
+    return [
+      `for(${varName} = ${node.from.toFixed(0)}; (${varName}|0) < ${node.to.toFixed(0)}; ${varName} = (${varName}+1)|0) {`,
+      '  ' + emit(node.expression),
+      `}`
+    ].join('\n');
+  } else if (node instanceof nodes.VariableReference) {
+    if (node.variable.type == 'int')
+      return `(${node.variable.name} | 0)`;
+    else
+      return `(+${node.variable.name})`;
+  } else if (node instanceof nodes.VariableDeclaration) {
+    if (node.type == 'int')
+      return `var ${node.name} = ${node.initialValue.toFixed(0)};`;
+    else
+      return `var ${node.name} = ${node.initialValue.toFixed(10)};`;
+  } else if (node instanceof nodes.HeapPointer) {
+    if (node.hasParenthesis)
+      return `+H[(${emit(node.position)} | 0)]`;
+    else
+      return `(+H[(${emit(node.position)} | 0)])`;
   }
   throw new Error('CANNOT PRINT NODE: ' + node.constructor.toString());
 };
 
 export function emit(node: nodes.Node) {
+  if (!node) return '!!!NULL!!!';
   if (node.hasParenthesis)
     return '(' + baseEmit.call(null, node) + ')';
   return baseEmit.call(null, node);
